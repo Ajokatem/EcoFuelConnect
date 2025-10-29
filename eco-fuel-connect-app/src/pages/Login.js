@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Container,
@@ -9,9 +9,17 @@ import {
   Alert,
   InputGroup
 } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
+import authService from "../services/authService";
+import api from "../services/api";
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import { useUser } from "../contexts/UserContext";
+import { sanitizeInput, sanitizeEmail, sanitizeMessage } from '../utils/sanitize';
 
 function Login() {
+  console.log('Login component is rendering...');
+  const history = useHistory();
+  const { updateUser } = useUser();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -23,12 +31,32 @@ function Login() {
   const [alertType, setAlertType] = useState("success");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking');
+
+  // Test backend connection on component mount
+  useEffect(() => {
+    const testBackendConnection = async () => {
+      try {
+        const response = await api.get('/health');
+        console.log('Backend connection successful:', response.data);
+        setBackendStatus('connected');
+      } catch (error) {
+        console.error('Backend connection failed:', error.message || error);
+        setBackendStatus('disconnected');
+        showErrorAlert('Backend server is not accessible. Please check if the server is running.');
+      }
+    };
+
+    testBackendConnection();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const sanitizedValue = type === 'checkbox' ? checked : (name === 'email' ? sanitizeEmail(value) : sanitizeInput(value));
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: sanitizedValue
     }));
     
     // Clear error when user starts typing
@@ -42,14 +70,14 @@ function Login() {
     
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
     
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
     }
     
     setErrors(newErrors);
@@ -66,83 +94,155 @@ function Login() {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Store user data in localStorage (in real app, use proper authentication)
-      localStorage.setItem('user', JSON.stringify({
+      // Real API call to backend
+      const response = await authService.login({
         email: formData.email,
-        isAuthenticated: true,
-        loginTime: new Date().toISOString()
-      }));
-      
-      showSuccessAlert("Login successful! Redirecting to dashboard...");
-      
+        password: formData.password,
+        rememberMe: formData.rememberMe
+      });
+
+      showSuccessAlert("Login successful! Setting up your profile...");
+
+      // Auto-update profile with login details and set token in axios
+      if (response.user && response.token) {
+        updateUser(response.user, response.token);
+      }
+
       // Redirect to dashboard after success message
       setTimeout(() => {
-        window.location.href = "/admin/dashboard";
-      }, 2000);
-      
+        history.push("/admin/dashboard");
+      }, 1500);
+
     } catch (error) {
-      showErrorAlert("Login failed. Please check your credentials and try again.");
+      const errorMessage = error.response?.data?.message || error.message || "Login failed. Please check your credentials and try again.";
+      showErrorAlert(sanitizeMessage(errorMessage));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      // Send credential to backend for verification and login
+      const response = await authService.googleLogin({ credential: credentialResponse.credential });
+      showSuccessAlert("Google login successful! Redirecting to dashboard...");
+      setTimeout(() => {
+        history.push("/admin/dashboard");
+      }, 1500);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Google login failed. Please try again.";
+      showErrorAlert(sanitizeMessage(errorMessage));
+    }
+  };
+
+  const handleGoogleError = () => {
+    showErrorAlert("Google authentication failed. Please try again.");
+  };
+
   const showSuccessAlert = (message) => {
-    setAlertMessage(message);
+    setAlertMessage(sanitizeMessage(message));
     setAlertType("success");
     setShowAlert(true);
     setTimeout(() => setShowAlert(false), 3000);
   };
 
   const showErrorAlert = (message) => {
-    setAlertMessage(message);
+    setAlertMessage(sanitizeMessage(message));
     setAlertType("danger");
     setShowAlert(true);
     setTimeout(() => setShowAlert(false), 5000);
   };
 
-  const handleDemoLogin = () => {
-    setFormData({
-      email: "demo@ecofuelconnect.com",
-      password: "demo123",
-      rememberMe: false
-    });
-    showSuccessAlert("Demo credentials filled! Click Login to continue.");
-  };
-
   return (
-    <div className="auth-page">
-      <Container fluid className="h-100">
-        <Row className="h-100 align-items-center justify-content-center">
-          <Col md="6" lg="4">
-            <div className="text-center mb-4">
-              <img 
-                src={require("../assets/img/recycle-symbol.png")} 
-                alt="EcoFuelConnect" 
-                className="auth-logo mb-3"
-                style={{ width: '80px', height: '80px' }}
-              />
-              <h2 className="text-success mb-2">Welcome Back!</h2>
-              <p className="text-muted">Sign in to your EcoFuelConnect account</p>
-            </div>
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
+      <Container fluid style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #25805a 0%, #1e6b47 100%)' }}>
+        <Row className="justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+          <Col md="6" lg="5" xl="4">
+            <Card 
+              className="shadow-lg border-0" 
+              style={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px'
+              }}
+            >
+              <Card.Body className="p-5">
+                {/* Header Section */}
+                <div className="text-center mb-4">
+                  <h3 
+                    style={{
+                      color: '#25805a', 
+                      fontWeight: '600', 
+                      fontSize: '1.5rem',
+                      fontFamily: '"Inter", "Segoe UI", sans-serif',
+                      marginBottom: '8px'
+                    }}
+                  >
+                    Welcome Back!
+                  </h3>
+                  <p 
+                    style={{
+                      color: '#666',
+                      fontSize: '0.9rem',
+                      fontFamily: '"Inter", "Segoe UI", sans-serif',
+                      marginBottom: '0'
+                    }}
+                  >
+                    Sign in to your EcoFuelConnect account
+                  </p>
+                </div>
 
-            <Card className="auth-card shadow">
-              <Card.Body className="p-4">
+                {/* Alert Section */}
                 {showAlert && (
-                  <Alert variant={alertType} className="mb-4">
-                    <i className={`nc-icon nc-${alertType === 'success' ? 'check-2' : 'simple-remove'}`}></i>
-                    {" "}{alertMessage}
+                  <Alert 
+                    variant={alertType} 
+                    className="mb-4"
+                    style={{
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: alertType === 'success' ? 'rgba(37, 128, 90, 0.1)' : 'rgba(220, 53, 69, 0.1)',
+                      color: alertType === 'success' ? '#25805a' : '#dc3545'
+                    }}
+                  >
+                    {alertMessage}
+                  </Alert>
+                )}
+
+                {/* Backend Status Indicator */}
+                {backendStatus === 'disconnected' && (
+                  <Alert 
+                    variant="warning" 
+                    className="mb-4"
+                    style={{
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'rgba(255, 193, 7, 0.1)',
+                      color: '#856404'
+                    }}
+                  >
+                    Backend server connection failed. Please check if the server is running.
                   </Alert>
                 )}
 
                 <Form onSubmit={handleSubmit}>
                   <Form.Group className="mb-3">
-                    <Form.Label>Email Address</Form.Label>
+                    <Form.Label 
+                      style={{
+                        color: '#2F4F4F', 
+                        fontWeight: '600',
+                        fontFamily: '"Inter", "Segoe UI", sans-serif'
+                      }}
+                    >
+                      Email Address
+                    </Form.Label>
                     <InputGroup>
-                      <InputGroup.Text>
+                      <InputGroup.Text 
+                        style={{
+                          background: '#f8f9fa',
+                          border: '1px solid #e9ecef',
+                          color: '#25805a'
+                        }}
+                      >
                         <i className="nc-icon nc-email-85"></i>
                       </InputGroup.Text>
                       <Form.Control
@@ -153,17 +253,28 @@ function Login() {
                         onChange={handleInputChange}
                         isInvalid={!!errors.email}
                         disabled={isLoading}
+                        style={{
+                          border: '1px solid #e9ecef',
+                          borderRadius: '0 8px 8px 0',
+                          padding: '12px 15px',
+                          fontFamily: '"Inter", "Segoe UI", sans-serif'
+                        }}
                       />
                     </InputGroup>
                     {errors.email && <Form.Text className="text-danger">{errors.email}</Form.Text>}
                   </Form.Group>
 
                   <Form.Group className="mb-3">
-                    <Form.Label>Password</Form.Label>
+                    <Form.Label 
+                      style={{
+                        color: '#2F4F4F', 
+                        fontWeight: '600',
+                        fontFamily: '"Inter", "Segoe UI", sans-serif'
+                      }}
+                    >
+                      Password
+                    </Form.Label>
                     <InputGroup>
-                      <InputGroup.Text>
-                        <i className="nc-icon nc-key-25"></i>
-                      </InputGroup.Text>
                       <Form.Control
                         type={showPassword ? "text" : "password"}
                         name="password"
@@ -172,89 +283,120 @@ function Login() {
                         onChange={handleInputChange}
                         isInvalid={!!errors.password}
                         disabled={isLoading}
+                        style={{
+                          border: '1px solid #e9ecef',
+                          padding: '12px 15px',
+                          fontFamily: '"Inter", "Segoe UI", sans-serif'
+                        }}
                       />
                       <Button
                         variant="outline-secondary"
                         onClick={() => setShowPassword(!showPassword)}
                         disabled={isLoading}
+                        style={{
+                          border: '1px solid #e9ecef',
+                          borderRadius: '0 8px 8px 0',
+                          background: '#f8f9fa',
+                          color: '#25805a'
+                        }}
                       >
-                        <i className={`nc-icon nc-${showPassword ? 'zoom-split' : 'glasses-2'}`}></i>
+                        {showPassword ? "Hide" : "Show"}
                       </Button>
                     </InputGroup>
                     {errors.password && <Form.Text className="text-danger">{errors.password}</Form.Text>}
                   </Form.Group>
 
-                  <Row className="mb-3">
-                    <Col>
-                      <Form.Check
-                        type="checkbox"
-                        name="rememberMe"
-                        label="Remember me"
-                        checked={formData.rememberMe}
-                        onChange={handleInputChange}
-                        disabled={isLoading}
-                      />
-                    </Col>
-                    <Col className="text-end">
-                      <Link to="/auth/forgot-password" className="text-success">
-                        Forgot Password?
-                      </Link>
-                    </Col>
-                  </Row>
+                  <Form.Group className="mb-4">
+                    <Form.Check
+                      type="checkbox"
+                      name="rememberMe"
+                      label="Remember me"
+                      checked={formData.rememberMe}
+                      onChange={handleInputChange}
+                      disabled={isLoading}
+                      style={{
+                        color: '#2F4F4F',
+                        fontFamily: '"Inter", "Segoe UI", sans-serif'
+                      }}
+                    />
+                  </Form.Group>
 
                   <Button
-                    variant="success"
                     type="submit"
+                    disabled={isLoading || backendStatus === 'disconnected'}
                     className="w-100 mb-3"
-                    disabled={isLoading}
+                    style={{
+                      background: 'linear-gradient(135deg, #25805a 0%, #1e6b47 100%)',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '12px',
+                      fontWeight: '600',
+                      fontSize: '1rem',
+                      fontFamily: '"Inter", "Segoe UI", sans-serif',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'translateY(-2px)';
+                      e.target.style.boxShadow = '0 4px 15px rgba(37, 128, 90, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)';
+                      e.target.style.boxShadow = 'none';
+                    }}
                   >
                     {isLoading ? (
                       <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                        Signing In...
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        Signing in...
                       </>
                     ) : (
                       <>
-                        <i className="nc-icon nc-key-25"></i> Sign In
+                        Sign In
                       </>
                     )}
                   </Button>
 
-                  <Button
-                    variant="outline-success"
-                    className="w-100 mb-3"
-                    onClick={handleDemoLogin}
-                    disabled={isLoading}
-                  >
-                    <i className="nc-icon nc-spaceship"></i> Try Demo Account
-                  </Button>
-
-                  <hr />
-
-                  <div className="text-center">
-                    <p className="mb-0">
-                      Don't have an account?{" "}
-                      <Link to="/auth/register" className="text-success fw-bold">
-                        Create Account
-                      </Link>
-                    </p>
+                  {/* Divider */}
+                  <div className="d-flex align-items-center my-3">
+                    <hr className="flex-grow-1" style={{ borderColor: '#e0e0e0' }} />
+                    <span className="px-3 text-muted" style={{ fontSize: '14px', fontFamily: '"Inter", "Segoe UI", sans-serif' }}>
+                      or
+                    </span>
+                    <hr className="flex-grow-1" style={{ borderColor: '#e0e0e0' }} />
                   </div>
+
                 </Form>
+                {/* Google Auth */}
+                <div className="text-center mt-3">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                  />
+                </div>
+                <div className="text-center mt-4">
+                  <p style={{ color: '#666', marginBottom: '10px', fontFamily: '"Inter", "Segoe UI", sans-serif' }}>
+                    Don't have an account?
+                  </p>
+                  <Link 
+                    to="/auth/register" 
+                    style={{
+                      color: '#25805a',
+                      textDecoration: 'none',
+                      fontWeight: '600',
+                      fontFamily: '"Inter", "Segoe UI", sans-serif'
+                    }}
+                    onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                    onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                  >
+                    Create an account here
+                  </Link>
+                </div>
               </Card.Body>
             </Card>
-
-            <div className="text-center mt-4">
-              <p className="text-muted small">
-                By signing in, you agree to our{" "}
-                <Link to="/admin/about" className="text-success">Terms of Service</Link>
-                {" "}and{" "}
-                <Link to="/admin/contact" className="text-success">Privacy Policy</Link>
-              </p>
-            </div>
           </Col>
         </Row>
       </Container>
-    </div>
+    </GoogleOAuthProvider>
   );
 }
 

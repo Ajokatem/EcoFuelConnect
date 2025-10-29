@@ -1,0 +1,233 @@
+### ==========================================
+### 1. SYSTEM HEALTH CHECK
+### ==========================================
+GET http://localhost:5000/api/health
+
+### ==========================================
+### 2. AUTHENTICATION - USER MANAGEMENT
+### ==========================================
+
+# Register User
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "firstName": "Abuk",
+  "lastName": "Deng",
+  "email": "abuk@gmail.com",
+  "password": "Abuk@2020",
+  "confirmPassword": "Abuk@2020",
+  "phone": "+211923456789",
+  "role": "supplier",
+  "organization": "Gumbo Market"
+}
+
+###
+
+# Login User
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "abuk@gmail.com",
+  "password": "Abuk@2020"
+}
+
+###
+
+GET http://localhost:5000/api/auth/me
+Cookie: token=YOUR_JWT_TOKEN_HERE
+###
+PUT http://localhost:5000/api/auth/profile
+Cookie: token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzIsImlhdCI6MTc2MTcyNDk3MiwiZXhwIjoxNzYyMzI5NzcyfQ.mbn6dXCEllJw6JqN0kcyMljS8rdiMKO3cWnxbWOM-gQ; Max-Age=604800; Path=/; Expires=Wed, 05 Nov 2025 08:02:52 GMT; HttpOnly; SameSite=Strict
+Content-Type: application/json
+
+{
+  "firstName": "Ajok",
+  "lastName": "Biar",
+  "phone": "+211987654321",
+  "organization": "Promised Land Secondary School"
+}
+
+###
+POST http://localhost:5000/api/auth/change-password
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "currentPassword": "Ajokatembeek@2020",
+  "newPassword": "manyangjok@123",
+  "confirmNewPassword": "manyangjok@123"
+}
+
+###
+POST http://localhost:5000/api/auth/logout
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+
+### ==========================================
+### 3. WASTE LOGGING - FULL CRUD
+### ==========================================
+
+POST http://localhost:5000/api/waste-logging
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "wasteType": "food_scraps",
+  "quantity": 50,
+  "unit": "kg",
+  "supplierType": "restaurant",
+  "location": "Konyokony Market",
+  "notes": "Daily food waste collection"
+}
+
+###
+GET http://localhost:5000/api/waste-logging?page=1&limit=10
+Cookie: token=YOUR_JWT_TOKEN_HERE
+###
+GET http://localhost:5000/api/waste-logging/WASTE_ID_HERE
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+###
+PUT http://localhost:5000/api/waste-logging/WASTE_ID_HERE
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "quantity": 60,
+  "notes": "Updated waste quantity after inspection"
+}
+
+DELETE http://localhost:5000/api/waste-logging/WASTE_ID_HERE
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+
+### ==========================================
+### 4. FUEL REQUESTS - FULL CRUD
+### ==========================================
+
+###
+POST http://localhost:5000/api/fuel-requests
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "fuelType": "biogas",
+  "requestedQuantity": 150,
+  "deliveryDate": "2025-11-01",
+  "deliveryAddress": "Promised Land Secondary School, Juba",
+  "priority": "high",
+  "contactPerson": "Ajok Biar",
+  "contactPhone": "+211987654321",
+  "notes": "Urgent monthly supply"
+}
+
+###
+GET http://localhost:5000/api/fuel-requests?page=1&limit=10
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+###
+GET http://localhost:5000/api/fuel-requests/REQUEST_ID_HERE
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+###
+PATCH http://localhost:5000/api/fuel-requests/REQUEST_ID_HERE/status
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "status": "approved"
+}
+
+###
+PATCH http://localhost:5000/api/fuel-requests/REQUEST_ID_HERE/status
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "status": "cancelled"
+}
+
+
+### ==========================================
+### 5. BIOGAS PRODUCTION - FULL CRUD
+### ==========================================
+
+###
+POST http://localhost:5000/api/biogas-production
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "producer": "USER_ID_HERE",
+  "productionDate": "2025-11-01",
+  "feedstock": ["food_scraps", "animal_manure"],
+  "outputQuantity": 200,
+  "status": "completed",
+  "notes": "Daily production data"
+}
+
+###
+GET http://localhost:5000/api/biogas-production?page=1&limit=10
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+GET http://localhost:5000/api/biogas-production/PRODUCTION_ID_HERE
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+PUT http://localhost:5000/api/biogas-production/PRODUCTION_ID_HERE
+Cookie: token=YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "outputQuantity": 220,
+  "status": "verified",
+  "notes": "Updated after quality control"
+}
+
+DELETE http://localhost:5000/api/biogas-production/PRODUCTION_ID_HERE
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+
+### ==========================================
+### 6. DASHBOARD and ANALYTICS - READ ONLY
+### ==========================================
+
+GET http://localhost:5000/api/dashboard/stats
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+GET http://localhost:5000/api/dashboard/recent-activity
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+GET http://localhost:5000/api/dashboard/charts/waste-trends
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+GET http://localhost:5000/api/dashboard/charts/biogas-production
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+GET http://localhost:5000/api/dashboard/charts/fuel-requests
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+GET http://localhost:5000/api/dashboard/waste-distribution
+Cookie: token=YOUR_JWT_TOKEN_HERE
+
+## Notes:
+# - Always replace YOUR_JWT_TOKEN_HERE with your actual bearer token after login
+# - Replace resource IDs (WASTE_ID_HERE, REQUEST_ID_HERE, etc.) with actual IDs from your API responses 
+# - Adjust pagination params as required for large data requests
+# - Confirm backend authorization and validation is properly configured before testing
+
+###
+POST http://localhost:5000/api/waste-logging
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MzIsImlhdCI6MTc2MTQ3OTA5NCwiZXhwIjoxNzYyMDgzODk0fQ.VDV_J_ctoSzvOsI4uozzR1ke_KU535iPiyOgxyR-DgY
+
+{
+  "producerId": 32,
+  "wasteType": "kitchen_scraps",
+  "wasteSource": "restaurant",
+  "quantity": 10,
+  "unit": "kg",
+  "qualityGrade": "good",
+  "verificationMethod": "manual_estimate"
+}

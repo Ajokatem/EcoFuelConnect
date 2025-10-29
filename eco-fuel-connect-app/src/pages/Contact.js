@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Card,
   Container,
@@ -9,6 +9,58 @@ import {
 } from "react-bootstrap";
 
 function Contact() {
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    subject: '',
+    message: ''
+  });
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus(null);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      
+      if (!res.ok) {
+        // Handle non-JSON error responses
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await res.json();
+          setStatus(data.error || 'Failed to send message');
+        } else {
+          setStatus('Server error - please try again later');
+        }
+        setLoading(false);
+        return;
+      }
+      
+      const data = await res.json();
+      if (data.success) {
+        setStatus('success');
+        setForm({ firstName: '', lastName: '', email: '', subject: '', message: '' });
+      } else {
+        setStatus(data.error || 'Failed to send message');
+      }
+    } catch (err) {
+      console.error('Contact form error:', err);
+      setStatus('Network error - please check your connection and try again');
+    }
+    setLoading(false);
+  };
+
   return (
     <>
       <Container 
@@ -60,7 +112,7 @@ function Contact() {
                     <h4 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '20px'}}>
                       Send us a Message
                     </h4>
-                    <Form>
+                    <Form onSubmit={handleSubmit}>
                       <Row>
                         <Col md="6">
                           <Form.Group className="mb-3">
@@ -69,11 +121,15 @@ function Contact() {
                             </Form.Label>
                             <Form.Control 
                               type="text" 
+                              name="firstName"
+                              value={form.firstName}
+                              onChange={handleChange}
                               placeholder="Enter your first name"
                               style={{
                                 borderColor: '#25805a',
                                 borderRadius: '8px'
                               }}
+                              required
                             />
                           </Form.Group>
                         </Col>
@@ -84,11 +140,15 @@ function Contact() {
                             </Form.Label>
                             <Form.Control 
                               type="text" 
+                              name="lastName"
+                              value={form.lastName}
+                              onChange={handleChange}
                               placeholder="Enter your last name"
                               style={{
                                 borderColor: '#25805a',
                                 borderRadius: '8px'
                               }}
+                              required
                             />
                           </Form.Group>
                         </Col>
@@ -99,11 +159,15 @@ function Contact() {
                         </Form.Label>
                         <Form.Control 
                           type="email" 
+                          name="email"
+                          value={form.email}
+                          onChange={handleChange}
                           placeholder="Enter your email"
                           style={{
                             borderColor: '#25805a',
                             borderRadius: '8px'
                           }}
+                          required
                         />
                       </Form.Group>
                       <Form.Group className="mb-3">
@@ -112,11 +176,15 @@ function Contact() {
                         </Form.Label>
                         <Form.Control 
                           type="text" 
+                          name="subject"
+                          value={form.subject}
+                          onChange={handleChange}
                           placeholder="Enter message subject"
                           style={{
                             borderColor: '#25805a',
                             borderRadius: '8px'
                           }}
+                          required
                         />
                       </Form.Group>
                       <Form.Group className="mb-3">
@@ -125,12 +193,16 @@ function Contact() {
                         </Form.Label>
                         <Form.Control 
                           as="textarea" 
+                          name="message"
+                          value={form.message}
+                          onChange={handleChange}
                           rows={5} 
                           placeholder="Enter your message"
                           style={{
                             borderColor: '#25805a',
                             borderRadius: '8px'
                           }}
+                          required
                         />
                       </Form.Group>
                       <Button 
@@ -143,9 +215,16 @@ function Contact() {
                           fontWeight: '500'
                         }}
                         type="submit"
+                        disabled={loading}
                       >
-                        Send Message
+                        {loading ? 'Sending...' : 'Send Message'}
                       </Button>
+                      {status === 'success' && (
+                        <div className="mt-3 text-success">Message sent successfully!</div>
+                      )}
+                      {status && status !== 'success' && (
+                        <div className="mt-3 text-danger">{typeof status === 'string' ? status : 'Failed to send message.'}</div>
+                      )}
                     </Form>
                   </Col>
                   <Col md="6">

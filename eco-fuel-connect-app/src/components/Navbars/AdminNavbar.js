@@ -1,11 +1,26 @@
 import React from "react";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation, Link, useHistory } from "react-router-dom";
 import { Navbar, Container, Nav, Button } from "react-bootstrap";
+import { useAuth } from "../../hooks/useAuth";
 
 import routes from "../../routes.js";
 
 function Header() {
   const location = useLocation();
+  const history = useHistory();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Redirect to login page after logout
+      history.push('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Even if logout fails, redirect to login page
+      history.push('/auth/login');
+    }
+  };
 
   const mobileSidebarToggle = (e) => {
     e.preventDefault();
@@ -179,10 +194,7 @@ function Header() {
                 }}
                 onMouseEnter={e => e.target.style.color = 'white'}
                 onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
-                onClick={() => {
-                  localStorage.removeItem('user');
-                  window.location.href = '/';
-                }}
+                onClick={handleLogout}
               >
                 <i className="nc-icon nc-button-power"></i> Logout
               </Button>

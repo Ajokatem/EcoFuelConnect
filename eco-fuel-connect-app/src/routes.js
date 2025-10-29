@@ -4,6 +4,7 @@ import UserProfile from "./pages/UserProfile.js";
 import FuelRequestManagement from "./pages/FuelRequestManagement.js";
 import Reports from "./pages/Reports.js";
 import EducationalContent from "./pages/EducationalContent.js";
+import AdminContentManagement from "./pages/AdminContentManagement.js";
 import Help from "./pages/Help.js";
 import Notifications from "./pages/Notifications.js";
 import OrganicWasteLogging from "./pages/OrganicWasteLogging.js";
@@ -14,6 +15,9 @@ import Settings from "./pages/Settings.js";
 import Login from "./pages/Login.js";
 import Register from "./pages/Register.js";
 import Welcome from "./pages/Welcome.js";
+import Terms from "./pages/Terms.js";
+import Privacy from "./pages/Privacy.js";
+import EducationalDetail from "./pages/EducationalDetail.js";
 
 const dashboardRoutes = [
   {
@@ -36,6 +40,14 @@ const dashboardRoutes = [
     icon: "nc-icon nc-tv-2",
     component: EducationalContent,
     layout: "/admin"
+  },
+  {
+    path: "/admin-content",
+    name: "Content Management",
+    icon: "nc-icon nc-paper-2",
+    component: AdminContentManagement,
+    layout: "/admin",
+    adminOnly: true
   },
   {
     path: "/organic-waste-logging",
@@ -100,6 +112,18 @@ export const authRoutes = [
     name: "Register",
     component: Register,
     layout: "/auth"
+  },
+  {
+    path: "/terms",
+    name: "Terms",
+    component: Terms,
+    layout: ""
+  },
+  {
+    path: "/privacy",
+    name: "Privacy",
+    component: Privacy,
+    layout: ""
   }
 ];
 
@@ -121,6 +145,12 @@ export const additionalAdminRoutes = [
     path: "/projects",
     name: "Projects",
     component: Projects,
+    layout: "/admin"
+  },
+  {
+    path: "/educational-detail/:topicId",
+    name: "Educational Detail",
+    component: EducationalDetail,
     layout: "/admin"
   }
 ];

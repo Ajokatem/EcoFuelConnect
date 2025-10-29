@@ -1,114 +1,221 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
 const bcrypt = require('bcryptjs');
+const { sequelize } = require('../config/database');
 
-const userSchema = new mongoose.Schema({
+const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   firstName: {
-    type: String,
-    required: [true, 'First name is required'],
-    trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      notEmpty: { msg: 'First name is required' },
+      len: { args: [1, 50], msg: 'First name cannot exceed 50 characters' }
+    }
   },
   lastName: {
-    type: String,
-    required: [true, 'Last name is required'],
-    trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
+    type: DataTypes.STRING(50),
+    allowNull: false,
+    validate: {
+      notEmpty: { msg: 'Last name is required' },
+      len: { args: [1, 50], msg: 'Last name cannot exceed 50 characters' }
+    }
   },
   email: {
-    type: String,
-    required: [true, 'Email is required'],
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+    validate: {
+      isEmail: { msg: 'Please enter a valid email' },
+      notEmpty: { msg: 'Email is required' }
+    },
+    set(value) {
+      this.setDataValue('email', value.toLowerCase());
+    }
   },
   password: {
-    type: String,
-    required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters long']
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      len: { args: [6, 255], msg: 'Password must be at least 6 characters long' }
+    }
   },
   phone: {
-    type: String,
-    trim: true,
-    match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please enter a valid phone number']
+    type: DataTypes.STRING,
+    allowNull: true,
+    validate: {
+      is: { args: /^[\+]?[1-9][\d]{0,15}$/, msg: 'Please enter a valid phone number' }
+    }
   },
   organization: {
-    type: String,
-    trim: true,
-    maxlength: [100, 'Organization name cannot exceed 100 characters']
+    type: DataTypes.STRING(100),
+    allowNull: true
   },
   role: {
-    type: String,
-    enum: ['user', 'supplier', 'admin', 'manager'],
-    default: 'user'
+    type: DataTypes.ENUM('admin', 'supplier', 'consumer', 'school'),
+    allowNull: false
   },
-  address: {
-    street: String,
-    city: String,
-    state: String,
-    zipCode: String,
-    country: { type: String, default: 'Rwanda' }
-  },
-  profile: {
-    avatar: String,
-    bio: String,
-    interests: [String],
-    preferredFuelTypes: [String]
-  },
+  // supplierType: {
+  //   type: DataTypes.ENUM('market', 'slaughterhouse', 'restaurant', 'household', 'farm'),
+  //   allowNull: true
+  // },
+  // supplierId: {
+  //   type: DataTypes.STRING,
+  //   allowNull: true,
+  //   unique: true
+  // },
+  // plantCapacity: {
+  //   type: DataTypes.DECIMAL(10, 2),
+  //   allowNull: true
+  // },
+  // producerId: {
+  //   type: DataTypes.STRING,
+  //   allowNull: true,
+  //   unique: true
+  // },
+  // certifications: {
+  //   type: DataTypes.JSON,
+  //   allowNull: true,
+  //   defaultValue: []
+  // },
+  // studentCount: {
+  //   type: DataTypes.INTEGER,
+  //   allowNull: true
+  // },
+  // schoolType: {
+  //   type: DataTypes.ENUM('primary', 'secondary', 'university', 'technical'),
+  //   allowNull: true
+  // },
+  // schoolId: {
+  //   type: DataTypes.STRING,
+  //   allowNull: true,
+  //   unique: true
+  // },
+  // address: {
+  //   type: DataTypes.JSON,
+  //   allowNull: true,
+  //   defaultValue: {
+  //     street: '',
+  //     city: '',
+  //     state: '',
+  //     zipCode: '',
+  //     country: 'South Sudan'
+  //   }
+  // },
+  // profile: {
+  //   type: DataTypes.JSON,
+  //   allowNull: true,
+  //   defaultValue: {
+  //     avatar: '',
+  //     bio: '',
+  //     interests: [],
+  //     preferredFuelTypes: []
+  //   }
+  // },
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
   emailVerified: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  lastLogin: Date,
-  preferences: {
-    notifications: {
-      email: { type: Boolean, default: true },
-      sms: { type: Boolean, default: false },
-      push: { type: Boolean, default: true }
-    },
-    language: { type: String, default: 'en' },
-    theme: { type: String, enum: ['light', 'dark'], default: 'light' }
-  }
+  profileImage: {
+    type: DataTypes.STRING(500),
+    allowNull: true
+  },
+  // lastLogin: {
+  //   type: DataTypes.DATE,
+  //   allowNull: true
+  // },
+  // lastLogoutAt: {
+  //   type: DataTypes.DATE,
+  //   allowNull: true
+  // },
+  // statistics: {
+  //   type: DataTypes.JSON,
+  //   allowNull: true,
+  //   defaultValue: {
+  //     totalSessions: 0,
+  //     totalLoginAttempts: 0
+  //   }
+  // },
+  // preferences: {
+  //   type: DataTypes.JSON,
+  //   allowNull: true,
+  //   defaultValue: {
+  //     notifications: {
+  //       email: true,
+  //       sms: false,
+  //       push: true
+  //     },
+  //     language: 'en',
+  //     theme: 'light'
+  //   }
+  // }
 }, {
   timestamps: true,
-  toJSON: { 
-    transform: function(doc, ret) {
-      delete ret.password;
-      return ret;
-    }
-  }
+  tableName: 'users'
 });
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
+// Hash password before creating/updating
+User.addHook('beforeCreate', async (user) => {
+  if (user.password) {
     const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
+    user.password = await bcrypt.hash(user.password, salt);
   }
 });
 
-// Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword) {
+User.addHook('beforeUpdate', async (user) => {
+  if (user.changed('password')) {
+    const salt = await bcrypt.genSalt(12);
+    user.password = await bcrypt.hash(user.password, salt);
+  }
+});
+
+// Instance methods
+User.prototype.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Get full name
-userSchema.virtual('fullName').get(function() {
-  return `${this.firstName} ${this.lastName}`;
-});
-
-// Update last login
-userSchema.methods.updateLastLogin = function() {
+User.prototype.updateLastLogin = async function() {
   this.lastLogin = new Date();
-  return this.save();
+  return await this.save();
 };
 
-module.exports = mongoose.model('User', userSchema);
+User.prototype.getFullName = function() {
+  return `${this.firstName} ${this.lastName}`;
+};
+
+User.prototype.getProfileCompletion = function() {
+  let completion = 0;
+  const totalFields = 10;
+  
+  if (this.firstName) completion++;
+  if (this.lastName) completion++;
+  if (this.email) completion++;
+  if (this.phone) completion++;
+  if (this.organization) completion++;
+  if (this.address && Object.keys(this.address).length > 0) completion++;
+  if (this.role) completion++;
+  if (this.emailVerified) completion++;
+  
+  // Role-specific fields
+  if (this.role === 'supplier' && this.supplierId) completion++;
+  if (this.role === 'producer' && this.plantCapacity) completion++;
+  if (this.role === 'school' && this.studentCount) completion++;
+  
+  return Math.round((completion / totalFields) * 100);
+};
+
+// Hide password in JSON output
+User.prototype.toJSON = function() {
+  const values = { ...this.dataValues };
+  delete values.password;
+  return values;
+};
+
+module.exports = User;

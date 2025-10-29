@@ -1,81 +1,76 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// Authentication middleware
 const auth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+    // Read token from cookie for cookie-based authentication
+    const token = req.cookies?.token;
     if (!token) {
-      return res.status(401).json({ 
-        message: 'Access denied. No token provided.' 
-      });
+      return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select('-password');
-    
-    if (!user) {
-      return res.status(401).json({ 
-        message: 'Token is not valid. User not found.' 
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findByPk(decoded.id, {
+        attributes: { exclude: ['password'] }
       });
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid token. User not found.' });
+      }
+      if (!user.isActive) {
+        return res.status(401).json({ message: 'Account is deactivated.' });
+      }
+      req.user = user;
+      next();
+    } catch (error) {
+      console.error('Auth middleware error:', error);
+      return res.status(401).json({ message: 'Invalid or expired token.' });
     }
-
-    if (!user.isActive) {
-      return res.status(401).json({ 
-        message: 'Account is deactivated. Please contact support.' 
-      });
-    }
-
-    req.user = user;
-    next();
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ 
-        message: 'Token expired. Please log in again.' 
+    console.error('Auth middleware error:', error);
+    res.status(401).json({ message: 'Invalid token.' });
+  }
+};
+
+// Role-based authorization middleware
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ message: 'Access denied. User not authenticated.' });
+    }
+    
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({ 
+        message: 'Access denied. Insufficient permissions.',
+        requiredRoles: roles,
+        userRole: req.user.role
       });
     }
     
-    if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ 
-        message: 'Invalid token. Please log in again.' 
-      });
-    }
-
-    console.error('Auth middleware error:', error);
-    res.status(500).json({ 
-      message: 'Server error during authentication.' 
-    });
-  }
+    next();
+  };
 };
 
-// Admin role middleware
-const adminOnly = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({
-      message: 'Access denied. Admin privileges required.'
-    });
-  }
-  next();
-};
+// Specific role middleware functions
+const adminOnly = authorize('admin');
+const managerOrAdmin = authorize('admin', 'manager');
+const supplierOnly = authorize('supplier');
+const schoolOnly = authorize('school');
+const consumerOnly = authorize('consumer');
+const supplierOrAdmin = authorize('supplier', 'admin');
+const schoolOrAdmin = authorize('school', 'admin');
+const consumerOrAdmin = authorize('consumer', 'admin');
 
-// Manager or Admin role middleware
-const managerOrAdmin = (req, res, next) => {
-  if (!['admin', 'manager'].includes(req.user.role)) {
-    return res.status(403).json({
-      message: 'Access denied. Manager or Admin privileges required.'
-    });
-  }
-  next();
-};
-
-// Optional auth middleware (doesn't fail if no token)
+// Optional auth middleware 
 const optionalAuth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findById(decoded.id).select('-password');
+      const user = await User.findByPk(decoded.id, {
+        attributes: { exclude: ['password'] }
+      });
       
       if (user && user.isActive) {
         req.user = user;
@@ -91,7 +86,14 @@ const optionalAuth = async (req, res, next) => {
 
 module.exports = {
   auth,
+  authorize,
   adminOnly,
   managerOrAdmin,
+  supplierOnly,
+  schoolOnly,
+  consumerOnly,
+  supplierOrAdmin,
+  schoolOrAdmin,
+  consumerOrAdmin,
   optionalAuth
 };

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
 
-// react-bootstrap components
+import React, { useState, useEffect } from "react";
+import { useUser } from "../contexts/UserContext";
 import {
   Badge,
   Button,
@@ -12,15 +12,74 @@ import {
 } from "react-bootstrap";
 
 function UserProfile() {
-  const [profilePhoto, setProfilePhoto] = useState(require("../assets/img/default-avatar.png"));
-  const [coverPhoto, setCoverPhoto] = useState(require("../assets/img/aboutaspageimg.jpg"));
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [coverPhoto, setCoverPhoto] = useState(null);
+  const { user } = useUser();
+  // Profile form data state
+  const [profileData, setProfileData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    organization: '',
+    phone: '',
+    role: '',
+    bio: ''
+  });
+
+  // Load profile data from context if available, otherwise fetch from backend
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (user) {
+        setProfileData({
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          organization: user.organization || '',
+          phone: user.phone || '',
+          role: user.role || '',
+          bio: user.bio || ''
+        });
+        setProfilePhoto(user.profilePhoto || require("../assets/img/default-avatar.png"));
+        setCoverPhoto(user.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
+      } else {
+        try {
+          const profile = await require('../services/authService').default.getProfile();
+          setProfileData({
+            firstName: profile.firstName || '',
+            lastName: profile.lastName || '',
+            email: profile.email || '',
+            organization: profile.organization || '',
+            phone: profile.phone || '',
+            role: profile.role || '',
+            bio: profile.bio || ''
+          });
+          setProfilePhoto(profile.profilePhoto || require("../assets/img/default-avatar.png"));
+          setCoverPhoto(profile.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
+        } catch (error) {
+          console.error('Error loading profile data:', error);
+        }
+      }
+    };
+    loadProfileData();
+  }, [user]);
+
+  // Handle profile data changes
+  const handleProfileChange = async (field, value) => {
+    setProfileData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+    // TODO: Send updated profile data to backend API
+  };
 
   const handlePhotoChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         setProfilePhoto(e.target.result);
+        // Persist to backend
+        await require('../services/authService').default.updateProfile({ profilePhoto: e.target.result });
       };
       reader.readAsDataURL(file);
     }
@@ -30,8 +89,10 @@ function UserProfile() {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = async (e) => {
         setCoverPhoto(e.target.result);
+        // Persist to backend
+        await require('../services/authService').default.updateProfile({ coverPhoto: e.target.result });
       };
       reader.readAsDataURL(file);
     }
@@ -100,7 +161,8 @@ function UserProfile() {
                           }}
                         >First Name</label>
                         <Form.Control
-                          defaultValue="Ajok Atem"
+                          value={profileData.firstName}
+                          onChange={(e) => handleProfileChange('firstName', e.target.value)}
                           placeholder="First Name"
                           type="text"
                           style={{
@@ -140,7 +202,8 @@ function UserProfile() {
                           }}
                         >Last Name</label>
                         <Form.Control
-                          defaultValue="Biar"
+                          value={profileData.lastName}
+                          onChange={(e) => handleProfileChange('lastName', e.target.value)}
                           placeholder="Last Name"
                           type="text"
                           style={{
@@ -182,7 +245,8 @@ function UserProfile() {
                           }}
                         >Username</label>
                         <Form.Control
-                          defaultValue="User"
+                          value={profileData.email}
+                          onChange={(e) => handleProfileChange('email', e.target.value)}
                           placeholder="Username"
                           type="text"
                           style={{
@@ -224,7 +288,8 @@ function UserProfile() {
                           }}
                         >Organization</label>
                         <Form.Control
-                          defaultValue="EcoFuel Connect"
+                          value={profileData.organization}
+                          onChange={(e) => handleProfileChange('organization', e.target.value)}
                           placeholder="Organization"
                           type="text"
                           style={{
@@ -266,7 +331,8 @@ function UserProfile() {
                           }}
                         >Location</label>
                         <Form.Control
-                          defaultValue="Juba, South Sudan"
+                          value={profileData.phone}
+                          onChange={(e) => handleProfileChange('phone', e.target.value)}
                           placeholder="Location"
                           type="text"
                           style={{
@@ -310,7 +376,8 @@ function UserProfile() {
                         <Form.Control
                           as="textarea"
                           rows="5"
-                          defaultValue="EcoFuel Connect is a web application project aimed at improving biogas fuel production and distribution in South Sudan through efficient organic waste management, monitoring, and community engagement."
+                          value={profileData.bio}
+                          onChange={(e) => handleProfileChange('bio', e.target.value)}
                           placeholder="Tell something about yourself or your role..."
                           style={{
                             border: '2px solid transparent',
@@ -527,7 +594,7 @@ function UserProfile() {
                       marginTop: '8px',
                       letterSpacing: '0.5px'
                     }}
-                  >Ajok Atem Biar</h5>
+                  >{profileData.firstName} {profileData.lastName}</h5>
                   <p 
                     className="description"
                     style={{
@@ -537,10 +604,8 @@ function UserProfile() {
                       backgroundClip: 'text',
                       fontWeight: '600',
                       fontFamily: '"Poppins", "Segoe UI", sans-serif',
-                      fontSize: '1rem',
-                      letterSpacing: '0.5px'
                     }}
-                  >eco.fuel.ajok</p>
+                  >{profileData.bio}</p>
                 </div>
                 <p 
                   className="description text-center"

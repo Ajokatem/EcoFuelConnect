@@ -1,315 +1,266 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const wasteEntrySchema = new mongoose.Schema({
-  entryId: {
-    type: String,
-    unique: true,
-    required: true
+const WasteEntry = sequelize.define('WasteEntry', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  supplier: {
-    name: {
-      type: String,
-      required: [true, 'Supplier name is required'],
-      trim: true
-    },
-    contact: {
-      phone: String,
-      email: String,
-      address: String
-    },
-    type: {
-      type: String,
-      enum: ['household', 'restaurant', 'market', 'farm', 'school', 'hospital', 'other'],
-      required: true
+  supplierId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
     }
   },
-  wasteDetails: {
-    type: {
-      type: String,
-      required: [true, 'Waste type is required'],
-      enum: [
-        'food_scraps',
-        'vegetable_peels', 
-        'fruit_waste',
-        'garden_waste',
-        'paper_organic',
-        'agricultural_residue',
-        'animal_manure',
-        'mixed_organic',
-        'other'
-      ]
-    },
-    category: {
-      type: String,
-      enum: ['wet_waste', 'dry_organic', 'mixed'],
-      required: true
-    },
-    quality: {
-      type: String,
-      enum: ['excellent', 'good', 'fair', 'poor'],
-      default: 'good'
-    },
-    moistureContent: {
-      type: Number,
-      min: 0,
-      max: 100,
-      validate: {
-        validator: Number.isInteger,
-        message: 'Moisture content must be a whole number'
-      }
-    },
-    contamination: {
-      level: {
-        type: String,
-        enum: ['none', 'low', 'medium', 'high'],
-        default: 'none'
-      },
-      contaminants: [String]
+  producerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
     }
+  },
+  wasteType: {
+    type: DataTypes.ENUM(
+      'kitchen_scraps', 
+      'fruit_vegetable', 
+      'meat_bones', 
+      'agricultural_residue', 
+      'animal_manure', 
+      'food_waste', 
+      'mixed_organic'
+    ),
+    allowNull: false
+  },
+  wasteSource: {
+    type: DataTypes.ENUM('market', 'slaughterhouse', 'restaurant', 'household', 'farm', 'school'),
+    allowNull: false
+  },
+  sourceLocation: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: {}
   },
   quantity: {
-    weight: {
-      type: Number,
-      required: [true, 'Weight is required'],
-      min: [0.1, 'Weight must be greater than 0']
-    },
-    unit: {
-      type: String,
-      enum: ['kg', 'pounds', 'tons'],
-      default: 'kg'
-    },
-    volume: {
-      amount: Number,
-      unit: {
-        type: String,
-        enum: ['liters', 'cubic_meters', 'gallons']
-      }
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0.1
     }
   },
-  collectionInfo: {
-    date: {
-      type: Date,
-      required: [true, 'Collection date is required']
-    },
-    time: String,
-    location: {
-      address: {
-        type: String,
-        required: [true, 'Collection address is required']
-      },
-      coordinates: {
-        latitude: Number,
-        longitude: Number
-      },
-      district: String,
-      sector: String
-    },
-    collectedBy: {
-      name: String,
-      id: String,
-      contact: String
+  unit: {
+    type: DataTypes.ENUM('kg', 'tons', 'bags', 'cubic_meters'),
+    allowNull: false,
+    defaultValue: 'kg'
+  },
+  estimatedWeight: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  qualityGrade: {
+    type: DataTypes.ENUM('excellent', 'good', 'fair', 'poor'),
+    defaultValue: 'good'
+  },
+  moistureContent: {
+    type: DataTypes.DECIMAL(5, 2),
+    validate: {
+      min: 0,
+      max: 100
     }
   },
-  processing: {
-    status: {
-      type: String,
-      enum: ['collected', 'in_transit', 'received', 'processing', 'processed', 'completed'],
-      default: 'collected'
-    },
-    facility: {
-      name: String,
-      location: String,
-      capacity: String
-    },
-    processedDate: Date,
-    biogasProduced: {
-      amount: Number,
-      unit: { type: String, default: 'cubic_meters' },
-      estimatedYield: Number
-    },
-    byProducts: {
-      fertilizer: {
-        amount: Number,
-        unit: { type: String, default: 'kg' }
-      },
-      compost: {
-        amount: Number,
-        unit: { type: String, default: 'kg' }
-      }
+  temperature: {
+    type: DataTypes.DECIMAL(5, 2),
+    allowNull: true
+  },
+  pH: {
+    type: DataTypes.DECIMAL(4, 2),
+    validate: {
+      min: 0,
+      max: 14
     }
   },
-  environmental: {
-    carbonFootprintReduced: {
-      type: Number,
-      default: 0
-    },
-    methaneEmissionAvoided: {
-      type: Number,
-      default: 0
-    },
-    energyGenerated: {
-      amount: Number,
-      unit: { type: String, default: 'kWh' }
-    }
+  // Documentation and verification
+  images: {
+    type: DataTypes.JSON,
+    defaultValue: []
   },
-  payment: {
-    amount: {
-      type: Number,
-      default: 0,
-      min: 0
-    },
-    currency: {
-      type: String,
-      default: 'RWF'
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'paid', 'failed'],
-      default: 'pending'
-    },
-    paidAt: Date,
-    paymentMethod: String
+  weighbridgePhoto: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
-  quality_check: {
-    inspector: String,
-    inspectionDate: Date,
-    passed: { type: Boolean, default: true },
-    notes: String,
-    images: [String]
+  receiptNumber: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
+  verificationMethod: {
+    type: DataTypes.ENUM('weighbridge', 'photo', 'manual_estimate', 'digital_scale'),
+    allowNull: false
+  },
+  // Geolocation and timestamp data
+  collectionTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  deliveryTimestamp: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  geoTimestamp: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  // Processing status
+  status: {
+    type: DataTypes.ENUM('collected', 'in_transit', 'delivered', 'processing', 'processed'),
+    defaultValue: 'collected'
+  },
+  processedDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  biogasYield: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  // Notes and observations
   notes: {
-    supplier: String,
-    collector: String,
-    processor: String
+    type: DataTypes.TEXT,
+    allowNull: true
   },
-  isActive: {
-    type: Boolean,
-    default: true
+  supplierNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  qualityIssues: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
+  // Verification and approval
+  verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  verifiedById: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  verifiedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  rejectionReason: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
-  timestamps: true
+  tableName: 'waste_entries',
+  timestamps: true,
+  indexes: [
+    {
+      fields: ['supplierId', 'collectionTimestamp']
+    },
+    {
+      fields: ['producerId', 'collectionTimestamp']
+    },
+    {
+      fields: ['wasteType', 'wasteSource']
+    },
+    {
+      fields: ['status', 'collectionTimestamp']
+    }
+  ]
 });
 
-// Generate unique entry ID before saving
-wasteEntrySchema.pre('save', async function(next) {
-  if (!this.entryId) {
-    const count = await this.constructor.countDocuments();
-    this.entryId = `WE${Date.now()}${String(count + 1).padStart(4, '0')}`;
+// Virtual for environmental impact
+WasteEntry.prototype.getEnvironmentalImpact = function() {
+  // Estimate CO2 saved (kg of waste = ~0.5 kg CO2 saved)
+  return {
+    co2Saved: this.estimatedWeight * 0.5,
+    treesEquivalent: Math.round(this.estimatedWeight * 0.02)
+  };
+};
+
+// Hook to calculate estimated weight
+WasteEntry.beforeSave(async (wasteEntry, options) => {
+  if (wasteEntry.changed('quantity') || wasteEntry.changed('unit')) {
+    switch(wasteEntry.unit) {
+      case 'kg':
+        wasteEntry.estimatedWeight = wasteEntry.quantity;
+        break;
+      case 'tons':
+        wasteEntry.estimatedWeight = wasteEntry.quantity * 1000;
+        break;
+      case 'bags':
+        wasteEntry.estimatedWeight = wasteEntry.quantity * 20; // assume 20kg per bag
+        break;
+      case 'cubic_meters':
+        wasteEntry.estimatedWeight = wasteEntry.quantity * 500; // assume 500kg per cubic meter for organic waste
+        break;
+      default:
+        wasteEntry.estimatedWeight = wasteEntry.quantity;
+    }
   }
-  
-  // Calculate estimated biogas production
-  if (this.quantity.weight && !this.processing.biogasProduced.estimatedYield) {
-    // Rough estimate: 1 kg organic waste = 0.3-0.5 cubic meters biogas
-    this.processing.biogasProduced.estimatedYield = this.quantity.weight * 0.4;
-  }
-  
-  // Calculate carbon footprint reduction
-  if (this.quantity.weight && !this.environmental.carbonFootprintReduced) {
-    // Rough estimate: 1 kg organic waste = 0.5 kg CO2 reduction
-    this.environmental.carbonFootprintReduced = this.quantity.weight * 0.5;
-  }
-  
-  next();
 });
 
 // Static method to get waste statistics
-wasteEntrySchema.statics.getStats = function(userId = null, timeframe = null) {
-  const matchStage = { isActive: true };
-  if (userId) matchStage.user = userId;
+WasteEntry.getWasteStatistics = async function(filters = {}) {
+  const { Op, fn, col } = require('sequelize');
   
-  if (timeframe) {
-    const now = new Date();
-    let startDate;
-    
-    switch (timeframe) {
-      case 'today':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-    }
-    
-    if (startDate) {
-      matchStage.createdAt = { $gte: startDate };
-    }
-  }
+  const result = await this.findAll({
+    where: filters,
+    attributes: [
+      [fn('SUM', col('estimatedWeight')), 'totalWaste'],
+      [fn('COUNT', '*'), 'totalEntries'],
+      [fn('AVG', col('estimatedWeight')), 'avgDailyWaste']
+    ]
+  });
   
-  return this.aggregate([
-    { $match: matchStage },
-    {
-      $group: {
-        _id: null,
-        totalEntries: { $sum: 1 },
-        totalWeight: { $sum: '$quantity.weight' },
-        totalBiogasProduced: { $sum: '$processing.biogasProduced.amount' },
-        totalCarbonReduced: { $sum: '$environmental.carbonFootprintReduced' },
-        totalPayments: { $sum: '$payment.amount' },
-        avgWeight: { $avg: '$quantity.weight' },
-        uniqueSuppliers: { $addToSet: '$supplier.name' }
-      }
-    },
-    {
-      $addFields: {
-        supplierCount: { $size: '$uniqueSuppliers' }
-      }
-    }
-  ]);
-};
-
-// Static method to get waste by type
-wasteEntrySchema.statics.getWasteByType = function() {
-  return this.aggregate([
-    { $match: { isActive: true } },
-    {
-      $group: {
-        _id: '$wasteDetails.type',
-        count: { $sum: 1 },
-        totalWeight: { $sum: '$quantity.weight' },
-        avgWeight: { $avg: '$quantity.weight' }
-      }
-    },
-    { $sort: { totalWeight: -1 } }
-  ]);
-};
-
-// Instance method to calculate biogas potential
-wasteEntrySchema.methods.calculateBiogasPotential = function() {
-  const baseYield = 0.4; // cubic meters per kg
-  let multiplier = 1;
+  // Get waste by type
+  const wasteByType = await this.findAll({
+    where: filters,
+    attributes: [
+      'wasteType',
+      [fn('SUM', col('estimatedWeight')), 'totalWeight']
+    ],
+    group: ['wasteType']
+  });
   
-  // Adjust based on waste type
-  const highYieldTypes = ['food_scraps', 'vegetable_peels', 'animal_manure'];
-  const lowYieldTypes = ['paper_organic', 'garden_waste'];
-  
-  if (highYieldTypes.includes(this.wasteDetails.type)) {
-    multiplier = 1.2;
-  } else if (lowYieldTypes.includes(this.wasteDetails.type)) {
-    multiplier = 0.7;
-  }
-  
-  // Adjust based on quality
-  const qualityMultipliers = {
-    excellent: 1.1,
-    good: 1.0,
-    fair: 0.8,
-    poor: 0.5
+  return {
+    ...result[0].toJSON(),
+    wasteByType: wasteByType.map(item => ({
+      type: item.wasteType,
+      weight: item.getDataValue('totalWeight')
+    }))
   };
-  
-  multiplier *= qualityMultipliers[this.wasteDetails.quality] || 1;
-  
-  return this.quantity.weight * baseYield * multiplier;
 };
 
-module.exports = mongoose.model('WasteEntry', wasteEntrySchema);
+// Define associations
+WasteEntry.associate = function(models) {
+  // Many-to-one with User (supplier)
+  WasteEntry.belongsTo(models.User, {
+    foreignKey: 'supplierId',
+    as: 'supplier'
+  });
+  
+  // Many-to-one with User (producer)
+  WasteEntry.belongsTo(models.User, {
+    foreignKey: 'producerId',
+    as: 'producer'
+  });
+  
+  // Many-to-one with User (verifier)
+  WasteEntry.belongsTo(models.User, {
+    foreignKey: 'verifiedById',
+    as: 'verifiedBy'
+  });
+};
+
+module.exports = WasteEntry;

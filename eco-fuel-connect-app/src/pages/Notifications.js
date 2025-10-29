@@ -50,12 +50,8 @@ function Notifications() {
   ];
 
   useEffect(() => {
-    const storedNotifications = localStorage.getItem("notifications");
-    if (storedNotifications) {
-      setNotifications(JSON.parse(storedNotifications));
-    } else {
-      setNotifications(initialNotifications);
-    }
+    // TODO: Replace with backend API call
+    setNotifications(initialNotifications);
   }, []);
 
   const markAsRead = (id) => {
@@ -63,7 +59,7 @@ function Notifications() {
       notification.id === id ? { ...notification, read: true } : notification
     );
     setNotifications(updatedNotifications);
-    localStorage.setItem("notifications", JSON.stringify(updatedNotifications));
+  // Notifications state is managed in React and synced with backend only
   };
 
   const deleteNotification = (id) => {
@@ -71,7 +67,7 @@ function Notifications() {
       (notification) => notification.id !== id
     );
     setNotifications(updatedNotifications);
-    localStorage.setItem("notifications", JSON.stringify(updatedNotifications));
+  // Notifications state is managed in React and synced with backend only
   };
 
   const formatDateTime = (datetime) => {

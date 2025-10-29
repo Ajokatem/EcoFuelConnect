@@ -1,2 +1,0 @@
-reword 314a470 Initial commit: Dashboard, Login, Register, Reports, Waste Logging, Fuel Request Management with backend and navigation components
-pick f47b72f UserProfile

@@ -1,212 +1,370 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/database');
 
-const fuelRequestSchema = new mongoose.Schema({
+const FuelRequest = sequelize.define('FuelRequest', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   requestId: {
-    type: String,
+    type: DataTypes.STRING,
     unique: true,
-    required: true
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  schoolId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
   },
+  producerId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'Users',
+      key: 'id'
+    }
+  },
+  
+  // Request details
   fuelType: {
-    type: String,
-    required: [true, 'Fuel type is required'],
-    enum: {
-      values: ['biogas', 'biomethane', 'bioethanol', 'bio_diesel'],
-      message: 'Invalid fuel type selected'
+    type: DataTypes.ENUM('biogas', 'biomethane', 'compressed_biogas'),
+    allowNull: false,
+    defaultValue: 'biogas'
+  },
+  quantityRequested: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0.1
     }
   },
-  fuelDetails: {
-    name: String,
-    description: String,
-    pricePerUnit: {
-      type: Number,
-      required: true,
-      min: [0, 'Price must be positive']
-    },
-    unit: {
-      type: String,
-      required: true,
-      enum: ['cubic meter', 'liter', 'kilogram', 'gallon']
-    }
+  unit: {
+    type: DataTypes.ENUM('cubic_meters', 'liters', 'kg'),
+    allowNull: false,
+    defaultValue: 'cubic_meters'
   },
-  quantity: {
-    type: Number,
-    required: [true, 'Quantity is required'],
-    min: [0.1, 'Quantity must be greater than 0']
+  urgencyLevel: {
+    type: DataTypes.ENUM('low', 'medium', 'high', 'critical'),
+    defaultValue: 'medium'
+  },
+  
+  // Delivery information
+  deliveryAddress: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: {}
+  },
+  
+  preferredDeliveryDate: {
+    type: DataTypes.DATE,
+    allowNull: false
+  },
+  flexibleDelivery: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  },
+  deliveryTimePreference: {
+    type: DataTypes.ENUM('morning', 'afternoon', 'evening', 'any_time'),
+    defaultValue: 'any_time'
+  },
+  
+  // Request status and tracking
+  status: {
+    type: DataTypes.ENUM(
+      'pending', 
+      'reviewing', 
+      'approved', 
+      'assigned', 
+      'preparing', 
+      'in_transit', 
+      'delivered', 
+      'completed', 
+      'cancelled', 
+      'rejected'
+    ),
+    defaultValue: 'pending'
+  },
+  statusHistory: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
+  
+  // Assignment and fulfillment
+  assignedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  approvedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  rejectedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  rejectionReason: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  
+  quantityApproved: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  quantityDelivered: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  deliveryDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  actualDeliveryDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  
+  // Pricing and payment
+  pricePerUnit: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
   },
   totalCost: {
-    type: Number,
-    required: true,
-    min: [0, 'Total cost must be positive']
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
   },
-  deliveryAddress: {
-    street: {
-      type: String,
-      required: [true, 'Street address is required']
-    },
-    city: {
-      type: String,
-      required: [true, 'City is required']
-    },
-    state: String,
-    zipCode: String,
-    coordinates: {
-      latitude: Number,
-      longitude: Number
-    },
-    deliveryInstructions: String
+  discountApplied: {
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0
   },
-  contactInfo: {
-    phone: {
-      type: String,
-      required: [true, 'Contact phone is required']
-    },
-    email: String,
-    alternateContact: String
+  finalCost: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
   },
-  preferredDeliveryDate: {
-    type: Date,
-    required: [true, 'Preferred delivery date is required'],
-    validate: {
-      validator: function(date) {
-        return date > new Date();
-      },
-      message: 'Delivery date must be in the future'
-    }
+  paymentStatus: {
+    type: DataTypes.ENUM('pending', 'paid', 'partial', 'overdue'),
+    defaultValue: 'pending'
   },
-  urgency: {
-    type: String,
-    enum: ['low', 'normal', 'medium', 'high'],
-    default: 'normal'
+  paymentMethod: {
+    type: DataTypes.ENUM('cash', 'mobile_money', 'bank_transfer', 'credit'),
+    defaultValue: 'cash'
   },
-  purpose: {
-    type: String,
-    required: [true, 'Purpose is required'],
-    maxlength: [500, 'Purpose cannot exceed 500 characters']
+  
+  // Quality and satisfaction
+  fuelQuality: {
+    type: DataTypes.JSON,
+    defaultValue: {}
   },
-  status: {
-    type: String,
-    enum: ['pending', 'approved', 'processing', 'in_transit', 'delivered', 'cancelled', 'rejected'],
-    default: 'pending'
+  deliveryRating: {
+    type: DataTypes.JSON,
+    defaultValue: {}
   },
-  statusHistory: [{
-    status: String,
-    timestamp: { type: Date, default: Date.now },
-    updatedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    notes: String
-  }],
-  approval: {
-    approvedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    approvedAt: Date,
-    rejectionReason: String
+  
+  // Communication and notes
+  schoolNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
-  delivery: {
-    assignedDriver: String,
-    vehicleInfo: String,
-    estimatedDeliveryTime: Date,
-    actualDeliveryTime: Date,
-    deliveryNotes: String,
-    deliveryConfirmation: {
-      receivedBy: String,
-      signature: String,
-      timestamp: Date
-    }
+  producerNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
-  payment: {
-    method: {
-      type: String,
-      enum: ['cash', 'card', 'bank_transfer', 'mobile_money'],
-      default: 'cash'
-    },
-    status: {
-      type: String,
-      enum: ['pending', 'paid', 'failed', 'refunded'],
-      default: 'pending'
-    },
-    transactionId: String,
-    paidAt: Date
+  adminNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
-  additionalNotes: String,
-  isActive: {
-    type: Boolean,
-    default: true
-  }
+  specialInstructions: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  
+  // Delivery logistics
+  transportationMethod: {
+    type: DataTypes.ENUM('truck', 'van', 'motorcycle', 'bicycle', 'walking'),
+    defaultValue: 'truck'
+  },
+  estimatedDeliveryTime: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  driverInfo: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  
+  // Environmental impact
+  environmentalBenefit: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  
+ 
 }, {
-  timestamps: true
-});
-
-// Generate unique request ID before saving
-fuelRequestSchema.pre('save', async function(next) {
-  if (!this.requestId) {
-    const count = await this.constructor.countDocuments();
-    this.requestId = `FR${Date.now()}${String(count + 1).padStart(4, '0')}`;
-  }
-  
-  // Calculate total cost
-  if (this.fuelDetails && this.fuelDetails.pricePerUnit && this.quantity) {
-    this.totalCost = this.fuelDetails.pricePerUnit * this.quantity;
-  }
-  
-  next();
-});
-
-// Add status to history when status changes
-fuelRequestSchema.pre('save', function(next) {
-  if (this.isModified('status') && !this.isNew) {
-    this.statusHistory.push({
-      status: this.status,
-      timestamp: new Date()
-    });
-  }
-  next();
-});
-
-// Static method to get request statistics
-fuelRequestSchema.statics.getStats = function(userId = null) {
-  const matchStage = userId ? { user: userId } : {};
-  
-  return this.aggregate([
-    { $match: matchStage },
+  tableName: 'fuel_requests',
+  timestamps: true,
+  indexes: [
     {
-      $group: {
-        _id: null,
-        totalRequests: { $sum: 1 },
-        pending: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
-        approved: { $sum: { $cond: [{ $eq: ['$status', 'approved'] }, 1, 0] } },
-        processing: { $sum: { $cond: [{ $eq: ['$status', 'processing'] }, 1, 0] } },
-        delivered: { $sum: { $cond: [{ $eq: ['$status', 'delivered'] }, 1, 0] } },
-        totalValue: { $sum: '$totalCost' },
-        avgOrderValue: { $avg: '$totalCost' }
-      }
+      fields: ['schoolId', 'createdAt']
+    },
+    {
+      fields: ['producerId', 'status']
+    },
+    {
+      fields: ['status', 'preferredDeliveryDate']
+    },
+    {
+      fields: ['requestId'],
+      unique: true
     }
-  ]);
-};
+  ]
+});
 
-// Instance method to check if request can be cancelled
-fuelRequestSchema.methods.canBeCancelled = function() {
-  return ['pending', 'approved'].includes(this.status);
-};
+// Hooks for pre-save operations
+FuelRequest.beforeCreate(async (fuelRequest, options) => {
+  // Generate request ID if not exists
+  if (!fuelRequest.requestId) {
+    const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+    const random = Math.random().toString(36).substr(2, 6).toUpperCase();
+    fuelRequest.requestId = `FR-${timestamp}-${random}`;
+  }
+});
+
+FuelRequest.beforeSave(async (fuelRequest, options) => {
+  // Calculate costs
+  if (fuelRequest.pricePerUnit && fuelRequest.quantityApproved) {
+    fuelRequest.totalCost = fuelRequest.pricePerUnit * fuelRequest.quantityApproved;
+    fuelRequest.finalCost = fuelRequest.totalCost - (fuelRequest.discountApplied || 0);
+  }
+  
+  // Calculate environmental benefits
+  if (fuelRequest.quantityApproved) {
+    fuelRequest.environmentalBenefit = {
+      co2Saved: fuelRequest.quantityApproved * 2.3, // 1 m³ biogas saves ~2.3 kg CO2
+      treesEquivalent: Math.round(fuelRequest.quantityApproved * 0.1),
+      fossilFuelReplaced: fuelRequest.quantityApproved * 0.6 // 1 m³ biogas ≈ 0.6L kerosene
+    };
+  }
+});
 
 // Instance method to update status
-fuelRequestSchema.methods.updateStatus = function(newStatus, updatedBy = null, notes = '') {
+FuelRequest.prototype.updateStatus = async function(newStatus, updatedBy, notes) {
   this.status = newStatus;
-  this.statusHistory.push({
+  
+  // Add to status history
+  const statusHistory = this.statusHistory || [];
+  statusHistory.push({
     status: newStatus,
-    timestamp: new Date(),
-    updatedBy,
-    notes
+    updatedBy: updatedBy,
+    notes: notes,
+    timestamp: new Date()
   });
-  return this.save();
+  this.statusHistory = statusHistory;
+  
+  // Set specific timestamps
+  switch(newStatus) {
+    case 'approved':
+      this.approvedAt = new Date();
+      break;
+    case 'assigned':
+      this.assignedAt = new Date();
+      break;
+    case 'rejected':
+      this.rejectedAt = new Date();
+      break;
+    case 'delivered':
+      this.actualDeliveryDate = new Date();
+      break;
+  }
+  
+  return await this.save();
 };
 
-module.exports = mongoose.model('FuelRequest', fuelRequestSchema);
+// Static method to get request statistics
+FuelRequest.getRequestStatistics = async function(filters = {}) {
+  const { Op, fn, col, literal } = require('sequelize');
+  
+  const results = await this.findAll({
+    where: filters,
+    attributes: [
+      'status',
+      [fn('COUNT', '*'), 'count'],
+      [fn('SUM', col('quantityRequested')), 'totalQuantity'],
+      [fn('AVG', literal('TIMESTAMPDIFF(HOUR, createdAt, approvedAt)')), 'avgResponseTimeHours']
+    ],
+    group: ['status']
+  });
+  
+  return results;
+};
+
+// Static method to get delivery performance metrics
+FuelRequest.getDeliveryMetrics = async function(producerId, startDate, endDate) {
+  const { Op, fn, col, literal } = require('sequelize');
+  
+  const results = await this.findAll({
+    where: {
+      producerId: producerId,
+      status: 'delivered',
+      actualDeliveryDate: {
+        [Op.between]: [startDate, endDate]
+      }
+    },
+    attributes: [
+      [fn('COUNT', '*'), 'totalDeliveries'],
+      [fn('SUM', literal('CASE WHEN actualDeliveryDate <= preferredDeliveryDate THEN 1 ELSE 0 END')), 'onTimeDeliveries'],
+      [fn('AVG', literal('JSON_EXTRACT(deliveryRating, "$.overallSatisfaction")')), 'avgSatisfactionRating'],
+      [fn('SUM', col('quantityDelivered')), 'totalFuelDelivered']
+    ]
+  });
+  
+  const result = results[0];
+  if (result) {
+    const totalDeliveries = result.getDataValue('totalDeliveries');
+    const onTimeDeliveries = result.getDataValue('onTimeDeliveries');
+    
+    return {
+      ...result.toJSON(),
+      onTimeDeliveryRate: totalDeliveries > 0 ? (onTimeDeliveries / totalDeliveries) * 100 : 0
+    };
+  }
+  
+  return null;
+};
+
+// Define associations (will be set up in a separate associations file)
+FuelRequest.associate = function(models) {
+  // Many-to-one with User (school)
+  FuelRequest.belongsTo(models.User, {
+    foreignKey: 'schoolId',
+    as: 'school'
+  });
+  
+  // Many-to-one with User (producer)
+  FuelRequest.belongsTo(models.User, {
+    foreignKey: 'producerId',
+    as: 'producer'
+  });
+  
+  // Many-to-one with BiogasProduction
+  FuelRequest.belongsTo(models.BiogasProduction, {
+    foreignKey: 'biogasProductionId',
+    as: 'biogasProduction'
+  });
+  
+  // Many-to-many with Transaction through junction table
+  FuelRequest.belongsToMany(models.Transaction, {
+    through: 'FuelRequestTransactions',
+    foreignKey: 'fuelRequestId',
+    otherKey: 'transactionId',
+    as: 'transactions'
+  });
+};
+
+module.exports = FuelRequest;

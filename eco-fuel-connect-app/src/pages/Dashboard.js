@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
+import { useHistory } from "react-router-dom";
 import {
   Card,
   Container,
@@ -10,8 +12,11 @@ import {
   ProgressBar,
   Button,
 } from "react-bootstrap";
+import dashboardService from "../services/dashboardService";
 
 function Dashboard() {
+  const history = useHistory();
+  const { translate } = useLanguage();
   const [stats, setStats] = useState({
     totalWaste: 0,
     dailyWaste: 0,
@@ -27,45 +32,24 @@ function Dashboard() {
     monthlyTarget: 0,
   });
 
-  // Simulated fetching and calculations based on localStorage or API could replace this
+  // Fetch dashboard analytics from backend API
   useEffect(() => {
-    const wasteEntries = JSON.parse(localStorage.getItem("wasteEntries") || "[]");
-    const fuelRequests = JSON.parse(localStorage.getItem("fuelRequests") || "[]");
-    const educationalContentViewed = JSON.parse(localStorage.getItem("educationViewed") || "[]");
+    const fetchDashboardData = async () => {
+      try {
+        const data = await dashboardService.getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
 
-    const totalWaste = wasteEntries.reduce((sum, e) => sum + parseFloat(e.quantity || 0), 0);
-    const today = new Date().toDateString();
-    const dailyWaste = wasteEntries
-      .filter((e) => new Date(e.date).toDateString() === today)
-      .reduce((sum, e) => sum + parseFloat(e.quantity || 0), 0);
-    const biogasProduced = totalWaste * 0.6; // ~60% conversion rate from organic waste to biogas
-    const fuelDelivered = fuelRequests.filter((r) => r.status === "delivered").length;
-    const carbonReduction = totalWaste * 0.8; // CO₂ reduction per kg of waste recycled
-    const forestSaved = Math.floor(totalWaste / 100); // Trees saved calculation
-    const schoolsServed = new Set(fuelRequests.map(r => r.school)).size;
-    const wasteSuppliers = new Set(wasteEntries.map(e => e.supplier)).size;
-    const communityEngagement = wasteEntries.length + fuelRequests.length;
-    const educationalMessages = educationalContentViewed.length;
-    const monthlyTarget = 1500; // Monthly waste recycling target in kg
+    fetchDashboardData();
 
-    setStats({
-      totalWaste: totalWaste.toFixed(1),
-      dailyWaste: dailyWaste.toFixed(1),
-      biogasProduced: biogasProduced.toFixed(1),
-      fuelRequests: fuelRequests.length,
-      fuelDelivered,
-      carbonReduction: carbonReduction.toFixed(1),
-      communityEngagement,
-      educationalMessages,
-      forestSaved,
-      schoolsServed,
-      wasteSuppliers,
-      monthlyTarget,
-    });
+    // No localStorage event listener needed. Real-time update handled by backend and React state/context.
   }, []);
 
   return (
-    <Container fluid className="p-4" style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
+  <Container fluid className="p-4" style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
       
       {/* Main Biogas Production Card (Sales Value Style) */}
       <Row className="mb-4">
@@ -79,20 +63,42 @@ function Dashboard() {
             <Card.Body className="p-4">
               <div className="d-flex justify-content-between align-items-start mb-3">
                 <div>
-                  <h6 className="text-white-50 mb-2">Biogas Production</h6>
+                  <h6 className="text-white-50 mb-2">{translate("biogasProduced")}</h6>
                   <h2 className="mb-1" style={{ fontSize: "2.5rem", fontWeight: "600" }}>
-                    {stats.biogasProduced} m³
+                    {stats.biogasProduced} m3
                   </h2>
                   <div className="d-flex align-items-center">
-                    <span className="text-white-50 me-2">Yesterday</span>
+                    <span className="text-white-50 me-2">{translate("overview")}</span>
                     <span className="badge bg-success bg-opacity-25 text-white">
-                      ↗ 12.4%
+                      7 12.4%
                     </span>
                   </div>
                 </div>
                 <div className="d-flex gap-2">
-                  <Button variant="light" size="sm" className="opacity-75">Month</Button>
-                  <Button variant="dark" size="sm">Week</Button>
+                  <Button 
+                    size="sm" 
+                    style={{
+                      backgroundColor: "#f8f9fa",
+                      borderColor: "#dee2e6",
+                      color: "#495057",
+                      borderRadius: "20px",
+                      padding: "4px 12px"
+                    }}
+                  >
+                    {translate("month") || "Month"}
+                  </Button>
+                  <Button 
+                    size="sm"
+                    style={{
+                      backgroundColor: "#28a745",
+                      borderColor: "#28a745",
+                      color: "white",
+                      borderRadius: "20px",
+                      padding: "4px 12px"
+                    }}
+                  >
+                    {translate("week") || "Week"}
+                  </Button>
                 </div>
               </div>
               
@@ -110,7 +116,7 @@ function Dashboard() {
                   ))}
                 </svg>
                 <div className="d-flex justify-content-between text-white-50 text-xs mt-2">
-                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                  <span>{translate("mon") || "Mon"}</span><span>{translate("tue") || "Tue"}</span><span>{translate("wed") || "Wed"}</span><span>{translate("thu") || "Thu"}</span><span>{translate("fri") || "Fri"}</span><span>{translate("sat") || "Sat"}</span><span>{translate("sun") || "Sun"}</span>
                 </div>
               </div>
             </Card.Body>
@@ -157,8 +163,8 @@ function Dashboard() {
                   </svg>
                 </div>
                 <div>
-                  <h5 className="mb-0">Schools</h5>
-                  <small className="text-muted">Active Partners</small>
+                  <h5 className="mb-0">{translate("schools")}</h5>
+                  <small className="text-muted">{translate("activePartners") || "Active Partners"}</small>
                 </div>
               </div>
               <h3 className="mb-2" style={{ color: "#059669" }}>{stats.schoolsServed}</h3>
@@ -184,8 +190,8 @@ function Dashboard() {
                   </svg>
                 </div>
                 <div>
-                  <h5 className="mb-0">Revenue</h5>
-                  <small className="text-muted">Carbon Credits</small>
+                  <h5 className="mb-0">{translate("revenue") || "Revenue"}</h5>
+                  <small className="text-muted">{translate("carbonCredits") || "Carbon Credits"}</small>
                 </div>
               </div>
               <h3 className="mb-2" style={{ color: "#059669" }}>SSP {(parseFloat(stats.carbonReduction) * 45).toLocaleString()}</h3>
@@ -283,7 +289,19 @@ function Dashboard() {
             <Card.Body>
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h6 className="mb-0">Waste Suppliers</h6>
-                <Button variant="outline-primary" size="sm">See all</Button>
+                <Button 
+                  size="sm"
+                  onClick={() => history.push('/admin/organic-waste-logging')}
+                  style={{
+                    backgroundColor: "#28a745",
+                    borderColor: "#28a745",
+                    color: "white",
+                    borderRadius: "20px",
+                    padding: "4px 12px"
+                  }}
+                >
+                  See all
+                </Button>
               </div>
               
               <div className="space-y-3">
@@ -298,7 +316,18 @@ function Dashboard() {
                       Active
                     </div>
                   </div>
-                  <Button variant="success" size="sm">Invite</Button>
+                  <Button 
+                    size="sm"
+                    style={{
+                      backgroundColor: "#28a745",
+                      borderColor: "#28a745",
+                      color: "white",
+                      borderRadius: "20px",
+                      padding: "4px 12px"
+                    }}
+                  >
+                    Invite
+                  </Button>
                 </div>
 
                 <div className="d-flex align-items-center">
@@ -309,10 +338,21 @@ function Dashboard() {
                     <div className="fw-medium">Imperial Plaza Restaurant</div>
                     <div className="text-warning d-flex align-items-center">
                       <span className="badge bg-warning me-2" style={{ width: "8px", height: "8px", borderRadius: "50%" }}></span>
-                      In a meeting
+                      Pending
                     </div>
                   </div>
-                  <Button variant="success" size="sm">Message</Button>
+                  <Button 
+                    size="sm"
+                    style={{
+                      backgroundColor: "#28a745",
+                      borderColor: "#28a745",
+                      color: "white",
+                      borderRadius: "20px",
+                      padding: "4px 12px"
+                    }}
+                  >
+                    Message
+                  </Button>
                 </div>
 
                 <div className="d-flex align-items-center">
@@ -326,7 +366,18 @@ function Dashboard() {
                       Offline
                     </div>
                   </div>
-                  <Button variant="success" size="sm">Invite</Button>
+                  <Button 
+                    size="sm"
+                    style={{
+                      backgroundColor: "#28a745",
+                      borderColor: "#28a745",
+                      color: "white",
+                      borderRadius: "20px",
+                      padding: "4px 12px"
+                    }}
+                  >
+                    Invite
+                  </Button>
                 </div>
 
                 <div className="d-flex align-items-center">
@@ -340,7 +391,18 @@ function Dashboard() {
                       Active
                     </div>
                   </div>
-                  <Button variant="success" size="sm">Message</Button>
+                  <Button 
+                    size="sm"
+                    style={{
+                      backgroundColor: "#28a745",
+                      borderColor: "#28a745",
+                      color: "white",
+                      borderRadius: "20px",
+                      padding: "4px 12px"
+                    }}
+                  >
+                    Message
+                  </Button>
                 </div>
               </div>
             </Card.Body>
@@ -463,7 +525,18 @@ function Dashboard() {
                   Your biogas production contributes to clean energy access 
                   and waste reduction in South Sudan's educational sector.
                 </p>
-                <Button variant="outline-primary" size="sm" className="mt-2">
+                <Button 
+                  size="sm" 
+                  className="mt-2"
+                  onClick={() => history.push('/admin/reports')}
+                  style={{
+                    backgroundColor: "#28a745",
+                    borderColor: "#28a745",
+                    color: "white",
+                    borderRadius: "20px",
+                    padding: "4px 12px"
+                  }}
+                >
                   View Details
                 </Button>
               </div>

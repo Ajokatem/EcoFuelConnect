@@ -1,0 +1,23 @@
+{
+  "development": {
+    "username": "root",
+    "password": "Ajokatembeek@2020",
+    "database": "ecofuelconnect",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "test": {
+      "username": "root",
+      "password": "Ajokatembeek@2020",
+    "database": "ecofuelconnect",
+    "host": "localhost",
+    "dialect": "mysql"
+  },
+  "production": {
+    "username": "root",
+    "password": "Ajokatembeek@2020",
+    "database": "ecofuelconnect",
+    "host": "localhost",
+    "dialect": "mysql"
+  }
+}

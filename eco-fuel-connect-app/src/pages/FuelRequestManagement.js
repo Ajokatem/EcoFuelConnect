@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import {
   Container,
   Row,
@@ -9,8 +10,10 @@ import {
   Modal,
   Badge
 } from "react-bootstrap";
+import fuelService from "../services/fuelService";
 
 function FuelRequestManagement() {
+  const { translate } = useLanguage();
   const [activeTab, setActiveTab] = useState('create');
   const [formData, setFormData] = useState({
     fuelType: '',
@@ -76,29 +79,30 @@ function FuelRequestManagement() {
 
   useEffect(() => {
     loadFuelRequests();
-    calculateStats();
   }, []);
+  
+  useEffect(() => {
+    calculateStats();
+  }, [fuelRequests]);
 
-  const loadFuelRequests = () => {
-    const saved = localStorage.getItem('fuelRequests');
-    if (saved) {
-      const requests = JSON.parse(saved);
+  const loadFuelRequests = async () => {
+    try {
+      const requests = await fuelService.getFuelRequests();
       setFuelRequests(requests);
+    } catch (error) {
+      setFuelRequests([]); // Show empty if backend fails
     }
   };
 
   const calculateStats = () => {
-    const saved = localStorage.getItem('fuelRequests');
-    if (saved) {
-      const requests = JSON.parse(saved);
-      const stats = {
-        totalRequests: requests.length,
-        pending: requests.filter(r => r.status === 'pending').length,
-        approved: requests.filter(r => r.status === 'approved').length,
-        delivered: requests.filter(r => r.status === 'delivered').length
-      };
-      setStats(stats);
-    }
+    // Calculate stats from fuelRequests state
+    const newStats = {
+      totalRequests: fuelRequests.length,
+      pending: fuelRequests.filter(r => r.status === 'pending').length,
+      approved: fuelRequests.filter(r => r.status === 'approved').length,
+      delivered: fuelRequests.filter(r => r.status === 'delivered').length
+    };
+    setStats(newStats);
   };
 
   const handleInputChange = (e) => {
@@ -143,7 +147,7 @@ function FuelRequestManagement() {
     return (parseFloat(formData.quantity) * selectedFuel.price).toFixed(2);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -154,42 +158,74 @@ function FuelRequestManagement() {
       return;
     }
 
-    const selectedFuel = fuelTypes.find(fuel => fuel.value === formData.fuelType);
-    const newRequest = {
-      id: Date.now(),
-      ...formData,
-      fuelTypeLabel: selectedFuel.label,
-      estimatedCost: calculateCost(),
-      unit: selectedFuel.unit,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      requestNumber: `FR${Date.now().toString().slice(-6)}`
-    };
+    try {
+      const selectedFuel = fuelTypes.find(fuel => fuel.value === formData.fuelType);
+      const requestData = {
+        fuelType: formData.fuelType,
+        quantity: parseFloat(formData.quantity),
+        deliveryAddress: formData.deliveryAddress,
+        preferredDate: formData.preferredDate,
+        urgency: formData.urgency,
+        purpose: formData.purpose,
+        contactNumber: formData.contactNumber,
+        additionalNotes: formData.additionalNotes,
+        estimatedCost: parseFloat(calculateCost()),
+        unit: selectedFuel ? selectedFuel.unit : 'units',
+        fuelTypeLabel: selectedFuel ? selectedFuel.label : formData.fuelType
+      };
 
-    const existingRequests = JSON.parse(localStorage.getItem('fuelRequests') || '[]');
-    const updatedRequests = [...existingRequests, newRequest];
-    localStorage.setItem('fuelRequests', JSON.stringify(updatedRequests));
+      const newRequest = await fuelService.createFuelRequest(requestData);
+      
+      // Add proper display data
+      const displayRequest = {
+        ...newRequest,
+        id: newRequest.id || Date.now(),
+        requestNumber: newRequest.requestNumber || `REQ-${Date.now()}`,
+        status: 'pending',
+        dateRequested: new Date().toISOString(),
+        fuelTypeLabel: selectedFuel ? selectedFuel.label : formData.fuelType,
+        unit: selectedFuel ? selectedFuel.unit : 'units'
+      };
+      
+      setFuelRequests(prev => [displayRequest, ...prev]);
 
-    // Reset form
-    setFormData({
-      fuelType: '',
-      quantity: '',
-      deliveryAddress: '',
-      preferredDate: '',
-      urgency: 'normal',
-      purpose: '',
-      contactNumber: '',
-      additionalNotes: ''
-    });
+      // Automatic dashboard refresh: fetch latest stats from backend and update React state/context
+      if (window.dashboardService && window.dashboardService.getDashboardStats) {
+        window.dashboardService.getDashboardStats().then(stats => {
+          // Update dashboard stats in React state/context (handled in parent/dashboard component)
+        });
+      }
 
-    setAlertType('success');
-    setAlertMessage(`Fuel request submitted successfully! Request ID: ${newRequest.requestNumber}`);
-    setShowAlert(true);
-    setTimeout(() => setShowAlert(false), 5000);
+      // Dispatch custom event to refresh report page
+      window.dispatchEvent(new Event('reportRefresh'));
 
-    // Refresh data
-    loadFuelRequests();
-    calculateStats();
+      // Reset form
+      setFormData({
+        fuelType: '',
+        quantity: '',
+        deliveryAddress: '',
+        preferredDate: '',
+        urgency: 'normal',
+        purpose: '',
+        contactNumber: '',
+        additionalNotes: ''
+      });
+
+      setAlertType('success');
+      setAlertMessage(`Fuel request submitted successfully! Request ID: ${displayRequest.requestNumber}`);
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 5000);
+
+      // Refresh data
+      calculateStats();
+      
+    } catch (error) {
+      console.error('Fuel request error:', error);
+      setAlertType('danger');
+      setAlertMessage(error.message || String(error) || 'Failed to submit fuel request. Please try again.');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 5000);
+    }
   };
 
   const viewRequestDetails = (request) => {
@@ -227,17 +263,17 @@ function FuelRequestManagement() {
             <span style={{ marginRight: "10px", fontSize: "20px" }}>
               {alertType === 'success' ? '✅' : '❌'}
             </span>
-            {alertMessage}
+            {alertType === 'success' ? (translate("fuelRequestSuccess") || alertMessage) : (translate("fuelRequestError") || alertMessage)}
           </div>
         )}
 
         {/* Beautiful Header */}
         <div className="text-center mb-5">
-          <h1 className="text-dark mb-3" style={{ fontWeight: "800", fontSize: "2.2rem" }}>
-            Fuel Request Center
+          <h1 className="text-dark mb-3" style={{ fontWeight: "800", fontSize: "1.8rem" }}>
+            {translate("fuelRequestManagement") || "Fuel Request Center"}
           </h1>
           <p className="text-muted" style={{ fontSize: "1.2rem", maxWidth: "700px", margin: "0 auto", lineHeight: "1.6" }}>
-            Request eco-friendly fuel for your needs. From biogas to bio-diesel, we've got sustainable energy solutions for you.
+            {translate("fuelRequestDesc") || "Request eco-friendly fuel for your needs. From biogas to bio-diesel, we've got sustainable energy solutions for you."}
           </p>
         </div>
 
@@ -305,9 +341,9 @@ function FuelRequestManagement() {
                 border: "1px solid #e8f5e8"
               }}>
                 <div className="text-center mb-4">
-                  <h3 style={{ color: "#2c3e50", fontWeight: "700", marginBottom: "10px" }}>
+                  <h4 style={{ color: "#2c3e50", fontWeight: "700", marginBottom: "10px" }}>
                     Create New Fuel Request
-                  </h3>
+                  </h4>
                   <p style={{ color: "#6c757d", fontSize: "16px" }}>
                     Fill out the form below to request eco-friendly fuel delivery
                   </p>
@@ -526,7 +562,7 @@ function FuelRequestManagement() {
                       <div style={{
                         backgroundColor: "#f8f9fa",
                         borderRadius: "15px",
-                        padding: "25px",
+                        padding: "20px",
                         border: "2px solid #e9ecef"
                       }}>
                         <h5 style={{ color: "#2c3e50", marginBottom: "20px", fontWeight: "600" }}>
@@ -569,8 +605,10 @@ function FuelRequestManagement() {
                             style={{
                               borderRadius: "10px",
                               border: "2px solid #e9ecef",
-                              padding: "12px 16px",
-                              fontSize: "15px"
+                              padding: "8px 12px",
+                              fontSize: "14px",
+                              maxWidth: "100%",
+                              width: "100%"
                             }}
                           >
                             {urgencyLevels.map(level => (
@@ -651,9 +689,9 @@ function FuelRequestManagement() {
                 border: "1px solid #e8f5e8"
               }}>
                 <div className="text-center mb-4">
-                  <h3 style={{ color: "#2c3e50", fontWeight: "700", marginBottom: "10px" }}>
+                  <h4 style={{ color: "#2c3e50", fontWeight: "700", marginBottom: "10px" }}>
                     My Fuel Requests
-                  </h3>
+                  </h4>
                   <p style={{ color: "#6c757d", fontSize: "16px" }}>
                     Track and manage all your fuel requests in one place
                   </p>

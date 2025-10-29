@@ -1,8 +1,23 @@
 const express = require('express');
-const WasteEntry = require('../models/WasteEntry');
-const { auth, managerOrAdmin } = require('../middleware/auth');
-
 const router = express.Router();
+const WasteEntry = require('../models/WasteEntry');
+const User = require('../models/User');
+const { auth, managerOrAdmin } = require('../middleware/auth');
+const { body, param, query, validationResult } = require('express-validator');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+
+// Apply security middleware
+router.use(helmet());
+
+// Rate limiting
+const wasteLoggingLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: { success: false, message: 'Too many requests, please try again later.' }
+});
+
+router.use(wasteLoggingLimiter);
 
 // Waste types configuration
 const WASTE_TYPES = {
@@ -21,9 +36,7 @@ const SUPPLIER_TYPES = [
   'household', 'restaurant', 'market', 'farm', 'school', 'hospital', 'other'
 ];
 
-// @route   GET /api/waste-logging/waste-types
-// @desc    Get available waste types
-// @access  Public
+// GET /api/waste-logging/waste-types - Get available waste types
 router.get('/waste-types', (req, res) => {
   try {
     const wasteTypes = Object.entries(WASTE_TYPES).map(([key, value]) => ({
@@ -46,421 +59,478 @@ router.get('/waste-types', (req, res) => {
   }
 });
 
-// @route   POST /api/waste-logging
-// @desc    Create a new waste entry
-// @access  Private
-router.post('/', auth, async (req, res) => {
-  try {
-    const {
-      supplierName,
-      supplierType,
-      supplierContact,
-      wasteType,
-      wasteCategory,
-      quality = 'good',
-      weight,
-      unit = 'kg',
-      collectionDate,
-      collectionTime,
-      collectionAddress,
-      collectorName,
-      collectorId,
-      collectorContact,
-      moistureContent,
-      notes
-    } = req.body;
-
-    // Validation
-    if (!supplierName || !supplierType || !wasteType || !weight || !collectionDate || !collectionAddress) {
-      return res.status(400).json({
-        message: 'Please provide all required fields'
-      });
-    }
-
-    // Validate waste type
-    if (!WASTE_TYPES[wasteType]) {
-      return res.status(400).json({
-        message: 'Invalid waste type selected'
-      });
-    }
-
-    // Validate supplier type
-    if (!SUPPLIER_TYPES.includes(supplierType)) {
-      return res.status(400).json({
-        message: 'Invalid supplier type selected'
-      });
-    }
-
-    // Parse collection address
-    const addressParts = collectionAddress.split(',').map(part => part.trim());
-    const parsedAddress = {
-      address: collectionAddress,
-      district: addressParts[1] || '',
-      sector: addressParts[2] || ''
-    };
-
-    // Parse supplier contact if provided
-    let supplierContactInfo = {};
-    if (supplierContact) {
-      const contactParts = supplierContact.split(',').map(part => part.trim());
-      supplierContactInfo = {
-        phone: contactParts[0] || supplierContact,
-        email: contactParts[1] || '',
-        address: contactParts[2] || ''
-      };
-    }
-
-    // Create waste entry
-    const wasteEntry = new WasteEntry({
-      user: req.user.id,
-      supplier: {
-        name: supplierName,
-        type: supplierType,
-        contact: supplierContactInfo
-      },
-      wasteDetails: {
-        type: wasteType,
-        category: wasteCategory || WASTE_TYPES[wasteType].category,
-        quality,
-        moistureContent: moistureContent ? parseInt(moistureContent) : undefined
-      },
-      quantity: {
-        weight: parseFloat(weight),
-        unit
-      },
-      collectionInfo: {
-        date: new Date(collectionDate),
-        time: collectionTime || new Date().toTimeString().slice(0, 5),
-        location: parsedAddress,
-        collectedBy: {
-          name: collectorName || req.user.firstName + ' ' + req.user.lastName,
-          id: collectorId || req.user.id,
-          contact: collectorContact || req.user.email
-        }
-      },
-      notes: {
-        supplier: notes
-      }
-    });
-
-    await wasteEntry.save();
-
-    // Populate user data for response
-    await wasteEntry.populate('user', 'firstName lastName email');
-
-    res.status(201).json({
-      message: 'Waste entry created successfully',
-      wasteEntry: {
-        id: wasteEntry._id,
-        entryId: wasteEntry.entryId,
-        supplier: wasteEntry.supplier,
-        wasteDetails: wasteEntry.wasteDetails,
-        quantity: wasteEntry.quantity,
-        collectionInfo: wasteEntry.collectionInfo,
-        processing: wasteEntry.processing,
-        environmental: wasteEntry.environmental,
-        createdAt: wasteEntry.createdAt
-      }
-    });
-
-  } catch (error) {
-    console.error('Create waste entry error:', error);
-    
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        message: 'Validation error',
-        errors: messages
-      });
-    }
-
-    res.status(500).json({
-      message: 'Error creating waste entry'
-    });
-  }
-});
-
-// @route   GET /api/waste-logging
-// @desc    Get user's waste entries
-// @access  Private
+// GET /api/waste-logging - Get waste entries with filtering
 router.get('/', auth, async (req, res) => {
   try {
     const {
-      page = 1,
-      limit = 10,
+      supplier,
+      producer,
       wasteType,
-      supplierType,
-      quality,
+      wasteSource,
       status,
       startDate,
       endDate,
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
+      page = 1,
+      limit = 20
     } = req.query;
-
-    // Build query
-    const query = { user: req.user.id, isActive: true };
-    
-    if (wasteType) query['wasteDetails.type'] = wasteType;
-    if (supplierType) query['supplier.type'] = supplierType;
-    if (quality) query['wasteDetails.quality'] = quality;
-    if (status) query['processing.status'] = status;
-
-    // Date range filter
+    // Build Sequelize where clause with proper sanitization
+    let where = {};
+    if (req.user.role === 'supplier') {
+      where.supplierId = parseInt(req.user.id);
+    } else if (req.user.role === 'producer') {
+      where.producerId = parseInt(req.user.id);
+    }
+    if (supplier && !isNaN(parseInt(supplier))) where.supplierId = parseInt(supplier);
+    if (producer && !isNaN(parseInt(producer))) where.producerId = parseInt(producer);
+    if (wasteType && typeof wasteType === 'string') where.wasteType = wasteType.trim();
+    if (wasteSource && typeof wasteSource === 'string') where.wasteSource = wasteSource.trim();
+    if (status && typeof status === 'string') where.status = status.trim();
     if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
+      where.collectionTimestamp = {};
+      if (startDate) where.collectionTimestamp[Op.gte] = new Date(startDate);
+      if (endDate) where.collectionTimestamp[Op.lte] = new Date(endDate);
     }
-
-    // Build sort object
-    const sort = {};
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
-    // Execute query with pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    const [wasteEntries, totalCount] = await Promise.all([
-      WasteEntry.find(query)
-        .sort(sort)
-        .skip(skip)
-        .limit(parseInt(limit))
-        .populate('user', 'firstName lastName email')
-        .select('-quality_check -notes.processor'),
-      WasteEntry.countDocuments(query)
-    ]);
-
-    const totalPages = Math.ceil(totalCount / parseInt(limit));
-
+    // Fetch entries with associations
+    const { Op } = require('sequelize');
+    const wasteEntries = await WasteEntry.findAll({
+      where,
+      include: [
+        { model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] },
+        { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] },
+        { model: User, as: 'verifiedBy', attributes: ['id', 'firstName', 'lastName'] }
+      ],
+      order: [['collectionTimestamp', 'DESC']],
+      limit: parseInt(limit),
+      offset: (page - 1) * limit
+    });
+    const total = await WasteEntry.count({ where });
     res.json({
-      message: 'Waste entries retrieved successfully',
+      success: true,
       wasteEntries,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages,
-        totalCount,
-        hasNextPage: parseInt(page) < totalPages,
-        hasPrevPage: parseInt(page) > 1
-      }
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      total,
+      stats: await WasteEntry.getWasteStatistics(where)
     });
-
   } catch (error) {
-    console.error('Get waste entries error:', error);
-    res.status(500).json({
-      message: 'Error retrieving waste entries'
-    });
+    console.error('Error fetching waste entries:', error.message);
+    res.status(500).json({ success: false, message: 'Error fetching waste entries' });
   }
 });
 
-// @route   GET /api/waste-logging/:id
-// @desc    Get specific waste entry
-// @access  Private
-router.get('/:id', auth, async (req, res) => {
+// GET /api/waste-logging/statistics
+router.get('/statistics', auth, async (req, res) => {
   try {
-    const wasteEntry = await WasteEntry.findById(req.params.id)
-      .populate('user', 'firstName lastName email phone');
-
-    if (!wasteEntry) {
-      return res.status(404).json({
-        message: 'Waste entry not found'
-      });
-    }
-
-    // Check if user owns the entry or is admin/manager
-    if (wasteEntry.user._id.toString() !== req.user.id && !['admin', 'manager'].includes(req.user.role)) {
-      return res.status(403).json({
-        message: 'Access denied. You can only view your own waste entries.'
-      });
-    }
-
-    res.json({
-      message: 'Waste entry retrieved successfully',
-      wasteEntry
-    });
-
-  } catch (error) {
-    console.error('Get waste entry error:', error);
-    res.status(500).json({
-      message: 'Error retrieving waste entry'
-    });
-  }
-});
-
-// @route   PUT /api/waste-logging/:id
-// @desc    Update waste entry (by user - limited fields)
-// @access  Private
-router.put('/:id', auth, async (req, res) => {
-  try {
-    const wasteEntry = await WasteEntry.findById(req.params.id);
-
-    if (!wasteEntry) {
-      return res.status(404).json({
-        message: 'Waste entry not found'
-      });
-    }
-
-    // Check ownership
-    if (wasteEntry.user.toString() !== req.user.id) {
-      return res.status(403).json({
-        message: 'Access denied. You can only update your own waste entries.'
-      });
-    }
-
-    // Only allow updates if entry is still in collected status
-    if (wasteEntry.processing.status !== 'collected') {
-      return res.status(400).json({
-        message: 'Cannot update waste entry. It has already been processed.'
-      });
-    }
-
-    const {
-      supplierContact,
-      quality,
-      moistureContent,
-      collectionTime,
-      notes
-    } = req.body;
-
-    // Update allowed fields
-    const updateData = {};
-    if (supplierContact) {
-      const contactParts = supplierContact.split(',').map(part => part.trim());
-      updateData['supplier.contact'] = {
-        phone: contactParts[0] || supplierContact,
-        email: contactParts[1] || '',
-        address: contactParts[2] || ''
-      };
-    }
-    if (quality) updateData['wasteDetails.quality'] = quality;
-    if (moistureContent !== undefined) updateData['wasteDetails.moistureContent'] = parseInt(moistureContent);
-    if (collectionTime) updateData['collectionInfo.time'] = collectionTime;
-    if (notes !== undefined) updateData['notes.supplier'] = notes;
-
-    const updatedEntry = await WasteEntry.findByIdAndUpdate(
-      req.params.id,
-      updateData,
-      { new: true, runValidators: true }
-    ).populate('user', 'firstName lastName email');
-
-    res.json({
-      message: 'Waste entry updated successfully',
-      wasteEntry: updatedEntry
-    });
-
-  } catch (error) {
-    console.error('Update waste entry error:', error);
+    const { startDate, endDate, groupBy = 'day' } = req.query;
     
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map(err => err.message);
-      return res.status(400).json({
-        message: 'Validation error',
-        errors: messages
-      });
+    let matchQuery = {};
+    if (req.user.role === 'supplier') {
+      matchQuery.supplier = req.user._id;
+    } else if (req.user.role === 'producer') {
+      matchQuery.producer = req.user._id;
     }
-
-    res.status(500).json({
-      message: 'Error updating waste entry'
-    });
-  }
-});
-
-// @route   DELETE /api/waste-logging/:id
-// @desc    Delete waste entry (soft delete)
-// @access  Private
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const wasteEntry = await WasteEntry.findById(req.params.id);
-
-    if (!wasteEntry) {
-      return res.status(404).json({
-        message: 'Waste entry not found'
-      });
-    }
-
-    // Check ownership
-    if (wasteEntry.user.toString() !== req.user.id) {
-      return res.status(403).json({
-        message: 'Access denied. You can only delete your own waste entries.'
-      });
-    }
-
-    // Only allow deletion if entry is still in collected status
-    if (wasteEntry.processing.status !== 'collected') {
-      return res.status(400).json({
-        message: 'Cannot delete waste entry. It has already been processed.'
-      });
-    }
-
-    // Soft delete
-    wasteEntry.isActive = false;
-    await wasteEntry.save();
-
-    res.json({
-      message: 'Waste entry deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Delete waste entry error:', error);
-    res.status(500).json({
-      message: 'Error deleting waste entry'
-    });
-  }
-});
-
-// @route   GET /api/waste-logging/stats/summary
-// @desc    Get waste logging statistics
-// @access  Private
-router.get('/stats/summary', auth, async (req, res) => {
-  try {
-    const { timeframe } = req.query;
     
-    const stats = await WasteEntry.getStats(req.user.id, timeframe);
-    const summary = stats[0] || {
-      totalEntries: 0,
-      totalWeight: 0,
-      totalBiogasProduced: 0,
-      totalCarbonReduced: 0,
-      totalPayments: 0,
-      avgWeight: 0,
-      supplierCount: 0
+    if (startDate || endDate) {
+      matchQuery.collectionTimestamp = {};
+      if (startDate) matchQuery.collectionTimestamp.$gte = new Date(startDate);
+      if (endDate) matchQuery.collectionTimestamp.$lte = new Date(endDate);
+    }
+    
+    // Get basic statistics
+    const basicStats = await WasteEntry.getWasteStatistics(matchQuery);
+    
+    // Get trends over time
+    const groupFormat = {
+      day: { $dateToString: { format: '%Y-%m-%d', date: '$collectionTimestamp' } },
+      week: { $dateToString: { format: '%Y-%U', date: '$collectionTimestamp' } },
+      month: { $dateToString: { format: '%Y-%m', date: '$collectionTimestamp' } }
     };
-
-    // Get waste type distribution
-    const wasteDistribution = await WasteEntry.aggregate([
-      { 
-        $match: { 
-          user: req.user._id,
-          isActive: true 
-        } 
-      },
+    
+    const trends = await WasteEntry.aggregate([
+      { $match: matchQuery },
       {
         $group: {
-          _id: '$wasteDetails.type',
+          _id: groupFormat[groupBy],
+          totalWaste: { $sum: '$estimatedWeight' },
+          entryCount: { $sum: 1 },
+          avgQuality: { $avg: { $cond: [
+            { $eq: ['$qualityGrade', 'excellent'] }, 4,
+            { $cond: [
+              { $eq: ['$qualityGrade', 'good'] }, 3,
+              { $cond: [
+                { $eq: ['$qualityGrade', 'fair'] }, 2, 1
+              ]}
+            ]}
+          ]}},
+          wasteByType: {
+            $push: {
+              type: '$wasteType',
+              weight: '$estimatedWeight'
+            }
+          }
+        }
+      },
+      { $sort: { '_id': 1 } }
+    ]);
+    
+    // Get waste type distribution
+    const wasteTypeDistribution = await WasteEntry.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: '$wasteType',
+          totalWeight: { $sum: '$estimatedWeight' },
           count: { $sum: 1 },
-          totalWeight: { $sum: '$quantity.weight' }
+          avgWeight: { $avg: '$estimatedWeight' }
         }
       },
       { $sort: { totalWeight: -1 } }
     ]);
-
+    
+    // Get source analysis
+    const sourceAnalysis = await WasteEntry.aggregate([
+      { $match: matchQuery },
+      {
+        $group: {
+          _id: '$wasteSource',
+          totalWeight: { $sum: '$estimatedWeight' },
+          count: { $sum: 1 },
+          avgQuality: { $avg: { $cond: [
+            { $eq: ['$qualityGrade', 'excellent'] }, 4,
+            { $cond: [
+              { $eq: ['$qualityGrade', 'good'] }, 3,
+              { $cond: [
+                { $eq: ['$qualityGrade', 'fair'] }, 2, 1
+              ]}
+            ]}
+          ]}}
+        }
+      },
+      { $sort: { totalWeight: -1 } }
+    ]);
+    
     res.json({
-      message: 'Waste logging statistics retrieved successfully',
-      stats: {
-        ...summary,
-        wasteDistribution: wasteDistribution.map(item => ({
-          type: item._id,
-          label: WASTE_TYPES[item._id]?.label || item._id,
-          count: item.count,
-          weight: item.totalWeight
-        }))
+      basicStats,
+      trends,
+      wasteTypeDistribution,
+      sourceAnalysis
+    });
+  } catch (error) {
+    console.error('Error fetching waste statistics:', error);
+    res.status(500).json({ message: 'Error fetching waste statistics' });
+  }
+});
+
+// GET /api/waste-logging/:id - Get single waste entry
+router.get('/:id', [
+  auth,
+  param('id').isInt().withMessage('ID must be a valid integer')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+    const wasteEntry = await WasteEntry.findByPk(req.params.id, {
+      include: [
+        { model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName', 'organization', 'role', 'contact'] },
+        { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'role', 'plantCapacity'] },
+        { model: User, as: 'verifiedBy', attributes: ['id', 'firstName', 'lastName'] }
+      ]
+    });
+
+    if (!wasteEntry) {
+      return res.status(404).json({ message: 'Waste entry not found' });
+    }
+
+    // Check authorization
+    if (req.user.role !== 'admin' && 
+        wasteEntry.supplierId !== req.user.id && 
+        wasteEntry.producerId !== req.user.id) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
+    res.json({ success: true, wasteEntry });
+  } catch (error) {
+    console.error('Error fetching waste entry:', error.message);
+    res.status(500).json({ success: false, message: 'Error fetching waste entry' });
+  }
+});
+
+// POST /api/waste-logging - Create new waste entry
+router.post('/', [
+  auth,
+  body('producerId').isInt().withMessage('Producer ID must be a valid integer'),
+  body('wasteType').isIn(Object.keys(WASTE_TYPES)).withMessage('Invalid waste type'),
+  body('wasteSource').isIn(SUPPLIER_TYPES).withMessage('Invalid waste source'),
+  body('quantity').isFloat({ min: 0.1 }).withMessage('Quantity must be a positive number'),
+  body('unit').isIn(['kg', 'tons', 'bags', 'cubic_meters']).withMessage('Invalid unit'),
+  body('qualityGrade').optional().isIn(['poor', 'fair', 'good', 'excellent']).withMessage('Invalid quality grade'),
+  body('notes').optional().isLength({ max: 500 }).withMessage('Notes must be less than 500 characters')
+], async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Validation errors',
+        errors: errors.array()
+      });
+    }
+    const {
+      producerId,
+      wasteType,
+      wasteSource,
+      sourceLocation,
+      quantity,
+      unit,
+      qualityGrade,
+      moistureContent,
+      temperature,
+      pH,
+      images,
+      weighbridgePhoto,
+      receiptNumber,
+      verificationMethod,
+      collectionTimestamp,
+      notes,
+      supplierNotes,
+      gpsAccuracy
+    } = req.body;
+
+    // Validate supplier role
+    if (req.user.role !== 'supplier' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Only suppliers can create waste entries' });
+    }
+
+    // Validate producer exists and is active (accept supplier or producer role)
+    const producerUser = await User.findByPk(parseInt(producerId));
+    if (!producerUser || (producerUser.role !== 'producer' && producerUser.role !== 'supplier') || producerUser.isActive === false) {
+      return res.status(400).json({ success: false, message: 'Invalid or inactive producer (must be supplier or producer role)' });
+    }
+
+    // Calculate estimatedWeight before saving
+    let estimatedWeight = quantity;
+    switch (unit) {
+      case 'kg':
+        estimatedWeight = quantity;
+        break;
+      case 'tons':
+        estimatedWeight = quantity * 1000;
+        break;
+      case 'bags':
+        estimatedWeight = quantity * 20;
+        break;
+      case 'cubic_meters':
+        estimatedWeight = quantity * 500;
+        break;
+      default:
+        estimatedWeight = quantity;
+    }
+
+    // Create new waste entry using Sequelize
+    const wasteEntry = await WasteEntry.create({
+      supplierId: req.user.id,
+      producerId,
+      wasteType,
+      wasteSource,
+      sourceLocation: sourceLocation || {},
+      quantity,
+      unit,
+      estimatedWeight,
+      qualityGrade,
+      moistureContent,
+      temperature,
+      pH,
+      images: images || [],
+      weighbridgePhoto,
+      receiptNumber,
+      verificationMethod,
+      collectionTimestamp: collectionTimestamp || new Date(),
+      geoTimestamp: {
+        recordedAt: new Date(),
+        accuracy: gpsAccuracy
+      },
+      notes,
+      supplierNotes,
+      status: 'collected'
+    });
+
+    // Fetch with associations for response
+      const createdEntry = await WasteEntry.findByPk(wasteEntry.id, {
+        include: [
+          { model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] },
+          { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] }
+        ]
+      });
+
+      // Notify admin(s) about new waste entry
+      const Notification = require('../models/Notification');
+      const adminUsers = await User.findAll({ where: { role: 'admin', isActive: true } });
+      const notificationPromises = adminUsers.map(admin => Notification.create({
+        userId: admin.id,
+        type: 'waste_entry',
+        title: 'Waste Entry Logged',
+        message: `New waste entry logged by ${req.user.firstName} ${req.user.lastName}. Waste type: ${createdEntry.wasteType}, Quantity: ${createdEntry.quantity} ${createdEntry.unit}.`,
+        read: false
+      }));
+      await Promise.all(notificationPromises);
+
+      res.status(201).json({
+        success: true,
+        message: 'Waste entry created successfully',
+        wasteEntry: createdEntry
+      });
+  } catch (error) {
+    console.error('Error creating waste entry:', error.message);
+    res.status(500).json({ success: false, message: 'Error creating waste entry' });
+  }
+});
+
+// PUT /api/waste-logging/:id - Update waste entry
+router.put('/:id', auth, async (req, res) => {
+  try {
+  const wasteEntry = await WasteEntry.findByPk(req.params.id);
+    
+    if (!wasteEntry) {
+      return res.status(404).json({ message: 'Waste entry not found' });
+    }
+    
+    // Check authorization
+    if (req.user.role !== 'admin' && !wasteEntry.supplier.equals(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    // Don't allow updates to processed entries
+    if (wasteEntry.status === 'processed') {
+      return res.status(400).json({ message: 'Cannot update processed waste entries' });
+    }
+    
+    const updateData = req.body;
+    Object.keys(updateData).forEach(key => {
+      if (key !== '_id' && key !== 'supplier' && key !== 'createdAt') {
+        wasteEntry[key] = updateData[key];
       }
     });
-
-  } catch (error) {
-    console.error('Waste logging stats error:', error);
-    res.status(500).json({
-      message: 'Error retrieving waste logging statistics'
+    
+    await wasteEntry.save();
+    await wasteEntry.populate('supplier', 'firstName lastName supplierType organization');
+    await wasteEntry.populate('producer', 'firstName lastName organization');
+    
+    res.json({
+      message: 'Waste entry updated successfully',
+      wasteEntry
     });
+  } catch (error) {
+    console.error('Error updating waste entry:', error);
+    res.status(500).json({ message: 'Error updating waste entry' });
+  }
+});
+
+// POST /api/waste-logging/:id/verify - Verify waste entry
+router.post('/:id/verify', auth, async (req, res) => {
+  try {
+    const { verified, rejectionReason } = req.body;
+    
+  const wasteEntry = await WasteEntry.findByPk(req.params.id);
+    
+    if (!wasteEntry) {
+      return res.status(404).json({ message: 'Waste entry not found' });
+    }
+    
+    // Only producers and admins can verify
+    if (req.user.role !== 'admin' && 
+        (req.user.role !== 'producer' || !wasteEntry.producer.equals(req.user._id))) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    wasteEntry.verified = verified;
+    wasteEntry.verifiedBy = req.user._id;
+    wasteEntry.verifiedAt = new Date();
+    
+    if (!verified && rejectionReason) {
+      wasteEntry.rejectionReason = rejectionReason;
+      wasteEntry.status = 'collected'; // Reset status
+    } else if (verified) {
+      wasteEntry.status = 'delivered';
+      wasteEntry.deliveryTimestamp = new Date();
+    }
+    
+    await wasteEntry.save();
+    await wasteEntry.populate('verifiedBy', 'firstName lastName');
+    
+    res.json({
+      message: verified ? 'Waste entry verified successfully' : 'Waste entry rejected',
+      wasteEntry
+    });
+  } catch (error) {
+    console.error('Error verifying waste entry:', error);
+    res.status(500).json({ message: 'Error verifying waste entry' });
+  }
+});
+
+// POST /api/waste-logging/:id/process - Mark as processed with biogas yield
+router.post('/:id/process', auth, async (req, res) => {
+  try {
+    const { actualBiogasYield, processedDate, notes } = req.body;
+    
+  const wasteEntry = await WasteEntry.findByPk(req.params.id);
+    
+    if (!wasteEntry) {
+      return res.status(404).json({ message: 'Waste entry not found' });
+    }
+    
+    // Only producers can mark as processed
+    if (req.user.role !== 'producer' || !wasteEntry.producer.equals(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    wasteEntry.status = 'processed';
+    wasteEntry.processedDate = processedDate || new Date();
+    wasteEntry.biogasYield.actual = actualBiogasYield;
+    if (notes) wasteEntry.notes = notes;
+    
+    await wasteEntry.save();
+    
+    res.json({
+      message: 'Waste entry marked as processed',
+      wasteEntry
+    });
+  } catch (error) {
+    console.error('Error processing waste entry:', error);
+    res.status(500).json({ message: 'Error processing waste entry' });
+  }
+});
+
+// DELETE /api/waste-logging/:id - Delete waste entry
+router.delete('/:id', auth, async (req, res) => {
+  try {
+  const wasteEntry = await WasteEntry.findByPk(req.params.id);
+    
+    if (!wasteEntry) {
+      return res.status(404).json({ message: 'Waste entry not found' });
+    }
+    
+    // Check authorization
+    if (req.user.role !== 'admin' && !wasteEntry.supplier.equals(req.user._id)) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    // Don't allow deletion of processed entries
+    if (wasteEntry.status === 'processed') {
+      return res.status(400).json({ message: 'Cannot delete processed waste entries' });
+    }
+    
+  await WasteEntry.destroy({ where: { id: req.params.id } });
+    
+    res.json({ message: 'Waste entry deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting waste entry:', error);
+    res.status(500).json({ message: 'Error deleting waste entry' });
   }
 });
 
@@ -469,7 +539,7 @@ router.get('/stats/summary', auth, async (req, res) => {
 // @access  Private
 router.get('/:id/biogas-potential', auth, async (req, res) => {
   try {
-    const wasteEntry = await WasteEntry.findById(req.params.id);
+  const wasteEntry = await WasteEntry.findByPk(req.params.id);
 
     if (!wasteEntry) {
       return res.status(404).json({
@@ -547,17 +617,17 @@ router.get('/admin/all', auth, managerOrAdmin, async (req, res) => {
     // Execute query with pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const [wasteEntries, totalCount] = await Promise.all([
-      WasteEntry.find(query)
-        .sort(sort)
-        .skip(skip)
-        .limit(parseInt(limit))
-        .populate('user', 'firstName lastName email phone organization'),
-      WasteEntry.countDocuments(query)
-    ]);
-
+    const wasteEntries = await WasteEntry.findAll({
+      where: query,
+      include: [
+        { model: User, attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'organization'] }
+      ],
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: skip
+    });
+    const totalCount = await WasteEntry.count({ where: query });
     const totalPages = Math.ceil(totalCount / parseInt(limit));
-
     res.json({
       message: 'All waste entries retrieved successfully',
       wasteEntries,
@@ -606,7 +676,7 @@ router.put('/admin/:id/processing', auth, managerOrAdmin, async (req, res) => {
       });
     }
 
-    const wasteEntry = await WasteEntry.findById(req.params.id);
+  const wasteEntry = await WasteEntry.findByPk(req.params.id);
 
     if (!wasteEntry) {
       return res.status(404).json({
@@ -630,7 +700,7 @@ router.put('/admin/:id/processing', auth, managerOrAdmin, async (req, res) => {
       updateData['processing.processedDate'] = new Date();
     }
 
-    const updatedEntry = await WasteEntry.findByIdAndUpdate(
+  const updatedEntry = await WasteEntry.update(
       req.params.id,
       updateData,
       { new: true, runValidators: true }

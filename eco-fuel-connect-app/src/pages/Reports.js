@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useLanguage } from "../contexts/LanguageContext";
 import {
   Card,
   Container,
@@ -13,9 +14,12 @@ import {
   Tabs,
   Tab,
 } from "react-bootstrap";
+import wasteService from '../services/wasteService';
+import fuelService from '../services/fuelService';
 
 function Reports() {
   const [activeTab, setActiveTab] = useState("overview");
+  const { translate } = useLanguage();
   const [dateRange, setDateRange] = useState("thisMonth");
   const [wasteData, setWasteData] = useState([]);
   const [fuelData, setFuelData] = useState([]);
@@ -29,15 +33,26 @@ function Reports() {
 
   useEffect(() => {
     loadReportData();
+
+    // Listen for custom event to refresh report data
+    const handleReportRefresh = () => {
+      loadReportData();
+    };
+    window.addEventListener('reportRefresh', handleReportRefresh);
+    return () => window.removeEventListener('reportRefresh', handleReportRefresh);
   }, [dateRange]);
 
-  const loadReportData = () => {
-    const wasteEntries = JSON.parse(localStorage.getItem("wasteEntries") || "[]");
-    const fuelRequests = JSON.parse(localStorage.getItem("fuelRequests") || "[]");
-
-    setWasteData(wasteEntries);
-    setFuelData(fuelRequests);
-    calculateStats(wasteEntries, fuelRequests);
+  const loadReportData = async () => {
+    try {
+      const wasteEntries = await wasteService.getWasteEntries();
+      const fuelRequests = await fuelService.getFuelRequests();
+      setWasteData(wasteEntries);
+      setFuelData(fuelRequests);
+      calculateStats(wasteEntries, fuelRequests);
+    } catch (error) {
+      setWasteData([]);
+      setFuelData([]);
+    }
   };
 
   const calculateStats = (waste, fuel) => {
@@ -133,12 +148,12 @@ function Reports() {
   };
 
   return (
-    <div className="content" style={{ minHeight: "100vh", padding: "20px", backgroundColor: "#fafbfc" }}>
+  <div className="content" style={{ minHeight: "100vh", padding: "20px", backgroundColor: "#fafbfc" }}>
       <Container fluid>
         {/* Beautiful Header */}
         <div className="text-center mb-4">
-          <h3 className="text-dark mb-2">Analytics and Reports</h3>
-          <p className="text-muted">Comprehensive insights into your eco-fuel activities and environmental impact</p>
+          <h3 className="text-dark mb-2">{translate("reports") || "Analytics and Reports"}</h3>
+          <p className="text-muted">{translate("reportsDescription") || "Comprehensive insights into your eco-fuel activities and environmental impact"}</p>
         </div>
 
         {/* Date Range Filter */}
@@ -147,9 +162,9 @@ function Reports() {
             <div className="text-center">
               <Form.Group>
                 <Form.Label className="fw-medium text-dark mb-3" style={{ fontSize: "16px" }}>
-                  Select Date Range
+                  {translate("selectDateRange") || "Select Date Range"}
                 </Form.Label>
-                <Form.Select 
+                <Form.Select
                   value={dateRange} 
                   onChange={(e) => setDateRange(e.target.value)}
                   style={{ 
@@ -160,24 +175,22 @@ function Reports() {
                     fontWeight: "500"
                   }}
                 >
-                  <option value="thisWeek">This Week</option>
-                  <option value="thisMonth">This Month</option>
-                  <option value="last3Months">Last 3 Months</option>
-                  <option value="thisYear">This Year</option>
-                  <option value="allTime">All Time</option>
+                  <option value="thisWeek">{translate("thisWeek") || "This Week"}</option>
+                  <option value="thisMonth">{translate("thisMonth") || "This Month"}</option>
+                  <option value="last3Months">{translate("last3Months") || "Last 3 Months"}</option>
+                  <option value="thisYear">{translate("thisYear") || "This Year"}</option>
+                  <option value="allTime">{translate("allTime") || "All Time"}</option>
                 </Form.Select>
               </Form.Group>
             </div>
           </Col>
         </Row>
-
-        {/* Clean Stats Overview */}
         <Row className="mb-5">
           {[
-            { label: "Waste Processed", value: stats.totalWasteProcessed, suffix: " kg", color: "#28a745" },
-            { label: "Fuel Generated", value: stats.totalFuelGenerated, suffix: " L", color: "#17a2b8" },
-            { label: "Efficiency", value: stats.conversionEfficiency, suffix: "%", color: "#ffc107" },
-            { label: "CO₂ Reduced", value: stats.carbonReduced, suffix: " kg", color: "#28a745" },
+            { label: translate("wasteProcessed") || "Waste Processed", value: stats.totalWasteProcessed, suffix: " kg", color: "#28a745" },
+            { label: translate("fuelGenerated") || "Fuel Generated", value: stats.totalFuelGenerated, suffix: " L", color: "#17a2b8" },
+            { label: translate("efficiency") || "Efficiency", value: stats.conversionEfficiency, suffix: "%", color: "#ffc107" },
+            { label: translate("co2Reduced") || "CO₂ Reduced", value: stats.carbonReduced, suffix: " kg", color: "#28a745" },
           ].map(({ label, value, suffix, color }, index) => (
             <Col lg="3" md="6" sm="6" key={label} className="mb-4">
               <div style={{
@@ -200,7 +213,7 @@ function Reports() {
                   marginBottom: "8px",
                   fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
                 }}>
-                  {typeof value === 'number' ? value.toFixed(1) : value}{suffix}
+                  {typeof value === 'number' ? value.toString() : value}{suffix}
                 </div>
                 <div style={{ 
                   fontSize: "14px", 
@@ -216,7 +229,7 @@ function Reports() {
           ))}
         </Row>
 
-        {/* Beautiful Detailed Reports Tabs */}
+        {/* Reports Tabs */}
         <Card style={{ 
           border: "1px solid #e9ecef", 
           borderRadius: "15px",

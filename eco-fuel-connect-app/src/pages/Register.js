@@ -10,9 +10,18 @@ import {
   InputGroup,
   ProgressBar
 } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
+import authService from "../services/authService";
+import { useUser } from "../contexts/UserContext";
+import { sanitizeInput, sanitizeEmail, sanitizeMessage } from '../utils/sanitize';
 
 function Register() {
+  const { updateUser } = useUser();
+  // Helper for progress bar percent
+  const getPasswordStrengthPercent = () => {
+    return passwordStrength;
+  };
+  const history = useHistory();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -34,21 +43,19 @@ function Register() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-    
+    const sanitizedValue = type === 'checkbox' ? checked : (name === 'email' ? sanitizeEmail(value) : sanitizeInput(value));
+
     setFormData(prev => ({
       ...prev,
-      [name]: newValue
+      [name]: sanitizedValue
     }));
-    
-    // Clear error when user starts typing
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: "" }));
     }
     
-    // Calculate password strength
     if (name === 'password') {
-      calculatePasswordStrength(newValue);
+      calculatePasswordStrength(sanitizedValue);
     }
   };
 
@@ -90,14 +97,16 @@ function Register() {
     
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
       newErrors.email = "Please enter a valid email address";
     }
     
     if (!formData.password.trim()) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(formData.password)) {
+      newErrors.password = "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character";
     }
     
     if (!formData.confirmPassword.trim()) {
@@ -111,7 +120,7 @@ function Register() {
     }
     
     if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = "You must agree to the terms and conditions";
+      newErrors.agreeToTerms = "You must agree to the Terms and Privacy Policy to register.";
     }
     
     setErrors(newErrors);
@@ -128,113 +137,145 @@ function Register() {
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Store user data in localStorage (in real app, use proper authentication)
-      localStorage.setItem('user', JSON.stringify({
+      const response = await authService.register({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
         organization: formData.organization,
-        phone: formData.phone,
-        isAuthenticated: true,
-        registrationTime: new Date().toISOString()
-      }));
-      
+        phone: formData.phone
+      });
+
+      if (response.user && response.token) {
+        updateUser(response.user, response.token);
+      }
       showSuccessAlert("Account created successfully! Redirecting to dashboard...");
-      
-      // Redirect to dashboard after success message
       setTimeout(() => {
-        window.location.href = "/admin/dashboard";
+        history.push("/admin/dashboard");
       }, 2500);
-      
+
     } catch (error) {
-      showErrorAlert("Registration failed. Please try again.");
+      const errorMessage = error.response?.data?.message || error.message || "Registration failed. Please try again.";
+      showErrorAlert(sanitizeMessage(errorMessage));
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      // Send credential to backend for verification and registration
+      const response = await authService.googleLogin({ credential: credentialResponse.credential });
+      showSuccessAlert("Google account registered! Redirecting to dashboard...");
+      setTimeout(() => {
+        history.push("/admin/dashboard");
+      }, 2500);
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || "Google registration failed. Please try again.";
+      showErrorAlert(sanitizeMessage(errorMessage));
+    }
+  };
+  const handleGoogleError = () => {
+    showErrorAlert("Google authentication failed. Please try again.");
+  };
+
   const showSuccessAlert = (message) => {
-    setAlertMessage(message);
+    setAlertMessage(sanitizeMessage(message));
     setAlertType("success");
     setShowAlert(true);
     setTimeout(() => setShowAlert(false), 3500);
   };
 
   const showErrorAlert = (message) => {
-    setAlertMessage(message);
+    setAlertMessage(sanitizeMessage(message));
     setAlertType("danger");
     setShowAlert(true);
     setTimeout(() => setShowAlert(false), 5000);
   };
 
   return (
-    <div className="auth-page">
-      <Container fluid className="h-100">
-        <Row className="h-100 align-items-center justify-content-center">
+    <Container fluid style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #25805a 0%, #1e6b47 100%)' }}>
+        <Row className="justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
           <Col md="8" lg="6" xl="5">
-            <div className="text-center mb-4">
-              <img 
-                src={require("../assets/img/recycle-symbol.png")} 
-                alt="EcoFuelConnect" 
-                className="auth-logo mb-3"
-                style={{ width: '80px', height: '80px' }}
-              />
-              <h2 className="text-success mb-2">Join EcoFuelConnect</h2>
-              <p className="text-muted">Create your account to start making a difference</p>
-            </div>
-
-            <Card className="auth-card shadow">
-              <Card.Body className="p-4">
+            <Card 
+              className="shadow-lg border-0" 
+              style={{
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px'
+              }}
+            >
+              <Card.Body className="p-5">
                 {showAlert && (
-                  <Alert variant={alertType} className="mb-4">
-                    <i className={`nc-icon nc-${alertType === 'success' ? 'check-2' : 'simple-remove'}`}></i>
-                    {" "}{alertMessage}
+                  <Alert 
+                    variant={alertType} 
+                    className="mb-4"
+                    style={{
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: alertType === 'success' ? 'rgba(37, 128, 90, 0.1)' : 'rgba(220, 53, 69, 0.1)',
+                      color: alertType === 'success' ? '#25805a' : '#dc3545'
+                    }}
+                  >
+                    {alertMessage}
                   </Alert>
                 )}
 
+                <div className="text-center mb-4">
+                  <h3 
+                    style={{
+                      color: '#25805a', 
+                      fontWeight: '600', 
+                      fontSize: '1.5rem',
+                      fontFamily: '"Inter", "Segoe UI", sans-serif',
+                      marginBottom: '8px'
+                    }}
+                  >
+                    Join EcoFuelConnect
+                  </h3>
+                  <p 
+                    style={{
+                      color: '#666',
+                      fontSize: '0.9rem',
+                      fontFamily: '"Inter", "Segoe UI", sans-serif',
+                      marginBottom: '0'
+                    }}
+                  >
+                    Create your account to start making a difference
+                  </p>
+                </div>
+
                 <Form onSubmit={handleSubmit}>
-                  {/* Name Fields */}
+                  {/* First and Last Name */}
                   <Row>
                     <Col md="6">
                       <Form.Group className="mb-3">
                         <Form.Label>First Name *</Form.Label>
-                        <InputGroup>
-                          <InputGroup.Text>
-                            <i className="nc-icon nc-single-02"></i>
-                          </InputGroup.Text>
-                          <Form.Control
-                            type="text"
-                            name="firstName"
-                            placeholder="Enter first name"
-                            value={formData.firstName}
-                            onChange={handleInputChange}
-                            isInvalid={!!errors.firstName}
-                            disabled={isLoading}
-                          />
-                        </InputGroup>
+                        <Form.Control
+                          type="text"
+                          name="firstName"
+                          placeholder="Enter first name"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          isInvalid={!!errors.firstName}
+                          disabled={isLoading}
+                        />
                         {errors.firstName && <Form.Text className="text-danger">{errors.firstName}</Form.Text>}
                       </Form.Group>
                     </Col>
                     <Col md="6">
                       <Form.Group className="mb-3">
                         <Form.Label>Last Name *</Form.Label>
-                        <InputGroup>
-                          <InputGroup.Text>
-                            <i className="nc-icon nc-single-02"></i>
-                          </InputGroup.Text>
-                          <Form.Control
-                            type="text"
-                            name="lastName"
-                            placeholder="Enter last name"
-                            value={formData.lastName}
-                            onChange={handleInputChange}
-                            isInvalid={!!errors.lastName}
-                            disabled={isLoading}
-                          />
-                        </InputGroup>
+                        <Form.Control
+                          type="text"
+                          name="lastName"
+                          placeholder="Enter last name"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          isInvalid={!!errors.lastName}
+                          disabled={isLoading}
+                        />
                         {errors.lastName && <Form.Text className="text-danger">{errors.lastName}</Form.Text>}
                       </Form.Group>
                     </Col>
@@ -243,58 +284,43 @@ function Register() {
                   {/* Email */}
                   <Form.Group className="mb-3">
                     <Form.Label>Email Address *</Form.Label>
-                    <InputGroup>
-                      <InputGroup.Text>
-                        <i className="nc-icon nc-email-85"></i>
-                      </InputGroup.Text>
-                      <Form.Control
-                        type="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        isInvalid={!!errors.email}
-                        disabled={isLoading}
-                      />
-                    </InputGroup>
+                    <Form.Control
+                      type="email"
+                      name="email"
+                      placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      isInvalid={!!errors.email}
+                      disabled={isLoading}
+                    />
                     {errors.email && <Form.Text className="text-danger">{errors.email}</Form.Text>}
                   </Form.Group>
 
                   {/* Organization */}
                   <Form.Group className="mb-3">
                     <Form.Label>Organization (Optional)</Form.Label>
-                    <InputGroup>
-                      <InputGroup.Text>
-                        <i className="nc-icon nc-bank"></i>
-                      </InputGroup.Text>
-                      <Form.Control
-                        type="text"
-                        name="organization"
-                        placeholder="Company, school, or organization"
-                        value={formData.organization}
-                        onChange={handleInputChange}
-                        disabled={isLoading}
-                      />
-                    </InputGroup>
+                    <Form.Control
+                      type="text"
+                      name="organization"
+                      placeholder="Company, school, or organization"
+                      value={formData.organization}
+                      onChange={handleInputChange}
+                      disabled={isLoading}
+                    />
                   </Form.Group>
 
                   {/* Phone */}
                   <Form.Group className="mb-3">
                     <Form.Label>Phone Number (Optional)</Form.Label>
-                    <InputGroup>
-                      <InputGroup.Text>
-                        <i className="nc-icon nc-mobile"></i>
-                      </InputGroup.Text>
-                      <Form.Control
-                        type="tel"
-                        name="phone"
-                        placeholder="+1 (555) 123-4567"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        isInvalid={!!errors.phone}
-                        disabled={isLoading}
-                      />
-                    </InputGroup>
+                    <Form.Control
+                      type="tel"
+                      name="phone"
+                      placeholder="+1 (555) 123-4567"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      isInvalid={!!errors.phone}
+                      disabled={isLoading}
+                    />
                     {errors.phone && <Form.Text className="text-danger">{errors.phone}</Form.Text>}
                   </Form.Group>
 
@@ -302,9 +328,6 @@ function Register() {
                   <Form.Group className="mb-3">
                     <Form.Label>Password *</Form.Label>
                     <InputGroup>
-                      <InputGroup.Text>
-                        <i className="nc-icon nc-key-25"></i>
-                      </InputGroup.Text>
                       <Form.Control
                         type={showPassword ? "text" : "password"}
                         name="password"
@@ -319,7 +342,7 @@ function Register() {
                         onClick={() => setShowPassword(!showPassword)}
                         disabled={isLoading}
                       >
-                        <i className={`nc-icon nc-${showPassword ? 'zoom-split' : 'glasses-2'}`}></i>
+                        {showPassword ? "Hide" : "Show"}
                       </Button>
                     </InputGroup>
                     {formData.password && (
@@ -330,9 +353,8 @@ function Register() {
                         </small>
                         <ProgressBar 
                           variant={getPasswordStrengthColor()} 
-                          now={passwordStrength} 
-                          className="mt-1" 
-                          style={{ height: '4px' }}
+                          now={getPasswordStrengthPercent()} 
+                          style={{ height: '6px', marginTop: '4px' }}
                         />
                       </div>
                     )}
@@ -342,90 +364,73 @@ function Register() {
                   {/* Confirm Password */}
                   <Form.Group className="mb-3">
                     <Form.Label>Confirm Password *</Form.Label>
-                    <InputGroup>
-                      <InputGroup.Text>
-                        <i className="nc-icon nc-key-25"></i>
-                      </InputGroup.Text>
-                      <Form.Control
-                        type="password"
-                        name="confirmPassword"
-                        placeholder="Confirm your password"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        isInvalid={!!errors.confirmPassword}
-                        disabled={isLoading}
-                      />
-                    </InputGroup>
+                    <Form.Control
+                      type="password"
+                      name="confirmPassword"
+                      placeholder="Re-enter your password"
+                      value={formData.confirmPassword}
+                      onChange={handleInputChange}
+                      isInvalid={!!errors.confirmPassword}
+                      disabled={isLoading}
+                    />
                     {errors.confirmPassword && <Form.Text className="text-danger">{errors.confirmPassword}</Form.Text>}
                   </Form.Group>
 
-                  {/* Checkboxes */}
+                  {/* Terms and Privacy Policy */}
                   <Form.Group className="mb-3">
-                    <Form.Check
-                      type="checkbox"
-                      name="agreeToTerms"
-                      label={
-                        <span>
-                          I agree to the{" "}
-                          <Link to="/admin/about" className="text-success">Terms of Service</Link>
-                          {" "}and{" "}
-                          <Link to="/admin/contact" className="text-success">Privacy Policy</Link> *
-                        </span>
-                      }
-                      checked={formData.agreeToTerms}
-                      onChange={handleInputChange}
-                      isInvalid={!!errors.agreeToTerms}
-                      disabled={isLoading}
-                    />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                      <Link to="/Terms.js" style={{color: '#25805a', textDecoration: 'underline', minWidth: 80, fontSize: '0.95em'}}>Terms</Link>
+                      <Link to="/Privacy.js" style={{color: '#25805a', textDecoration: 'underline', minWidth: 80, fontSize: '0.95em'}}>Privacy Policy</Link>
+                      <Button
+                        variant="success"
+                        size="sm"
+                        type="button"
+                        disabled={formData.agreeToTerms}
+                        style={{
+                          marginLeft: 10,
+                          backgroundColor: formData.agreeToTerms ? '#888' : '#e0e0e0',
+                          border: 'none',
+                          borderRadius: '8px',
+                          fontWeight: '600',
+                          color: formData.agreeToTerms ? '#fff' : '#1976d2',
+                          padding: '2px 12px',
+                          fontSize: '0.85em',
+                          transition: 'background-color 0.2s, color 0.2s'
+                        }}
+                        onClick={() => setFormData(prev => ({ ...prev, agreeToTerms: true }))}
+                      >
+                        {formData.agreeToTerms ? 'Accepted' : 'Accept & Continue'}
+                      </Button>
+                    </div>
                     {errors.agreeToTerms && <Form.Text className="text-danger">{errors.agreeToTerms}</Form.Text>}
                   </Form.Group>
 
-                  <Form.Group className="mb-4">
-                    <Form.Check
-                      type="checkbox"
-                      name="subscribeNewsletter"
-                      label="Subscribe to our newsletter for eco-friendly tips and updates"
-                      checked={formData.subscribeNewsletter}
-                      onChange={handleInputChange}
-                      disabled={isLoading}
-                    />
-                  </Form.Group>
-
+                  {/* Submit Button */}
                   <Button
                     variant="success"
                     type="submit"
                     className="w-100 mb-3"
                     disabled={isLoading}
+                    style={{ backgroundColor: '#25805a', border: 'none', borderRadius: '8px', fontWeight: '600', color: '#1976d2' }}
                   >
-                    {isLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        <i className="nc-icon nc-check-2"></i> Create Account
-                      </>
-                    )}
+                    {isLoading ? 'Registering...' : <span style={{color: '#1976d2'}}>Register</span>}
                   </Button>
 
-                  <hr />
-
-                  <div className="text-center">
-                    <p className="mb-0">
-                      Already have an account?{" "}
-                      <Link to="/auth/login" className="text-success fw-bold">
-                        Sign In
-                      </Link>
-                    </p>
+                  {/* Sign In Option */}
+                  <div className="text-center mt-3">
+                    <span style={{ color: '#25805a', fontWeight: 500 }}>
+                      Already have an account?{' '}
+                      <Link to="/auth/login" style={{ color: '#25805a', textDecoration: 'underline', cursor: 'pointer' }}>Sign In</Link>
+                    </span>
                   </div>
+
+                  {/* Google Auth */}
                 </Form>
               </Card.Body>
             </Card>
           </Col>
         </Row>
       </Container>
-    </div>
   );
 }
 

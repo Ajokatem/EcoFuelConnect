@@ -17,7 +17,7 @@ function Admin() {
         return (
           <Route
             path={prop.layout + prop.path}
-            render={(props) => <prop.component {...props} />}
+            component={prop.component}
             key={key}
           />
         );
