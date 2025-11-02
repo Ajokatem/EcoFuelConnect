@@ -258,7 +258,7 @@ function Welcome() {
           <Row>
             <Col md={4} className="mb-4">
               <Card style={{ border: "none", borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", height: "100%" }}>
-                <div style={{ height: "180px", background: "linear-gradient(135deg, #25805a, #1e6b47)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3.5rem" }}>🔬</div>
+                <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=400&h=180&fit=crop" alt="Biogas Technology" style={{ height: "180px", width: "100%", objectFit: "cover" }} />
                 <Card.Body style={{ padding: "20px" }}>
                   <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Biogas Technology</h5>
                   <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>From microbiology to engineering—understand how bacteria transform waste into energy. Hands-on labs, expert mentors, certification included.</p>
@@ -269,7 +269,7 @@ function Welcome() {
             </Col>
             <Col md={4} className="mb-4">
               <Card style={{ border: "none", borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", height: "100%" }}>
-                <div style={{ height: "180px", background: "linear-gradient(135deg, #2d9467, #25805a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3.5rem" }}>♻️</div>
+                <img src="https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&h=180&fit=crop" alt="Waste Management" style={{ height: "180px", width: "100%", objectFit: "cover" }} />
                 <Card.Body style={{ padding: "20px" }}>
                   <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Waste Management</h5>
                   <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>Turn trash into cash. Learn collection logistics, quality control, safety protocols, and business operations. Start your own waste collection enterprise.</p>
@@ -280,7 +280,7 @@ function Welcome() {
             </Col>
             <Col md={4} className="mb-4">
               <Card style={{ border: "none", borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", height: "100%" }}>
-                <div style={{ height: "180px", background: "linear-gradient(135deg, #1e6b47, #25805a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3.5rem" }}>🌱</div>
+                <img src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&h=180&fit=crop" alt="Community Impact" style={{ height: "180px", width: "100%", objectFit: "cover" }} />
                 <Card.Body style={{ padding: "20px" }}>
                   <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Community Impact</h5>
                   <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>Become a community advocate. Learn to measure health outcomes, calculate carbon savings, and inspire others. Change starts with knowledge.</p>
