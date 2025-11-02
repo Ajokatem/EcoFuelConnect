@@ -115,8 +115,8 @@ const WasteEntry = sequelize.define('WasteEntry', {
   },
   // Processing status
   status: {
-    type: DataTypes.ENUM('collected', 'in_transit', 'delivered', 'processing', 'processed'),
-    defaultValue: 'collected'
+    type: DataTypes.ENUM('pending', 'collected', 'in_transit', 'delivered', 'processing', 'processed'),
+    defaultValue: 'pending'
   },
   processedDate: {
     type: DataTypes.DATE,

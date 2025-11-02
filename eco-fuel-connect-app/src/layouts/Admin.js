@@ -6,11 +6,14 @@ import AdminNavbar from "../components/Navbars/AdminNavbar";
 import Footer from "../components/Footer/Footer";
 import Sidebar from "../components/Sidebar/Sidebar";
 
-import routes, { additionalAdminRoutes } from "../routes.js";
+import { dashboardRoutes, getDashboardRoutesByRole, additionalAdminRoutes } from "../routes.js";
+import { useUser } from "../contexts/UserContext";
 
 function Admin() {
+  const { user } = useUser();
   const location = useLocation();
   const mainPanel = React.useRef(null);
+  const filteredRoutes = getDashboardRoutesByRole(user?.role);
   const getRoutes = (routes) => {
     return routes.map((prop, key) => {
       if (prop.layout === "/admin") {
@@ -26,9 +29,8 @@ function Admin() {
       }
     });
   };
-  
   const getAllRoutes = () => {
-    return [...getRoutes(routes), ...getRoutes(additionalAdminRoutes)];
+    return [...getRoutes(filteredRoutes), ...getRoutes(additionalAdminRoutes)];
   };
   React.useEffect(() => {
     document.documentElement.scrollTop = 0;
@@ -40,13 +42,15 @@ function Admin() {
     ) {
       document.documentElement.classList.toggle("nav-open");
       var element = document.getElementById("bodyClick");
-      element.parentNode.removeChild(element);
+      if (element && element.parentNode) {
+        element.parentNode.removeChild(element);
+      }
     }
   }, [location]);
   return (
     <>
       <div className="wrapper">
-        <Sidebar routes={routes} />
+        <Sidebar routes={filteredRoutes} />
         <div className="main-panel" ref={mainPanel}>
           <AdminNavbar />
           <div className="content" style={{padding: '0', margin: '0'}}>

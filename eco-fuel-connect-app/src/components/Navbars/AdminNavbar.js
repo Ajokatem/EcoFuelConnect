@@ -1,9 +1,9 @@
 import React from "react";
-import { useLocation, Link, useHistory } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import { Navbar, Container, Nav, Button } from "react-bootstrap";
 import { useAuth } from "../../hooks/useAuth";
 
-import routes from "../../routes.js";
+import { dashboardRoutes } from "../../routes.js";
 
 function Header() {
   const location = useLocation();
@@ -13,12 +13,12 @@ function Header() {
   const handleLogout = async () => {
     try {
       await logout();
-      // Redirect to login page after logout
-      history.push('/auth/login');
+      // Redirect to Welcome page after logout
+      history.push('/');
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if logout fails, redirect to login page
-      history.push('/auth/login');
+      // Even if logout fails, redirect to Welcome page
+      history.push('/');
     }
   };
 
@@ -35,9 +35,9 @@ function Header() {
   };
 
   const getBrandText = () => {
-    for(let i=0; i<routes.length; i++) {
-      if(location.pathname.indexOf(routes[i].layout + routes[i].path) !== -1) {
-        return routes[i].name;
+    for(let i=0; i<dashboardRoutes.length; i++) {
+      if(location.pathname.indexOf(dashboardRoutes[i].layout + dashboardRoutes[i].path) !== -1) {
+        return dashboardRoutes[i].name;
       }
     }
     return "Brand";
@@ -85,102 +85,7 @@ function Header() {
           <span className="navbar-toggler-bar burger-lines" style={{background: 'white'}}></span>
         </Navbar.Toggle>
         <Navbar.Collapse id="eco-fuel-navbar-nav">
-          <Nav className="nav mr-auto" navbar>
-            <Nav.Item>
-              <Nav.Link 
-                data-toggle="dropdown" 
-                href="#pablo" 
-                onClick={e => e.preventDefault()} 
-                className="m-0"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontFamily: '"Inter", "Segoe UI", sans-serif',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={e => e.target.style.color = 'white'}
-                onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
-              >
-                <span className="d-lg-none ml-1">Dashboard</span>
-              </Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Link 
-                to="/" 
-                className="nav-link m-0"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontFamily: '"Inter", "Segoe UI", sans-serif',
-                  transition: 'all 0.3s ease',
-                  textDecoration: 'none'
-                }}
-                onMouseEnter={e => e.target.style.color = 'white'}
-                onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
-              >
-                Home
-              </Link>
-            </Nav.Item>
-            <Nav.Item className="d-flex align-items-center">
-              <div className="search-container d-flex align-items-center">
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    borderRadius: '20px',
-                    padding: '6px 15px',
-                    color: 'white',
-                    fontSize: '14px',
-                    width: '200px',
-                    fontFamily: '"Inter", "Segoe UI", sans-serif'
-                  }}
-                  onFocus={e => {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.2)';
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.5)';
-                  }}
-                  onBlur={e => {
-                    e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                    e.target.style.borderColor = 'rgba(255, 255, 255, 0.3)';
-                  }}
-                />
-              </div>
-            </Nav.Item>
-          </Nav>
-
-          <Nav className="ml-auto" navbar>
-            <Nav.Item>
-              <Link 
-                to="/admin/contact" 
-                className="nav-link m-0"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontFamily: '"Inter", "Segoe UI", sans-serif',
-                  transition: 'all 0.3s ease',
-                  textDecoration: 'none'
-                }}
-                onMouseEnter={e => e.target.style.color = 'white'}
-                onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
-              >
-                Contact
-              </Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Link 
-                to="/admin/about" 
-                className="nav-link m-0"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.9)',
-                  fontFamily: '"Inter", "Segoe UI", sans-serif',
-                  transition: 'all 0.3s ease',
-                  textDecoration: 'none'
-                }}
-                onMouseEnter={e => e.target.style.color = 'white'}
-                onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
-              >
-                About
-              </Link>
-            </Nav.Item>
+          <Nav className="ms-auto" navbar>
             <Nav.Item>
               <Button
                 variant=""

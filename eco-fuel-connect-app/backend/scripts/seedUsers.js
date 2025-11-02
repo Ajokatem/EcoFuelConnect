@@ -61,6 +61,16 @@ const seedUsers = async () => {
         organization: 'Central Market',
         role: 'supplier',
         emailVerified: true
+      },
+      {
+        firstName: 'Ajok Atem',
+        lastName: 'Beek',
+        email: 'producer@ecofuelconnect.com',
+        password: await bcrypt.hash('producer@123', saltRounds),
+        phone: '+211922333444',
+        organization: 'EcoFuel Biogas Plant',
+        role: 'producer',
+        emailVerified: true
       }
     ];
 

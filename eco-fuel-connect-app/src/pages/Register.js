@@ -30,6 +30,7 @@ function Register() {
     confirmPassword: "",
     organization: "",
     phone: "",
+    role: "",
     agreeToTerms: false,
     subscribeNewsletter: true
   });
@@ -119,10 +120,13 @@ function Register() {
       newErrors.phone = "Please enter a valid phone number";
     }
     
+    if (!formData.role) {
+      newErrors.role = "Please select your category";
+    }
     if (!formData.agreeToTerms) {
       newErrors.agreeToTerms = "You must agree to the Terms and Privacy Policy to register.";
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -144,7 +148,8 @@ function Register() {
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         organization: formData.organization,
-        phone: formData.phone
+        phone: formData.phone,
+        role: formData.role
       });
 
       if (response.user && response.token) {
@@ -307,6 +312,24 @@ function Register() {
                       onChange={handleInputChange}
                       disabled={isLoading}
                     />
+                  </Form.Group>
+
+                  {/* Role Selection */}
+                  <Form.Group className="mb-3">
+                    <Form.Label>Role *</Form.Label>
+                    <Form.Select
+                      name="role"
+                      value={formData.role}
+                      onChange={handleInputChange}
+                      isInvalid={!!errors.role}
+                      disabled={isLoading}
+                    >
+                      <option value="">Select role</option>
+                      <option value="school">School</option>
+                      <option value="supplier">Supplier</option>
+                      <option value="producer">Producer</option>
+                    </Form.Select>
+                    {errors.role && <Form.Text className="text-danger">{errors.role}</Form.Text>}
                   </Form.Group>
 
                   {/* Phone */}

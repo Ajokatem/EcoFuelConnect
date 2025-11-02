@@ -1,0 +1,37 @@
+/* Help Page Responsive Styles */
+
+/* Mobile Responsive Adjustments for Getting Started Card */
+@media (max-width: 768px) {
+  .getting-started-card {
+    padding: 25px !important;
+    margin: 0 15px;
+  }
+  
+  .getting-started-card h5 {
+    font-size: 1.2rem !important;
+    margin-bottom: 15px !important;
+  }
+  
+  .getting-started-card p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .getting-started-card {
+    padding: 20px !important;
+    margin: 0 10px;
+    border-radius: 15px !important;
+  }
+  
+  .getting-started-card h5 {
+    font-size: 1.1rem !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .getting-started-card p {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+}

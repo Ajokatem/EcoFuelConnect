@@ -16,6 +16,8 @@ import {
 } from "react-bootstrap";
 import wasteService from '../services/wasteService';
 import fuelService from '../services/fuelService';
+import { useUser } from "../contexts/UserContext";
+import { useHistory } from "react-router-dom";
 
 function Reports() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -30,11 +32,22 @@ function Reports() {
     carbonReduced: 0,
     costsaved: 0,
   });
+  const [loading, setLoading] = useState(true);
+  const { user } = useUser();
+  const history = useHistory();
 
   useEffect(() => {
-    loadReportData();
+    if (user && user.role !== "producer") {
+      history.push("/admin/dashboard");
+    }
+  }, [user, history]);
+
+  useEffect(() => {
+  setLoading(true);
+  loadReportData();
 
     // Listen for custom event to refresh report data
+    // To trigger a refresh from anywhere, dispatch: window.dispatchEvent(new Event('reportRefresh'))
     const handleReportRefresh = () => {
       loadReportData();
     };
@@ -46,12 +59,14 @@ function Reports() {
     try {
       const wasteEntries = await wasteService.getWasteEntries();
       const fuelRequests = await fuelService.getFuelRequests();
-      setWasteData(wasteEntries);
-      setFuelData(fuelRequests);
-      calculateStats(wasteEntries, fuelRequests);
+      setWasteData(Array.isArray(wasteEntries) ? wasteEntries : []);
+      setFuelData(Array.isArray(fuelRequests) ? fuelRequests : []);
+      calculateStats(Array.isArray(wasteEntries) ? wasteEntries : [], Array.isArray(fuelRequests) ? fuelRequests : []);
     } catch (error) {
       setWasteData([]);
       setFuelData([]);
+    } finally {
+      setTimeout(() => setLoading(false), 1200); // Simulate loading for 1.2s for realism
     }
   };
 
@@ -73,7 +88,8 @@ function Reports() {
 
   const getWasteByType = () => {
     const typeMap = {};
-    wasteData.forEach((entry) => {
+    const arr = Array.isArray(wasteData) ? wasteData : [];
+    arr.forEach((entry) => {
       const type = entry.type || "unknown";
       typeMap[type] = (typeMap[type] || 0) + parseFloat(entry.quantity || 0);
     });
@@ -82,7 +98,8 @@ function Reports() {
 
   const getFuelByStatus = () => {
     const statusMap = {};
-    fuelData.forEach((entry) => {
+    const arr = Array.isArray(fuelData) ? fuelData : [];
+    arr.forEach((entry) => {
       const status = entry.status || "unknown";
       statusMap[status] = (statusMap[status] || 0) + 1;
     });
@@ -150,6 +167,12 @@ function Reports() {
   return (
   <div className="content" style={{ minHeight: "100vh", padding: "20px", backgroundColor: "#fafbfc" }}>
       <Container fluid>
+        {loading ? (
+          <div className="text-center py-5">
+            <div style={{ fontSize: "0.85rem", fontWeight: "400", color: "#28a745" }}>Loading reports...</div>
+          </div>
+        ) : (
+        <>
         {/* Beautiful Header */}
         <div className="text-center mb-4">
           <h3 className="text-dark mb-2">{translate("reports") || "Analytics and Reports"}</h3>
@@ -228,6 +251,8 @@ function Reports() {
             </Col>
           ))}
         </Row>
+        </>
+        )}
 
         {/* Reports Tabs */}
         <Card style={{ 
@@ -456,7 +481,7 @@ function Reports() {
                                 </td>
                               </tr>
                             ) : (
-                              wasteData
+                              (Array.isArray(wasteData) ? wasteData : [])
                                 .slice()
                                 .reverse()
                                 .map((entry) => (
@@ -568,7 +593,7 @@ function Reports() {
                                 </td>
                               </tr>
                             ) : (
-                              fuelData
+                              (Array.isArray(fuelData) ? fuelData : [])
                                 .slice()
                                 .reverse()
                                 .map((request) => (

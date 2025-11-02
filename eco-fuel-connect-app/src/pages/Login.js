@@ -103,10 +103,19 @@ function Login() {
 
       showSuccessAlert("Login successful! Setting up your profile...");
 
-      // Auto-update profile with login details and set token in axios
-      if (response.user && response.token) {
-        updateUser(response.user, response.token);
+      // Always fetch full profile after login and update context ONLY after profile is available
+      let fullProfile = response.user;
+      if (response.token) {
+        try {
+          // Set token in axios before fetching profile
+          updateUser(response.user, response.token);
+          fullProfile = await authService.getProfile();
+        } catch (profileError) {
+          // If profile fetch fails, fallback to login response
+        }
       }
+      // Update context with full profile (guaranteed after profile fetch)
+      updateUser(fullProfile, response.token);
 
       // Redirect to dashboard after success message
       setTimeout(() => {

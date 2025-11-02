@@ -1,13 +1,26 @@
 import api from './api';
 
 class WasteService {
+  // Get active producers for dropdown
+  async getProducers() {
+    try {
+      const response = await api.get('/users?role=producer&isActive=true');
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: 'Failed to fetch producers' };
+    }
+  }
   // Get all waste entries
   async getWasteEntries(params = {}) {
     try {
       const queryString = new URLSearchParams(params).toString();
-  const url = queryString ? `/waste-logging?${queryString}` : '/waste-logging';
+      const url = queryString ? `/waste-logging?${queryString}` : '/waste-logging';
       const response = await api.get(url);
-      return response.data;
+      // Handle both formats: direct array or object with wasteEntries property
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      return response.data.wasteEntries || [];
     } catch (error) {
       throw error.response?.data || { message: 'Failed to fetch waste entries' };
     }

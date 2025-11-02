@@ -173,21 +173,23 @@ export const useLanguage = () => {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [currentLanguage, setCurrentLanguage] = useState('en');
+  // Load language from localStorage or default to 'en'
+  const [currentLanguage, setCurrentLanguage] = useState(() => {
+    return localStorage.getItem('appLanguage') || 'en';
+  });
 
-  // Load language from default or backend user profile
   useEffect(() => {
-    // TODO: Optionally fetch user language from backend profile
-    setCurrentLanguage('en');
-    document.documentElement.dir = 'ltr';
-    document.documentElement.lang = 'en';
-  }, []);
+    document.documentElement.dir = currentLanguage === 'ar' ? 'rtl' : 'ltr';
+    document.documentElement.lang = currentLanguage;
+    localStorage.setItem('appLanguage', currentLanguage);
+  }, [currentLanguage]);
 
   const changeLanguage = (languageCode) => {
     setCurrentLanguage(languageCode);
     // Optionally sync with backend user profile
     document.documentElement.dir = languageCode === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = languageCode;
+    localStorage.setItem('appLanguage', languageCode);
   };
 
   const translate = (key) => {

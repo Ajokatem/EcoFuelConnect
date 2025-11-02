@@ -1,619 +1,624 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useHistory } from "react-router-dom";
-import { Container, Row, Col, Button, Card, Badge, ProgressBar } from "react-bootstrap";
+import { Container, Row, Col, Button, Card, ListGroup, Collapse, Nav } from "react-bootstrap";
 
 function EducationalDetail() {
   const { topicId } = useParams();
   const history = useHistory();
   const [content, setContent] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [completedSections, setCompletedSections] = useState(new Set());
-  const [currentSection, setCurrentSection] = useState(0);
+  const [selectedTopic, setSelectedTopic] = useState(null);
+  const [expandedChapters, setExpandedChapters] = useState([0]);
+  
+  const trainerNames = [
+    { name: "Dr. Sarah Johnson", title: "Environmental Science Professor", initials: "SJ" },
+    { name: "Michael Chen", title: "Renewable Energy Specialist", initials: "MC" },
+    { name: "Dr. Amina Hassan", title: "Biogas Technology Expert", initials: "AH" },
+    { name: "James Omondi", title: "Waste Management Consultant", initials: "JO" },
+    { name: "Dr. Emily Rodriguez", title: "Sustainable Development Advisor", initials: "ER" }
+  ];
+  
+  const trainer = trainerNames[Math.floor(Math.random() * trainerNames.length)];
 
-  useEffect(() => {
-    loadContent();
-  }, [topicId]);
+  const courseData = {
+    1: {
+      title: "Understanding Biogas Technology",
+      description: "Comprehensive guide to biogas production through anaerobic digestion",
+      chapters: [
+        {
+          title: "Introduction to Biogas",
+          topics: [
+            {
+              title: "What is Biogas?",
+              content: `Biogas is a renewable energy source produced through the anaerobic digestion of organic matter. It consists primarily of methane (CH4) at 50-70% and carbon dioxide (CO2) at 30-40%, with trace amounts of hydrogen sulfide, nitrogen, and water vapor.
 
-  const loadContent = () => {
-    const educationalContent = {
-      1: {
-        title: "Biogas Technology",
-        category: "Renewable Energy",
-        duration: "45 min",
-        difficulty: "Beginner",
-        instructor: "Dr. Sarah Johnson, Environmental Engineer",
-        rating: 4.8,
-        students: 12847,
-        sections: [
-          {
-            title: "Introduction to Biogas",
-            content: "Biogas is a renewable energy source produced through anaerobic digestion of organic matter, consisting primarily of methane (50-70%) and carbon dioxide (30-40%). This clean-burning fuel offers an excellent alternative to traditional cooking methods and fossil fuels, particularly in rural areas with abundant organic waste."
-          },
-          {
-            title: "The Anaerobic Digestion Process",
-            content: "The process occurs when organic materials decompose in an oxygen-free environment. Specialized bacteria break down organic matter in four stages: hydrolysis (complex materials into simpler compounds), acidogenesis (conversion to organic acids), acetogenesis (acid conversion to acetate), and methanogenesis (methane and CO2 production)."
-          },
-          {
-            title: "System Components & Design",
-            content: "Biogas systems include a digester (sealed fermentation container), gas storage (collection and storage), distribution system (pipes and valves), and safety equipment (pressure relief valves and gas detectors). Proper design ensures optimal gas production and safe operation."
-          },
-          {
-            title: "Applications & Benefits",
-            content: "Applications range from household cooking and heating to electricity generation and vehicle fuel. Benefits include reduced dependence on firewood, decreased indoor air pollution, lower greenhouse gas emissions, and production of nutrient-rich fertilizer slurry."
-          }
-        ],
-        keyPoints: [
-          "Biogas contains 50-70% methane, making it highly combustible and energy-rich",
-          "One cubic meter of biogas equals approximately 0.6 liters of diesel fuel in energy content",
-          "Anaerobic digestion reduces organic waste volume by 80-90%",
-          "Biogas burns with a blue flame, indicating complete combustion and minimal pollution",
-          "The process works best at temperatures between 35-40°C (mesophilic) or 50-60°C (thermophilic)",
-          "pH levels must stay between 6.8-7.2 for optimal gas production",
-          "Carbon-to-nitrogen ratio should be maintained at 25-30:1 for efficient digestion",
-          "Retention time varies from 15-30 days depending on temperature and waste type",
-          "Gas production typically starts 10-15 days after initial feeding",
-          "Daily gas yield ranges from 0.2-0.4 cubic meters per kilogram of organic waste",
-          "Biogas can be upgraded to biomethane (95%+ methane) for vehicle fuel",
-          "The digestate (slurry) contains nitrogen, phosphorus, and potassium - excellent fertilizer",
-          "Biogas systems can reduce methane emissions by 90% compared to open waste decomposition",
-          "Small household digesters (2-10 cubic meters) can serve families of 4-8 people",
-          "Community digesters (50-200 cubic meters) can power entire villages or institutions",
-          "Initial investment ranges from $200-2000 depending on system size and materials",
-          "Payback period typically 2-4 years through fuel savings and fertilizer benefits",
-          "Maintenance requires 2-4 hours monthly for household systems",
-          "System lifespan averages 15-25 years with proper maintenance",
-          "Biogas production increases by 25-40% when combining different waste types (co-digestion)",
-          "Temperature fluctuations can reduce gas production by up to 50%",
-          "Proper mixing increases gas yield by 15-20%",
-          "Biogas contains trace amounts of hydrogen sulfide (H2S) which is corrosive",
-          "Gas purification can increase methane content from 60% to 95%+",
-          "Biogas density is 20% lighter than air, requiring proper ventilation",
-          "Flame temperature reaches 870°C, suitable for most cooking applications",
-          "Energy content: 21-25 MJ per cubic meter of biogas",
-          "Cooking efficiency: 55-60% compared to 15-20% for wood fires",
-          "Carbon footprint reduction: 2-4 tons CO2 equivalent per household annually",
-          "Job creation potential: 5-10 positions per 100 households served"
-        ],
-        practicalTips: [
-          "Start with kitchen waste and gradually add other organic materials",
-          "Maintain consistent feeding schedule for stable gas production",
-          "Monitor temperature daily during startup phase",
-          "Keep spare parts available for quick repairs",
-          "Train multiple family members in system operation",
-          "Document gas production rates to optimize performance",
-          "Use biogas slurry within 6 months for maximum nutrient value",
-          "Install gas leak detectors in enclosed spaces",
-          "Regular cleaning prevents system blockages",
-          "Seasonal adjustments needed for temperature variations"
-        ],
-        relatedTopics: [
-          { id: 2, title: "Organic Waste Management", type: "prerequisite" },
-          { id: 3, title: "Environmental Benefits", type: "related" },
-          { id: 5, title: "Technology & Innovation", type: "advanced" }
-        ],
-        resources: [
-          { text: "Global Biogas Production Statistics", url: "https://www.irena.org/publications/2022/Jul/Global-Energy-Transformation-A-Roadmap-to-2050", type: "report" },
-          { text: "Anaerobic Digestion Process Guide", url: "https://www.epa.gov/anaerobic-digestion", type: "guide" },
-          { text: "Biogas Plant Design Manual", url: "https://www.snv.org/cms/sites/default/files/explore/download/biogas_manual_final.pdf", type: "manual" },
-          { text: "Methane Production Calculations", url: "https://www.extension.iastate.edu/alternativeag/cropproduction/pdf/methaneproduction.pdf", type: "calculator" },
-          { text: "Biogas Safety Guidelines", url: "https://www.hse.gov.uk/waste/biogas.htm", type: "safety" }
-        ]
-      },
-      2: {
-        title: "Waste Management",
-        category: "Environmental Science",
-        duration: "60 min",
-        difficulty: "Intermediate",
-        instructor: "Prof. Michael Chen, Waste Management Specialist",
-        rating: 4.7,
-        students: 9234,
-        sections: [
-          {
-            title: "Understanding Organic Waste Streams",
-            content: "Organic waste encompasses kitchen scraps, agricultural residues, animal waste, and market waste. Each stream has unique characteristics requiring specific handling procedures to maximize resource recovery and minimize environmental impact."
-          },
-          {
-            title: "Collection & Transportation Systems",
-            content: "Effective collection involves source separation, regular pickup schedules, appropriate storage containers, and quality control measures. Proper systems reduce costs, improve efficiency, and enhance end-product quality."
-          },
-          {
-            title: "Processing Technologies",
-            content: "Processing methods include composting, anaerobic digestion, vermicomposting, and fermentation. Method selection depends on waste characteristics, available resources, climate conditions, and desired end products."
-          },
-          {
-            title: "Economic & Environmental Benefits",
-            content: "Benefits include waste volume reduction, methane emission prevention, soil health improvement, and creation of valuable products. Economic advantages encompass reduced disposal costs and income generation opportunities."
-          }
-        ],
-        keyPoints: [
-          "Organic waste comprises 40-60% of total municipal solid waste in developing countries",
-          "Proper composting can reduce waste volume by 50-70% while creating valuable soil amendment",
-          "Anaerobic digestion can process wet organic waste with 80-95% moisture content",
-          "Vermicomposting produces castings with 5-7 times more nutrients than regular compost",
-          "Food waste generates 3.3 gigatons of CO2 equivalent annually when decomposing in landfills",
-          "Composting temperatures of 55-65°C for 15 days eliminate most pathogens and weed seeds",
-          "Optimal compost C:N ratio is 25-30:1, achieved by mixing green and brown materials",
-          "Compost moisture should be maintained at 50-60% - feeling like a wrung-out sponge",
-          "Turning compost every 2-3 weeks accelerates decomposition and prevents odors",
-          "Finished compost has earthy smell, dark color, and crumbly texture",
-          "Biogas slurry contains 1.5-2% nitrogen, 1% phosphorus, and 1% potassium",
-          "Liquid fertilizer from anaerobic digestion is immediately available to plants",
-          "Proper waste segregation can increase processing efficiency by 40-60%",
-          "Collection frequency should match waste generation rates to prevent spoilage",
-          "Storage containers should be ventilated, covered, and easy to clean",
-          "Waste sorting at source reduces contamination by 80-90%",
-          "Composting reduces greenhouse gas emissions by 50% compared to landfilling",
-          "Vermicomposting can process 0.5-1 kg waste per kg of worms daily",
-          "Compost application increases soil water retention by 20-30%",
-          "Organic waste recycling creates 10-15 jobs per 1000 tons processed annually",
-          "Biogas production from food waste averages 100-200 m³ per ton",
-          "Composting eliminates 99% of pathogenic organisms when done properly",
-          "Waste collection costs can be reduced by 30-40% with proper route optimization",
-          "Community composting programs achieve 60-80% participation rates",
-          "Organic fertilizer from waste reduces chemical fertilizer needs by 40-60%",
-          "Waste processing facilities require 2-5 hectares per 100,000 population served",
-          "Investment payback period for waste processing facilities: 5-8 years",
-          "Compost market value: $20-50 per ton depending on quality and location",
-          "Waste diversion rates can reach 70-85% with comprehensive programs",
-          "Processing capacity: 50-100 kg per cubic meter of digester volume daily"
-        ],
-        practicalTips: [
-          "Separate organic waste at the source to prevent contamination",
-          "Use covered containers to prevent odors and pest attraction",
-          "Establish regular collection schedules to prevent waste spoilage",
-          "Train community members on proper waste segregation techniques",
-          "Monitor compost temperature and moisture levels regularly",
-          "Create incentive programs to encourage participation",
-          "Develop local markets for compost and biogas products",
-          "Implement quality control measures for end products",
-          "Design collection routes for maximum efficiency",
-          "Partner with local farmers for compost distribution"
-        ],
-        relatedTopics: [
-          { id: 1, title: "Biogas Technology", type: "related" },
-          { id: 3, title: "Environmental Benefits", type: "related" },
-          { id: 4, title: "Community Empowerment", type: "advanced" }
-        ],
-        resources: [
-          { text: "FAO Organic Waste Management Guide", url: "http://www.fao.org/3/i3388e/i3388e.pdf", type: "guide" },
-          { text: "Composting Best Practices Manual", url: "https://www.epa.gov/sites/production/files/2018-05/documents/final_compost_guide_508_compliant.pdf", type: "manual" },
-          { text: "Waste-to-Energy Technologies", url: "https://www.irena.org/publications/2017/Mar/Biogas-for-domestic-cooking", type: "report" },
-          { text: "Organic Waste Recycling Guidelines", url: "https://www.unep.org/resources/report/global-waste-management-outlook", type: "guidelines" },
-          { text: "Municipal Solid Waste Management", url: "https://openknowledge.worldbank.org/handle/10986/30317", type: "research" }
-        ]
-      },
-      3: {
-        title: "Environmental Impact & Health Benefits",
-        category: "Public Health",
-        content: `The environmental and health benefits of biogas technology extend far beyond simple waste management, creating positive impacts on climate change mitigation, ecosystem protection, and community health improvement.
+The energy content of biogas ranges from 21-24 MJ/m³, making it comparable to natural gas when purified. One cubic meter of biogas is equivalent to approximately 0.6 liters of diesel fuel in terms of energy output.
 
-Climate change mitigation occurs through multiple mechanisms: preventing methane emissions from decomposing organic waste (methane is 25 times more potent than CO2 as a greenhouse gas), replacing fossil fuels with renewable biogas, reducing deforestation pressure by providing alternative cooking fuel, and sequestering carbon in soil through biogas slurry application.
+Biogas production occurs naturally in environments devoid of oxygen, such as wetlands, rice paddies, and the digestive systems of ruminant animals. However, controlled anaerobic digestion in purpose-built digesters allows for efficient capture and utilization of this valuable energy resource.`,
+              links: [
+                { text: "International Energy Agency - Biogas Report", url: "https://www.iea.org/reports/outlook-for-biogas-and-biomethane-prospects-for-organic-growth" },
+                { text: "EPA Guide to Anaerobic Digestion", url: "https://www.epa.gov/anaerobic-digestion" },
+                { text: "World Biogas Association", url: "https://www.worldbiogasassociation.org/" }
+              ]
+            },
+            {
+              title: "The Anaerobic Digestion Process",
+              content: `Anaerobic digestion is a complex biological process involving four distinct stages:
 
-Ecosystem protection benefits include preventing water contamination from organic waste runoff, reducing soil degradation through organic fertilizer use, protecting biodiversity by decreasing pressure on natural resources, and improving air quality by eliminating open burning of waste materials.
+Hydrolysis: Complex organic polymers (carbohydrates, proteins, lipids) are broken down into simpler monomers (sugars, amino acids, fatty acids) by hydrolytic bacteria. This is often the rate-limiting step in the process.
 
-Health benefits are particularly significant for women and children who spend more time around cooking areas. Indoor air pollution from traditional biomass burning causes respiratory diseases, eye irritation, cardiovascular problems, and premature deaths. Biogas burns cleanly without smoke, dramatically reducing these health risks.
+Acidogenesis: Acidogenic bacteria convert the monomers into volatile fatty acids (VFAs), alcohols, hydrogen, and carbon dioxide. This stage produces organic acids that lower the pH of the digester.
 
-Community health improvements include reduced disease vector breeding in organic waste, improved sanitation through proper waste management, better nutrition from increased food safety, and enhanced quality of life through cleaner living environments.
+Acetogenesis: Acetogenic bacteria convert the VFAs and alcohols into acetic acid, hydrogen, and carbon dioxide. This stage is crucial for maintaining the proper substrate for methane production.
 
-Economic health benefits encompass reduced healthcare costs from respiratory diseases, increased productivity due to better health, time savings from efficient cooking methods, and improved educational outcomes as children spend less time collecting firewood and more time in school.
+Methanogenesis: Methanogenic archaea convert acetic acid and hydrogen/carbon dioxide into methane and carbon dioxide. This final stage produces the combustible biogas.
 
-Environmental monitoring shows that biogas projects can reduce household carbon footprints by 2-4 tons CO2 equivalent annually, decrease particulate matter emissions by 90%, and eliminate up to 95% of methane emissions from organic waste decomposition.`,
-        notes: [
-          "Indoor air pollution causes 4.3 million premature deaths annually worldwide",
-          "Women and children face 20 times higher exposure to cooking smoke than men",
-          "Biogas reduces particulate matter emissions by 90% compared to wood burning",
-          "One biogas plant can prevent 2-4 tons of CO2 equivalent emissions per year",
-          "Methane has 25 times higher global warming potential than carbon dioxide",
-          "Biogas slurry increases soil organic carbon by 15-25% over 3-5 years",
-          "Clean cooking reduces respiratory infections in children by 50%",
-          "Time saved from fuel collection averages 2-4 hours daily for women",
-          "Biogas cooking reduces kitchen temperatures by 5-8°C compared to wood fires",
-          "Eye irritation from cooking smoke affects 80% of women using traditional fuels",
-          "Cardiovascular disease risk decreases by 30% with clean cooking adoption",
-          "Biogas projects can reduce deforestation rates by 20-40% in local areas",
-          "Water quality improves as organic waste is diverted from water sources",
-          "Soil fertility increases by 20-30% with regular biogas slurry application",
-          "Healthcare cost savings average $50-100 per household annually"
-        ],
-        links: [
-          { text: "WHO Indoor Air Pollution Report", url: "https://www.who.int/news-room/fact-sheets/detail/household-air-pollution-and-health" },
-          { text: "Climate Benefits of Biogas", url: "https://www.ipcc.ch/report/renewable-energy-sources-and-climate-change-mitigation/" },
-          { text: "Health Impact Assessment Guide", url: "https://www.cleancookingalliance.org/about/news/04-28-2016-new-health-impact-assessment-toolkit.html" },
-          { text: "Environmental Benefits Study", url: "https://www.sciencedirect.com/science/article/pii/S0960148118304270" },
-          { text: "Gender and Energy Access", url: "https://www.unwomen.org/en/digital-library/publications/2018/5/the-energy-access-situation-report" }
-        ]
-      },
-      4: {
-        title: "Community Empowerment",
-        category: "Social Development",
-        content: `Community empowerment through biogas technology creates sustainable development opportunities that extend beyond energy access to encompass education, economic growth, and social transformation.
+The entire process requires strict anaerobic conditions, with optimal temperature ranges of 35-40°C (mesophilic) or 50-60°C (thermophilic). pH must be maintained between 6.8-7.2 for optimal microbial activity.`,
+              links: [
+                { text: "Anaerobic Digestion Fundamentals", url: "https://www.sciencedirect.com/topics/engineering/anaerobic-digestion" },
+                { text: "Microbiology of Biogas Production", url: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4626696/" }
+              ]
+            }
+          ]
+        },
+        {
+          title: "Digester Design and Components",
+          topics: [
+            {
+              title: "Types of Biogas Digesters",
+              content: `Fixed Dome Digesters: Underground masonry structures with a fixed gas storage dome. Advantages include long lifespan (20-25 years), no moving parts, and space efficiency. Commonly used in China and India for household and community-scale applications.
 
-Educational opportunities emerge through technical skills development in system installation, operation, and maintenance. Community members learn about renewable energy principles, waste management practices, business development, and financial management. These skills create pathways for employment and entrepreneurship while building local capacity for technology adoption and innovation.
+Floating Drum Digesters: Feature a movable gas holder that rises and falls with gas production. Provide visible indication of gas availability but require regular maintenance of the drum. Popular in South Asia for small to medium-scale installations.
 
-Economic empowerment occurs through multiple income streams: waste collection services, biogas sales, fertilizer marketing, system installation and maintenance services, and value-added processing of biogas byproducts. These opportunities are particularly beneficial for women, youth, and marginalized groups who may have limited access to traditional employment.
+Flexible Bag Digesters: Made from PVC or polyethylene materials, these low-cost systems are portable and easy to install. Suitable for tropical climates but have shorter lifespans (5-10 years) and are vulnerable to damage.
 
-Social benefits include improved community organization through cooperative formation, enhanced gender equality through women's participation in technical roles, strengthened social cohesion through collaborative projects, and increased community pride through environmental achievements.
+Plug Flow Digesters: Horizontal rectangular tanks where feedstock moves from inlet to outlet. Ideal for high-solids content waste like animal manure. Commonly used in commercial livestock operations.
 
-Capacity building programs focus on technical training (system design, construction, troubleshooting), business skills (marketing, financial management, customer service), leadership development (project management, community organizing), and knowledge transfer (peer-to-peer learning, mentorship programs).
+Complete Mix Digesters: Mechanically mixed tanks ensuring uniform temperature and substrate distribution. Suitable for diverse waste streams and co-digestion applications. Used in industrial-scale facilities.`,
+              links: [
+                { text: "Biogas Digester Design Manual", url: "https://www.giz.de/en/downloads/giz2013-en-biogas-digest-volume-1.pdf" },
+                { text: "FAO Biogas Technology Guide", url: "http://www.fao.org/3/i3441e/i3441e.pdf" }
+              ]
+            },
+            {
+              title: "System Components and Materials",
+              content: `Digester Tank: The main fermentation chamber must be airtight, structurally sound, and resistant to corrosion. Materials include reinforced concrete, brick with cement plaster, steel, or high-density polyethylene (HDPE).
 
-Institutional support includes access to microfinance for system installation, technical assistance for problem-solving, market linkages for product sales, and policy advocacy for supportive regulations. These support systems ensure sustainable adoption and long-term success of biogas initiatives.
+Gas Storage: Can be integrated (fixed dome) or separate (floating drum, gas bag). Storage capacity should match daily production and consumption patterns. Pressure regulation is essential for safe operation.
 
-Scaling strategies involve demonstration projects to showcase benefits, training programs to build local expertise, financing mechanisms to overcome cost barriers, and policy frameworks to support widespread adoption.`,
-        notes: [
-          "Women's participation in biogas projects increases household decision-making power by 40%",
-          "Technical training programs create employment for 15-20% of participants",
-          "Community biogas projects reduce fuel expenses by 60-80% for participating households",
-          "Cooperative formation increases project success rates by 70%",
-          "Youth engagement in biogas projects reduces rural-urban migration by 25%",
-          "Women save 2-4 hours daily from reduced fuel collection and cooking time",
-          "Income from biogas-related activities averages $200-500 annually per household",
-          "Leadership training increases women's participation in community decisions by 50%",
-          "Peer learning networks improve system performance by 30-40%",
-          "Microfinance access enables 80% of interested households to install systems",
-          "Technical support reduces system failure rates from 40% to less than 10%",
-          "Community ownership increases project sustainability by 85%",
-          "Skills transfer creates local employment for 5-10 people per 100 households served",
-          "Social cohesion improvements reduce community conflicts by 30%",
-          "Educational outcomes improve as children spend more time studying instead of collecting fuel"
-        ],
-        links: [
-          { text: "Community-Based Energy Projects", url: "https://www.irena.org/publications/2018/Jul/Community-Energy-Toolkit" },
-          { text: "Gender and Renewable Energy", url: "https://www.irena.org/publications/2019/Jan/Renewable-Energy-A-Gender-Perspective" },
-          { text: "Rural Development Through Biogas", url: "https://www.snv.org/cms/sites/default/files/explore/download/biogas_programme_impact_study.pdf" },
-          { text: "Cooperative Development Guide", url: "https://www.ilo.org/wcmsp5/groups/public/---ed_emp/---emp_ent/---coop/documents/publication/wcms_166021.pdf" },
-          { text: "Capacity Building Framework", url: "https://www.undp.org/content/undp/en/home/librarypage/capacity-building/" }
-        ]
-      },
-      5: {
-        title: "Technology & Innovation",
-        category: "Engineering",
-        content: `Biogas technology continues evolving through innovations in design, materials, monitoring systems, and integration with other renewable energy sources, making systems more efficient, affordable, and user-friendly.
+Inlet and Outlet: Designed for easy feeding and removal of digestate. Inlet pipes should prevent air entry, while outlet chambers allow for hydraulic pressure management.
 
-Digester design innovations include fixed dome digesters with improved gas storage, floating drum systems with corrosion-resistant materials, flexible bag digesters with enhanced durability, and modular systems allowing capacity expansion. Each design offers specific advantages for different applications, climates, and user needs.
+Mixing System: Mechanical or hydraulic mixing improves gas production by 15-20% by ensuring uniform temperature and preventing stratification. Can be manual, mechanical, or biogas-powered.
 
-Material innovations focus on locally available resources, cost reduction, and performance improvement. New concrete formulations increase durability, plastic materials offer lightweight alternatives, biogas-resistant coatings extend system life, and prefabricated components reduce installation time and costs.
+Heating System: In cold climates, maintaining optimal temperature requires insulation and/or active heating. Solar water heaters, heat exchangers, or biogas-fired boilers can be used.
 
-Digital integration transforms biogas systems through IoT sensors monitoring temperature, pH, and gas production, mobile applications for system management, data analytics for performance optimization, and remote monitoring capabilities. These technologies enable predictive maintenance, performance optimization, and quality control.
+Gas Cleaning and Conditioning: Removal of hydrogen sulfide (H2S), moisture, and CO2 improves combustion efficiency and prevents corrosion. Methods include iron oxide filters, water scrubbing, and activated carbon.
 
-Smart systems incorporate automated feeding mechanisms, gas purification units, pressure regulation systems, and safety monitoring devices. Integration with solar panels, wind turbines, and battery storage creates hybrid renewable energy systems providing reliable power supply.
+Safety Equipment: Pressure relief valves, flame arrestors, gas leak detectors, and emergency shut-off valves are essential for safe operation.`,
+              links: [
+                { text: "Biogas Plant Construction Manual", url: "https://www.snv.org/cms/sites/default/files/explore/download/biogas_construction_manual.pdf" },
+                { text: "Materials Selection Guide", url: "https://www.irena.org/publications/2017/Mar/Biogas-for-domestic-cooking" }
+              ]
+            }
+          ]
+        },
+        {
+          title: "Feedstock and Substrate Management",
+          topics: [
+            {
+              title: "Suitable Feedstock Materials",
+              content: `Animal Manure: Cattle, pig, and poultry manure are excellent feedstocks with C:N ratios of 15-25:1. Fresh manure contains 70-90% moisture, ideal for anaerobic digestion. Biogas yield: 200-400 m³/ton volatile solids.
 
-Process innovations include pre-treatment methods to accelerate digestion, co-digestion techniques combining different waste types, gas upgrading technologies producing vehicle-quality fuel, and waste-to-energy integration maximizing resource recovery.
+Kitchen Waste: Food scraps, vegetable peels, and cooking waste have high biogas potential (400-500 m³/ton VS) but require pH management due to rapid acidification. Should be mixed with other substrates.
 
-Future developments focus on micro-digesters for individual households, community-scale systems with distributed generation, integration with smart grids, and carbon credit mechanisms providing additional revenue streams.`,
-        notes: [
-          "Modern biogas plants achieve 85-95% methane capture efficiency",
-          "IoT monitoring systems reduce maintenance costs by 30-40%",
-          "Prefabricated digesters reduce installation time from weeks to days",
-          "Gas upgrading can increase methane content from 60% to 95%+",
-          "Hybrid systems combining biogas and solar increase energy reliability by 80%",
-          "Automated feeding systems reduce labor requirements by 70%",
-          "Advanced materials extend digester life from 10-15 years to 20-25 years",
-          "Mobile monitoring reduces system downtime by 50%",
-          "Co-digestion can increase gas production by 25-40%",
-          "Micro-digesters (1-2 cubic meters) serve individual households effectively",
-          "Community systems (100+ cubic meters) achieve economies of scale",
-          "Gas purification removes 99% of hydrogen sulfide and CO2",
-          "Smart pressure regulation prevents system damage and improves safety",
-          "Predictive maintenance reduces unexpected failures by 60%",
-          "Integration with carbon markets provides additional income of $50-200 annually"
-        ],
-        links: [
-          { text: "Biogas Technology Roadmap", url: "https://www.irena.org/publications/2017/Mar/Biogas-for-domestic-cooking" },
-          { text: "Innovation in Anaerobic Digestion", url: "https://www.iea.org/reports/outlook-for-biogas-and-biomethane-prospects-for-organic-growth" },
-          { text: "Smart Energy Systems", url: "https://www.irena.org/publications/2019/Feb/Innovation-landscape-for-smart-energy-systems" },
-          { text: "Biogas Plant Design Guide", url: "https://www.giz.de/en/downloads/giz2013-en-biogas-digest-volume-1.pdf" },
-          { text: "Renewable Energy Integration", url: "https://www.irena.org/publications/2017/Mar/Electricity-storage-and-renewables-costs-and-markets" }
-        ]
-      },
-      6: {
-        title: "Getting Involved",
-        category: "Participation Guide",
-        content: `Getting involved with biogas and sustainable energy initiatives offers multiple pathways for individuals, families, organizations, and communities to contribute to environmental protection while gaining economic and social benefits.
+Agricultural Residues: Crop residues, straw, and plant materials provide carbon-rich substrate. Require pre-treatment (chopping, soaking) to improve digestibility. C:N ratio: 50-100:1.
 
-Individual participation begins with household waste separation, contributing organic materials to community collection systems, adopting biogas for cooking and heating, and sharing knowledge with neighbors and friends. Personal involvement creates immediate benefits while supporting larger community initiatives.
+Market Waste: Spoiled fruits, vegetables, and organic market waste offer consistent supply in urban areas. High moisture content and readily biodegradable.
 
-Family engagement includes installing household biogas systems, participating in cooperative purchasing programs, involving children in environmental education, and integrating sustainable practices into daily routines. Family participation demonstrates commitment and creates learning opportunities for future generations.
+Slaughterhouse Waste: Blood, intestinal contents, and soft tissues have very high biogas potential (600-800 m³/ton VS) but require careful management to prevent ammonia inhibition.
 
-Community involvement encompasses organizing waste collection cooperatives, establishing community biogas plants, developing local maintenance networks, and advocating for supportive policies. Community-level action achieves economies of scale and creates sustainable support systems.
+Energy Crops: Purpose-grown crops like maize, grass, and sorghum can be used but compete with food production. Mainly used in large-scale commercial facilities.`,
+              links: [
+                { text: "Feedstock Characteristics Database", url: "https://www.biogas-renewable-energy.info/biogas_feedstocks.html" },
+                { text: "Substrate Pre-treatment Methods", url: "https://www.sciencedirect.com/science/article/pii/S0960852413018263" }
+              ]
+            },
+            {
+              title: "Co-digestion and Optimization",
+              content: `Co-digestion involves mixing different substrates to optimize biogas production. Benefits include:
 
-Organizational participation includes schools integrating biogas into curricula and operations, businesses contributing waste and purchasing biogas, NGOs supporting implementation and training, and government agencies creating enabling policies and regulations.
+Nutrient Balance: Combining carbon-rich and nitrogen-rich materials achieves optimal C:N ratio of 25-30:1. For example, mixing straw (high C:N) with manure (low C:N).
 
-Professional opportunities exist in system design and installation, maintenance and repair services, waste collection and processing, training and education, research and development, and policy development and advocacy. These careers contribute to sustainable development while providing meaningful employment.
+Dilution of Inhibitors: Mixing substrates dilutes potentially toxic compounds like ammonia, salts, or heavy metals that might inhibit digestion in concentrated form.
 
-Getting started involves learning about biogas technology through workshops and demonstrations, assessing personal or organizational waste generation and energy needs, connecting with local biogas initiatives and support organizations, and beginning with small-scale participation before expanding involvement.`,
-        notes: [
-          "Household biogas systems require 20-50 kg of organic waste daily for optimal operation",
-          "Community systems serve 50-200 households with shared infrastructure costs",
-          "Training programs typically last 2-5 days for basic operation and maintenance",
-          "Initial investment for household systems ranges from $200-800 depending on size",
-          "Payback period averages 2-4 years through fuel savings and fertilizer benefits",
-          "Cooperative purchasing reduces individual system costs by 20-30%",
-          "Technical support networks increase system success rates by 60%",
-          "Educational programs reach 80% of community members within 6 months",
-          "Women's participation increases project sustainability by 70%",
-          "Youth involvement ensures knowledge transfer to next generation",
-          "Business partnerships provide steady waste supply and gas demand",
-          "Government support accelerates adoption rates by 300-500%",
-          "Financing options include microloans, subsidies, and payment plans",
-          "Maintenance requirements average 2-4 hours monthly per household system",
-          "Community systems create 5-10 local jobs per 100 households served"
-        ],
-        links: [
-          { text: "Biogas User Manual", url: "https://www.snv.org/cms/sites/default/files/explore/download/biogas_user_manual.pdf" },
-          { text: "Community Energy Planning", url: "https://www.irena.org/publications/2018/Jul/Community-Energy-Toolkit" },
-          { text: "Financing Renewable Energy", url: "https://www.irena.org/publications/2020/Jan/Renewable-energy-finance-Institutional-capital" },
-          { text: "Training Resources", url: "https://www.giz.de/en/worldwide/15109.html" },
-          { text: "Policy Support Framework", url: "https://www.irena.org/publications/2018/Apr/Renewable-energy-policies-in-a-time-of-transition" }
-        ]
-      }
-    };
+Increased Biogas Yield: Synergistic effects can increase gas production by 25-40% compared to mono-digestion. Different substrates provide diverse nutrients for microbial communities.
 
-    const topicContent = educationalContent[parseInt(topicId)];
-    if (topicContent) {
-      setContent(topicContent);
+Improved Process Stability: Diverse substrate mix buffers against fluctuations in individual feedstock availability or quality.
+
+Optimal Mixing Ratios:
+- Cattle manure 60% + kitchen waste 40%
+- Pig manure 50% + crop residues 50%
+- Poultry manure 30% + vegetable waste 70%
+
+Loading Rate: Organic loading rate (OLR) should be 1-4 kg VS/m³/day for stable operation. Overloading causes acid accumulation and process failure.
+
+Hydraulic Retention Time (HRT): Typically 20-40 days depending on temperature and substrate. Longer HRT ensures complete digestion but requires larger digesters.`,
+              links: [
+                { text: "Co-digestion Best Practices", url: "https://www.irena.org/publications/2017/Mar/Biogas-for-domestic-cooking" },
+                { text: "Process Optimization Guide", url: "https://www.extension.iastate.edu/alternativeag/cropproduction/pdf/methaneproduction.pdf" }
+              ]
+            }
+          ]
+        },
+        {
+          title: "Operation and Maintenance",
+          topics: [
+            {
+              title: "Daily Operations",
+              content: `Feeding Schedule: Maintain consistent daily feeding times to establish stable microbial populations. Feed in small batches rather than large single loads to prevent pH shock.
+
+Monitoring Parameters:
+- Temperature: Check daily, maintain within ±2°C of optimal range
+- pH: Test weekly, should be 6.8-7.2
+- Gas production: Record daily volume to track performance
+- Pressure: Monitor gas storage pressure for safety
+- Foam formation: Indicates overloading or imbalance
+
+Mixing: Stir digester contents 2-3 times daily for household systems, continuous for commercial systems. Prevents scum formation and ensures uniform temperature.
+
+Gas Utilization: Use biogas regularly to maintain steady production. Unused gas should be safely flared rather than vented.
+
+Record Keeping: Maintain logs of feeding amounts, gas production, temperature, and any operational issues. Helps identify trends and optimize performance.`,
+              links: [
+                { text: "Operation and Maintenance Manual", url: "https://www.snv.org/cms/sites/default/files/explore/download/biogas_operation_manual.pdf" },
+                { text: "Troubleshooting Guide", url: "https://www.biogas-renewable-energy.info/biogas_troubleshooting.html" }
+              ]
+            },
+            {
+              title: "Maintenance and Troubleshooting",
+              content: `Routine Maintenance:
+- Weekly: Check for gas leaks using soap solution, inspect pipes and connections
+- Monthly: Clean gas pipes and water traps, check pressure relief valves
+- Quarterly: Inspect digester structure for cracks, test safety equipment
+- Annually: Empty and clean digester, inspect internal components, replace worn parts
+
+Common Problems and Solutions:
+
+Low Gas Production:
+- Cause: Low temperature, overloading, toxic substances, nutrient imbalance
+- Solution: Adjust feeding rate, improve insulation, check substrate quality, add buffer materials
+
+Foul Odor:
+- Cause: Gas leaks, incomplete combustion, H2S buildup
+- Solution: Repair leaks, clean burners, install H2S scrubber
+
+Foam Formation:
+- Cause: Overloading, high protein content, rapid gas production
+- Solution: Reduce feeding rate, add anti-foaming agents, improve mixing
+
+pH Drop:
+- Cause: Overloading, insufficient alkalinity
+- Solution: Reduce feeding, add lime or wood ash, increase HRT
+
+Scum Layer:
+- Cause: High fat content, insufficient mixing
+- Solution: Improve mixing, reduce fat input, break up scum manually
+
+Safety Considerations:
+- Never enter digester without proper ventilation and safety equipment
+- Test for methane and oxygen levels before entry
+- Use explosion-proof lighting and tools
+- Have emergency procedures in place
+- Train all operators in safety protocols`,
+              links: [
+                { text: "Safety Guidelines", url: "https://www.hse.gov.uk/waste/biogas.htm" },
+                { text: "Maintenance Checklist", url: "https://www.biogas-renewable-energy.info/biogas_maintenance.html" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    2: {
+      title: "Organic Waste Collection & Management",
+      description: "Comprehensive strategies for collecting and managing organic waste for biogas production",
+      chapters: [
+        {
+          title: "Waste Stream Identification",
+          topics: [
+            {
+              title: "Municipal Organic Waste",
+              content: `Municipal solid waste in developing countries contains 40-60% organic material, representing a significant resource for biogas production.
+
+Residential Waste: Kitchen scraps, food waste, garden trimmings. Generation rate: 0.3-0.5 kg/person/day. Characteristics: High moisture (70-80%), readily biodegradable, variable composition.
+
+Commercial Waste: Restaurants, hotels, food processing facilities. Generation rate: 2-10 kg/employee/day. Characteristics: Consistent quality, high organic content, potential for contamination with packaging.
+
+Market Waste: Spoiled produce, vegetable trimmings, unsold items. Generation rate: 50-200 kg/vendor/day. Characteristics: Seasonal variation, high moisture, rapid decomposition.
+
+Institutional Waste: Schools, hospitals, prisons. Generation rate: 0.2-0.4 kg/person/day. Characteristics: Predictable generation, controlled quality, regular collection schedule.
+
+Collection Strategies:
+- Source separation at point of generation
+- Color-coded bins for different waste types
+- Regular collection schedules (daily for food waste)
+- Quality control to prevent contamination
+- Incentive programs for participation`,
+              links: [
+                { text: "World Bank Waste Management Report", url: "https://openknowledge.worldbank.org/handle/10986/30317" },
+                { text: "UN Environment Waste Guidelines", url: "https://www.unep.org/resources/report/global-waste-management-outlook" }
+              ]
+            },
+            {
+              title: "Agricultural and Livestock Waste",
+              content: `Agricultural waste represents the largest potential feedstock for biogas production globally.
+
+Crop Residues: Straw, stalks, husks, leaves. Generation: 1-3 tons/hectare/harvest. Characteristics: High C:N ratio (50-100:1), requires pre-treatment, seasonal availability.
+
+Animal Manure: Cattle, pigs, poultry, sheep. Generation: 10-40 kg/animal/day (cattle), 2-4 kg/animal/day (pigs). Characteristics: Consistent composition, optimal C:N ratio, year-round availability.
+
+Processing Waste: Fruit pulp, vegetable trimmings, grain waste. Generation: 10-30% of processed material. Characteristics: High biogas potential, concentrated source, may require pH adjustment.
+
+Slaughterhouse Waste: Blood, intestinal contents, soft tissues, bones. Generation: 20-40 kg/animal slaughtered. Characteristics: Very high biogas potential, requires careful handling, potential pathogen concerns.
+
+Collection Considerations:
+- Proximity to generation source
+- Transportation costs and logistics
+- Storage requirements
+- Seasonal variations
+- Quality control measures
+- Biosecurity protocols`,
+              links: [
+                { text: "FAO Agricultural Waste Management", url: "http://www.fao.org/3/i3388e/i3388e.pdf" },
+                { text: "Livestock Waste Utilization", url: "https://www.sciencedirect.com/topics/agricultural-and-biological-sciences/livestock-waste" }
+              ]
+            }
+          ]
+        },
+        {
+          title: "Collection Systems Design",
+          topics: [
+            {
+              title: "Collection Infrastructure",
+              content: `Effective waste collection requires appropriate infrastructure, equipment, and logistics.
+
+Storage Containers:
+- Household: 20-50 liter bins with tight-fitting lids
+- Commercial: 120-240 liter wheeled bins
+- Bulk: 1-10 cubic meter containers or compactors
+- Materials: HDPE plastic, galvanized steel, or fiberglass
+- Features: Ventilation holes, drainage, easy cleaning, pest-proof
+
+Collection Vehicles:
+- Small-scale: Handcarts, bicycle trailers, motorcycles with trailers
+- Medium-scale: Pickup trucks, small compactor trucks
+- Large-scale: Rear-loader trucks, side-loader trucks, roll-off trucks
+- Capacity: Match to route density and distance to processing facility
+
+Transfer Stations:
+- Purpose: Consolidate waste from multiple collection routes
+- Location: Strategic points between collection areas and processing facility
+- Features: Covered area, weighbridge, quality control station, temporary storage
+- Benefits: Reduce transportation costs, improve efficiency, enable quality control
+
+Route Optimization:
+- Use GIS mapping to plan efficient routes
+- Consider traffic patterns and road conditions
+- Balance load across collection days
+- Minimize travel distance and time
+- Account for seasonal variations
+
+Collection Frequency:
+- Food waste: Daily or every 2 days (rapid decomposition)
+- Garden waste: Weekly
+- Agricultural waste: Seasonal, as available
+- Market waste: Daily
+- Institutional waste: Daily or every 2 days`,
+              links: [
+                { text: "Waste Collection Best Practices", url: "https://www.epa.gov/sites/production/files/2016-03/documents/r5_mswc_final.pdf" },
+                { text: "Route Optimization Tools", url: "https://www.waste360.com/fleet-technology/route-optimization-software-guide" }
+              ]
+            },
+            {
+              title: "Quality Control and Monitoring",
+              content: `Quality control ensures feedstock suitability for biogas production and prevents process disruptions.
+
+Acceptance Criteria:
+- Organic content: >80% by weight
+- Moisture content: 60-90% for wet digestion
+- Contamination: <5% non-organic materials
+- Particle size: <50mm for most digesters
+- pH: 5-9 (will be adjusted in digester)
+- No toxic substances: heavy metals, pesticides, antibiotics
+
+Inspection Procedures:
+- Visual inspection at collection point
+- Random sampling for detailed analysis
+- Rejection of contaminated loads
+- Documentation of waste sources and quantities
+- Regular feedback to waste generators
+
+Weighing and Recording:
+- Weighbridge or platform scales at facility
+- Record weight, source, date, and quality
+- Track seasonal variations
+- Calculate biogas yield per source
+- Identify best-performing sources
+
+Pre-treatment:
+- Sorting to remove contaminants
+- Size reduction (shredding, chopping)
+- Moisture adjustment if needed
+- Mixing different waste streams
+- Hygienization if required (pathogens)
+
+Storage Management:
+- Maximum storage time: 2-3 days for food waste
+- Covered storage to prevent odors and pests
+- First-in-first-out (FIFO) system
+- Temperature monitoring
+- Leachate collection and management`,
+              links: [
+                { text: "Quality Control Guidelines", url: "https://www.biogas-renewable-energy.info/biogas_feedstocks.html" },
+                { text: "Waste Characterization Methods", url: "https://www.sciencedirect.com/topics/engineering/waste-characterization" }
+              ]
+            }
+          ]
+        },
+        {
+          title: "Community Engagement",
+          topics: [
+            {
+              title: "Stakeholder Participation",
+              content: `Successful waste management requires active participation from all stakeholders.
+
+Awareness Campaigns:
+- Public meetings and workshops
+- School education programs
+- Mass media campaigns (radio, posters, social media)
+- Demonstration projects
+- Success story sharing
+
+Incentive Programs:
+- Reduced waste collection fees for participants
+- Payment for delivered organic waste
+- Free compost or biogas for contributors
+- Recognition and awards for best performers
+- Community benefit sharing from biogas sales
+
+Training Programs:
+- Waste separation techniques
+- Proper storage and handling
+- Collection schedules and procedures
+- Benefits of participation
+- Environmental and health impacts
+
+Feedback Mechanisms:
+- Regular community meetings
+- Complaint and suggestion systems
+- Performance reporting
+- Transparent operations
+- Responsive management
+
+Behavior Change:
+- Start with early adopters and champions
+- Demonstrate tangible benefits
+- Make participation easy and convenient
+- Provide ongoing support and encouragement
+- Celebrate successes and milestones`,
+              links: [
+                { text: "Community Engagement Guide", url: "https://www.worldbank.org/en/topic/urbandevelopment/brief/solid-waste-management" },
+                { text: "Behavior Change Strategies", url: "https://www.unep.org/resources/report/global-waste-management-outlook" }
+              ]
+            }
+          ]
+        }
+      ]
     }
-    setLoading(false);
   };
 
-  if (loading) {
-    return (
-      <Container className="mt-5">
-        <div className="text-center">
-          <div className="spinner-border text-success" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="mt-3">Loading educational content...</p>
-        </div>
-      </Container>
+  useEffect(() => {
+    const course = courseData[parseInt(topicId)];
+    if (course) {
+      setContent(course);
+      if (course.chapters[0]?.topics[0]) {
+        setSelectedTopic(course.chapters[0].topics[0]);
+      }
+    }
+  }, [topicId]);
+
+  const toggleChapter = (index) => {
+    setExpandedChapters(prev =>
+      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
     );
-  }
+  };
+  
+  const handleTopicClick = (topic) => {
+    setSelectedTopic(topic);
+  };
 
   if (!content) {
     return (
       <Container className="mt-5">
         <div className="text-center">
-          <h3>Content Not Found</h3>
-          <Button variant="success" onClick={() => history.goBack()}>
-            Go Back
+          <h3>Course not found</h3>
+          <Button variant="success" onClick={() => history.push('/admin/educational-content')}>
+            Back to Courses
           </Button>
         </div>
       </Container>
     );
   }
 
-  const toggleSection = (index) => {
-    const newCompleted = new Set(completedSections);
-    if (newCompleted.has(index)) {
-      newCompleted.delete(index);
-    } else {
-      newCompleted.add(index);
-    }
-    setCompletedSections(newCompleted);
-  };
-
-  const progress = content && content.sections ? (completedSections.size / content.sections.length) * 100 : 0;
-
   return (
-    <div style={{ backgroundColor: '#f8f9fa', minHeight: '100vh' }}>
-      {/* Course Header */}
-      <div style={{ background: 'linear-gradient(135deg, #25805a, #1e6b47)', color: 'white', padding: '40px 0' }}>
-        <Container>
-          <Row>
-            <Col lg={8}>
-              <Button variant="outline-light" size="sm" onClick={() => history.goBack()} className="mb-3">
-                ← Back to Courses
-              </Button>
-              <h1 style={{ fontSize: '2.2rem', fontWeight: '600', marginBottom: '15px' }}>{content.title}</h1>
-              <p style={{ fontSize: '1.1rem', opacity: '0.9', marginBottom: '20px' }}>
-                Learn sustainable energy through practical applications
-              </p>
-              <div className="d-flex flex-wrap gap-3 align-items-center">
-                <Badge bg="warning" text="dark" style={{ padding: '8px 12px', fontSize: '0.9rem' }}>
-                  {content.difficulty}
-                </Badge>
-                <span>⏱️ {content.duration}</span>
-                <span>👨‍🏫 {content.instructor}</span>
-                <span>⭐ {content.rating} ({content.students ? content.students.toLocaleString() : 0} students)</span>
-              </div>
-            </Col>
-            <Col lg={4} className="text-end">
-              <div style={{ background: 'rgba(255,255,255,0.1)', padding: '20px', borderRadius: '12px' }}>
-                <h5>Course Progress</h5>
-                <ProgressBar 
-                  now={progress} 
-                  style={{ height: '8px', marginBottom: '10px' }}
-                  variant="warning"
-                />
-                <small>{Math.round(progress)}% Complete</small>
-              </div>
-            </Col>
-          </Row>
+    <div style={{ background: "#f7f9fa", minHeight: "100vh" }}>
+      {/* Top Navigation */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #d1d7dc", padding: "12px 0" }}>
+        <Container fluid style={{ maxWidth: "1340px" }}>
+          <Nav style={{ fontSize: "14px" }}>
+            <Nav.Link href="#" style={{ color: "#1c1d1f", padding: "8px 16px" }}>Home</Nav.Link>
+            <Nav.Link href="#" style={{ color: "#1c1d1f", padding: "8px 16px", fontWeight: 600 }}>My Learning</Nav.Link>
+            <Nav.Link href="#" style={{ color: "#1c1d1f", padding: "8px 16px" }}>Catalog</Nav.Link>
+            <Nav.Link href="#" style={{ color: "#1c1d1f", padding: "8px 16px" }}>Favorites <span style={{ background: "#e4e8eb", padding: "2px 8px", borderRadius: "3px", marginLeft: "4px" }}>1</span></Nav.Link>
+          </Nav>
         </Container>
       </div>
 
-      <Container style={{ padding: '40px 15px' }}>
-        <Row>
-          {/* Course Content */}
-          <Col lg={8}>
-            <Card className="shadow-sm border-0 mb-4">
-              <Card.Body style={{ padding: '30px' }}>
-                <h4 style={{ color: '#25805a', marginBottom: '20px' }}>Sections</h4>
-                {content.sections && content.sections.map((section, index) => (
-                  <div key={index} className="mb-4">
-                    <div 
-                      style={{
-                        background: completedSections.has(index) ? '#d4edda' : '#f8f9fa',
-                        border: '1px solid #e9ecef',
-                        borderRadius: '12px',
-                        padding: '20px',
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onClick={() => toggleSection(index)}
-                    >
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 style={{ color: '#2c3e50', marginBottom: '0' }}>
-                          {completedSections.has(index) ? '✅' : '📖'} {section.title}
-                        </h5>
-                        <Badge bg={completedSections.has(index) ? 'success' : 'secondary'}>
-                          {completedSections.has(index) ? 'Completed' : 'Not Started'}
-                        </Badge>
-                      </div>
-                      <p style={{ color: '#6c757d', lineHeight: '1.6', marginBottom: '0' }}>
-                        {section.content}
-                      </p>
-                    </div>
+      {/* Course Title Bar */}
+      <div style={{ background: "#2d2f31", color: "#fff", padding: "16px 0" }}>
+        <Container fluid style={{ maxWidth: "1340px", display: "flex", alignItems: "center" }}>
+          <Button 
+            variant="link" 
+            onClick={() => history.push('/admin/educational-content')} 
+            style={{ 
+              color: "#fff", 
+              textDecoration: "none", 
+              padding: "0 12px 0 0", 
+              fontSize: "20px",
+              fontWeight: 300,
+              border: "none",
+              background: "none"
+            }}
+          >
+            &lt;
+          </Button>
+          <h5 style={{ margin: 0, fontSize: "16px", fontWeight: 600 }}>{content.title}</h5>
+        </Container>
+      </div>
+
+      {/* Main Content Layout */}
+      <Container fluid style={{ padding: 0, maxWidth: "1340px" }}>
+        <Row style={{ margin: 0 }}>
+          {/* Left Sidebar - Chapter List */}
+          <Col md={7} lg={8} style={{ background: "#fff", padding: "24px", maxHeight: "calc(100vh - 140px)", overflowY: "auto" }}>
+            {content.chapters.map((chapter, chapterIndex) => (
+              <div key={chapterIndex} style={{ marginBottom: "16px" }}>
+                <div
+                  onClick={() => toggleChapter(chapterIndex)}
+                  style={{
+                    padding: "14px 16px",
+                    background: "#f7f9fa",
+                    border: "1px solid #d1d7dc",
+                    borderRadius: "0",
+                    cursor: "pointer",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    color: "#1c1d1f",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}
+                >
+                  <span>📄 {chapter.title}</span>
+                  <span style={{ fontSize: "12px", color: "#6a6f73" }}>{chapter.topics.length} chapter</span>
+                </div>
+                <Collapse in={expandedChapters.includes(chapterIndex)}>
+                  <div>
+                    {chapter.topics.map((topic, topicIndex) => {
+                      const isSelected = selectedTopic?.title === topic.title;
+                      return (
+                        <div
+                          key={topicIndex}
+                          onClick={() => handleTopicClick(topic)}
+                          style={{
+                            cursor: "pointer",
+                            background: isSelected ? "#f7f9fa" : "#fff",
+                            border: "1px solid #d1d7dc",
+                            borderTop: "none",
+                            padding: "12px 16px 12px 40px",
+                            fontSize: "14px",
+                            color: "#1c1d1f"
+                          }}
+                        >
+                          📄 Chapter {topicIndex + 1}: {topic.title}
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </Card.Body>
-            </Card>
-
-            {/* Key Learning Points */}
-            <Card className="shadow-sm border-0 mb-4">
-              <Card.Body style={{ padding: '30px' }}>
-                <h4 style={{ color: '#25805a', marginBottom: '20px' }}>📚 Key Points</h4>
-                <Row>
-                  {content.keyPoints && content.keyPoints.map((point, index) => (
-                    <Col md={6} key={index} className="mb-3">
-                      <div style={{
-                        background: '#e8f5e8',
-                        padding: '15px',
-                        borderRadius: '8px',
-                        borderLeft: '4px solid #25805a',
-                        height: '100%'
-                      }}>
-                        <small style={{ color: '#2c3e50', fontWeight: '500', lineHeight: '1.4' }}>
-                          💡 {point}
-                        </small>
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-              </Card.Body>
-            </Card>
-
-            {/* Practical Tips */}
-            <Card className="shadow-sm border-0 mb-4">
-              <Card.Body style={{ padding: '30px' }}>
-                <h4 style={{ color: '#25805a', marginBottom: '20px' }}>🛠️ Tips</h4>
-                <Row>
-                  {content.practicalTips && content.practicalTips.map((tip, index) => (
-                    <Col md={6} key={index} className="mb-3">
-                      <div style={{
-                        background: '#fff3cd',
-                        padding: '15px',
-                        borderRadius: '8px',
-                        borderLeft: '4px solid #ffc107',
-                        height: '100%'
-                      }}>
-                        <small style={{ color: '#856404', fontWeight: '500', lineHeight: '1.4' }}>
-                          ⚡ {tip}
-                        </small>
-                      </div>
-                    </Col>
-                  ))}
-                </Row>
-              </Card.Body>
-            </Card>
+                </Collapse>
+              </div>
+            ))}
           </Col>
 
-          {/* Sidebar */}
-          <Col lg={4}>
-            {/* Related Topics */}
-            <Card className="shadow-sm border-0 mb-4">
-              <Card.Body style={{ padding: '25px' }}>
-                <h6 style={{ color: '#25805a', marginBottom: '15px' }}>🔗 Related</h6>
-                {content.relatedTopics.map((topic, index) => (
-                  <div key={index} className="mb-3">
-                    <Card 
-                      style={{ 
-                        border: '1px solid #e9ecef', 
-                        cursor: 'pointer',
-                        transition: 'all 0.3s ease'
-                      }}
-                      onClick={() => history.push(`/admin/educational-detail/${topic.id}`)}
-                    >
-                      <Card.Body style={{ padding: '15px' }}>
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <h6 style={{ marginBottom: '5px', color: '#2c3e50' }}>{topic.title}</h6>
-                            <Badge 
-                              bg={topic.type === 'prerequisite' ? 'warning' : topic.type === 'advanced' ? 'danger' : 'info'}
-                              style={{ fontSize: '0.7rem' }}
-                            >
-                              {topic.type}
-                            </Badge>
-                          </div>
-                          <span style={{ color: '#25805a' }}>→</span>
+          {/* Right Sidebar - Course Details */}
+          <Col md={5} lg={4} style={{ background: "#fff", padding: "24px", borderLeft: "1px solid #d1d7dc", maxHeight: "calc(100vh - 140px)", overflowY: "auto" }}>
+            {/* Topic Content Display */}
+            {selectedTopic && (
+              <Card style={{ border: "1px solid #d1d7dc", borderRadius: "0", marginBottom: "20px" }}>
+                <Card.Body style={{ padding: "20px" }}>
+                  <h5 style={{ fontSize: "18px", fontWeight: 700, color: "#1c1d1f", marginBottom: "16px" }}>{selectedTopic.title}</h5>
+                  <div style={{ fontSize: "14px", color: "#1c1d1f", lineHeight: 1.7, whiteSpace: "pre-line", marginBottom: "20px" }}>
+                    {selectedTopic.content}
+                  </div>
+                  
+                  {selectedTopic.links && selectedTopic.links.length > 0 && (
+                    <div>
+                      <h6 style={{ fontSize: "14px", fontWeight: 600, color: "#1c1d1f", marginBottom: "12px" }}>Additional Resources:</h6>
+                      {selectedTopic.links.map((link, index) => (
+                        <div key={index} style={{ marginBottom: "8px" }}>
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "#5624d0", textDecoration: "none", fontSize: "13px" }}
+                          >
+                            → {link.text}
+                          </a>
                         </div>
-                      </Card.Body>
-                    </Card>
-                  </div>
-                ))}
+                      ))}
+                    </div>
+                  )}
+                </Card.Body>
+              </Card>
+            )}
+            
+            <Card style={{ border: "1px solid #d1d7dc", borderRadius: "0", marginBottom: "20px" }}>
+              <Card.Body style={{ padding: "20px" }}>
+                <h6 style={{ fontSize: "16px", fontWeight: 700, color: "#1c1d1f", marginBottom: "16px" }}>Details content</h6>
+                
+                <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", fontSize: "14px" }}>
+                  <span style={{ marginRight: "8px" }}>⏱️</span>
+                  <span style={{ color: "#1c1d1f" }}>3 Hours Estimation</span>
+                </div>
+                
+                <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", fontSize: "14px" }}>
+                  <span style={{ marginRight: "8px" }}>⚡</span>
+                  <span style={{ color: "#1c1d1f" }}>100 Points</span>
+                </div>
+                
+                <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", fontSize: "14px" }}>
+                  <span style={{ marginRight: "8px" }}>🌐</span>
+                  <span style={{ color: "#1c1d1f" }}>English</span>
+                </div>
+                
+                <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", fontSize: "14px" }}>
+                  <span style={{ marginRight: "8px" }}>🎓</span>
+                  <span style={{ color: "#1c1d1f" }}>Certificate of Completion</span>
+                </div>
+                
+                <div style={{ display: "flex", alignItems: "center", fontSize: "14px" }}>
+                  <span style={{ marginRight: "8px" }}>📅</span>
+                  <span style={{ color: "#1c1d1f" }}>No due date for this content</span>
+                </div>
               </Card.Body>
             </Card>
 
-            {/* Resources */}
-            <Card className="shadow-sm border-0 mb-4">
-              <Card.Body style={{ padding: '25px' }}>
-                <h6 style={{ color: '#25805a', marginBottom: '15px' }}>📖 Resources</h6>
-                {content.resources.map((resource, index) => (
-                  <div key={index} className="mb-3">
-                    <a 
-                      href={resource.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ textDecoration: 'none' }}
-                    >
-                      <Card style={{ 
-                        border: '1px solid #e9ecef',
-                        transition: 'all 0.3s ease'
-                      }}>
-                        <Card.Body style={{ padding: '15px' }}>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <h6 style={{ marginBottom: '5px', color: '#25805a' }}>{resource.text}</h6>
-                              <Badge bg="light" text="dark" style={{ fontSize: '0.7rem' }}>
-                                {resource.type}
-                              </Badge>
-                            </div>
-                            <span style={{ color: '#25805a' }}>🔗</span>
-                          </div>
-                        </Card.Body>
-                      </Card>
-                    </a>
+            <Card style={{ border: "1px solid #d1d7dc", borderRadius: "0" }}>
+              <Card.Body style={{ padding: "20px" }}>
+                <h6 style={{ fontSize: "16px", fontWeight: 700, color: "#1c1d1f", marginBottom: "16px" }}>Trainer</h6>
+                
+                <div style={{ display: "flex", alignItems: "center", marginBottom: "12px" }}>
+                  <div style={{ width: "48px", height: "48px", borderRadius: "50%", background: "#5624d0", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: "18px", fontWeight: 600, marginRight: "12px" }}>
+                    {trainer.initials}
                   </div>
-                ))}
-              </Card.Body>
-            </Card>
-
-            {/* Course Actions */}
-            <Card className="shadow-sm border-0">
-              <Card.Body style={{ padding: '25px', textAlign: 'center' }}>
-                <Button 
-                  style={{
-                    background: 'linear-gradient(135deg, #25805a, #1e6b47)',
-                    border: 'none',
-                    borderRadius: '25px',
-                    padding: '12px 30px',
-                    width: '100%',
-                    marginBottom: '15px'
-                  }}
-                  onClick={() => setCompletedSections(new Set([0, 1, 2, 3]))}
-                >
-                  Mark as Complete
-                </Button>
-                <Button 
-                  variant="outline-success"
-                  style={{
-                    borderRadius: '25px',
-                    padding: '12px 30px',
-                    width: '100%'
-                  }}
-                  onClick={() => history.push('/admin/educational-content')}
-                >
-                  Browse More Courses
-                </Button>
+                  <div>
+                    <div style={{ fontSize: "14px", fontWeight: 600, color: "#1c1d1f" }}>{trainer.name}</div>
+                    <div style={{ fontSize: "12px", color: "#6a6f73" }}>{trainer.title}</div>
+                  </div>
+                </div>
+                
+                <div style={{ fontSize: "12px", color: "#6a6f73", padding: "8px 12px", background: "#f7f9fa", borderRadius: "4px" }}>
+                  Content Author
+                </div>
               </Card.Body>
             </Card>
           </Col>

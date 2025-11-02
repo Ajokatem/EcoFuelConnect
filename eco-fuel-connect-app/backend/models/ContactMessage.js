@@ -27,6 +27,8 @@ const ContactMessage = sequelize.define('ContactMessage', {
     type: DataTypes.TEXT,
     allowNull: false
   }
+}, {
+  tableName: 'contactmessage'
 });
 
 module.exports = ContactMessage;

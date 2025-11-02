@@ -10,13 +10,40 @@ export const useUser = () => {
 };
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  // Restore user and token from localStorage on initial load
+  const [user, setUser] = useState(() => {
+    try {
+      const storedUser = localStorage.getItem('profileUser');
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [token, setToken] = useState(() => {
+    try {
+      return localStorage.getItem('profileToken') || null;
+    } catch {
+      return null;
+    }
+  });
 
   // Update user and token after login/registration
   const updateUser = (userData, jwtToken) => {
     setUser(userData);
     setToken(jwtToken);
+    // Persist to localStorage
+    try {
+      if (userData) {
+        localStorage.setItem('profileUser', JSON.stringify(userData));
+      } else {
+        localStorage.removeItem('profileUser');
+      }
+      if (jwtToken) {
+        localStorage.setItem('profileToken', jwtToken);
+      } else {
+        localStorage.removeItem('profileToken');
+      }
+    } catch {}
     if (jwtToken) {
       api.defaults.headers.common['Authorization'] = `Bearer ${jwtToken}`;
     } else {

@@ -7,6 +7,7 @@ import {
   Button,
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import "../assets/css/help.css";
 
 function Help() {
 
@@ -35,7 +36,7 @@ function Help() {
 
   return (
     <div style={{ 
-      background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)', 
+      background: 'linear-gradient(135deg, rgba(37, 128, 90, 0.08) 0%, rgba(30, 107, 71, 0.12) 100%)', 
       minHeight: "100vh", 
       paddingTop: "30px",
       paddingBottom: "30px"
@@ -66,48 +67,44 @@ function Help() {
             </div>
 
             {/* Getting Started */}
-            <Row className="mb-5">
-              <Col>
+            <Row className="mb-5 justify-content-center">
+              <Col xs={12} style={{ display: 'flex', justifyContent: 'center' }}>
                 <Card 
-                  className="shadow-lg border-0"
+                  className="border-0 getting-started-card"
                   style={{ 
-                    borderRadius: "15px",
-                    overflow: "hidden"
+                    maxWidth: "500px",
+                    width: "100%",
+                    borderRadius: "20px",
+                    background: "rgba(37, 128, 90, 0.15)",
+                    backdropFilter: "blur(10px)",
+                    WebkitBackdropFilter: "blur(10px)",
+                    boxShadow: "0 8px 32px rgba(37, 128, 90, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)",
+                    border: "1px solid rgba(37, 128, 90, 0.2)",
+                    padding: "30px"
                   }}
                 >
-                  <Card.Header 
-                    style={{ 
-                      background: 'linear-gradient(135deg, #25805a 0%, #1e6b47 100%)',
-                      borderBottom: "none",
-                      padding: "20px"
-                    }}
-                  >
-                    <h5 style={{ 
-                      color: "white", 
-                      margin: 0, 
-                      fontWeight: "600",
-                      fontSize: "1.1rem"
-                    }}>
-                      Getting Started
-                    </h5>
-                  </Card.Header>
-                  <Card.Body style={{ 
-                    padding: "15px",
-                    background: "white"
+                  <h5 style={{ 
+                    color: "white", 
+                    margin: "0 0 20px 0", 
+                    fontWeight: "700",
+                    fontSize: "1.4rem",
+                    textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)"
                   }}>
-                    <p style={{ 
-                      color: "#2F4F4F", 
-                      fontSize: "16px", 
-                      lineHeight: "1.1",
-                      marginBottom: "0"
-                    }}>
-                      Welcome to <strong>EcoFuelConnect</strong>! This comprehensive web application connects biogas producers and users through 
-                      transparent systems for real-time biogas production tracking, efficient waste recycling management, 
-                      and reliable biogas fuel delivery. Targeting schools as major customers, the platform addresses the 
-                      critical challenges of organic waste management where only 2.6% of daily waste is properly collected, 
-                      while promoting clean energy access and reducing dependence on harmful charcoal and firewood.
-                    </p>
-                  </Card.Body>
+                    Getting Started
+                  </h5>
+                  <p style={{ 
+                    color: "#2F4F4F", 
+                    fontSize: "15px", 
+                    lineHeight: "1.6",
+                    marginBottom: "0",
+                    fontWeight: "500"
+                  }}>
+                    Welcome to <strong>EcoFuelConnect</strong>! This comprehensive web application connects biogas producers and users through 
+                    transparent systems for real-time biogas production tracking, efficient waste recycling management, 
+                    and reliable biogas fuel delivery. Targeting schools as major customers, the platform addresses the 
+                    critical challenges of organic waste management where only 2.6% of daily waste is properly collected, 
+                    while promoting clean energy access and reducing dependence on harmful charcoal and firewood.
+                  </p>
                 </Card>
               </Col>
             </Row>
@@ -131,19 +128,24 @@ function Help() {
               {helpTopics.map((topic, index) => (
                 <Col lg="6" key={index} className="mb-4">
                   <Card 
-                    className="shadow-sm border-0 h-100"
+                    className="border-0 h-100"
                     style={{
-                      borderRadius: "12px",
+                      borderRadius: "16px",
+                      background: "rgba(37, 128, 90, 0.12)",
+                      backdropFilter: "blur(10px)",
+                      WebkitBackdropFilter: "blur(10px)",
+                      boxShadow: "0 6px 24px rgba(37, 128, 90, 0.25), 0 2px 6px rgba(0, 0, 0, 0.08)",
+                      border: "1px solid rgba(37, 128, 90, 0.15)",
                       transition: "all 0.3s ease",
                       cursor: "pointer"
                     }}
                     onMouseEnter={e => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(37, 128, 90, 0.15)';
+                      e.currentTarget.style.transform = 'translateY(-4px)';
+                      e.currentTarget.style.boxShadow = '0 10px 32px rgba(37, 128, 90, 0.35), 0 4px 12px rgba(0, 0, 0, 0.12)';
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.1)';
+                      e.currentTarget.style.boxShadow = '0 6px 24px rgba(37, 128, 90, 0.25), 0 2px 6px rgba(0, 0, 0, 0.08)';
                     }}
                   >
                     <Card.Body style={{ padding: "25px" }}>
@@ -178,10 +180,14 @@ function Help() {
             <Row className="mt-5">
               <Col>
                 <Card 
-                  className="shadow-lg border-0 text-center"
+                  className="border-0 text-center"
                   style={{
-                    borderRadius: "15px",
-                    background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)'
+                    borderRadius: "20px",
+                    background: "rgba(37, 128, 90, 0.12)",
+                    backdropFilter: "blur(10px)",
+                    WebkitBackdropFilter: "blur(10px)",
+                    boxShadow: "0 8px 32px rgba(37, 128, 90, 0.3), 0 2px 8px rgba(0, 0, 0, 0.1)",
+                    border: "1px solid rgba(37, 128, 90, 0.2)"
                   }}
                 >
                   <Card.Body style={{ padding: "40px" }}>

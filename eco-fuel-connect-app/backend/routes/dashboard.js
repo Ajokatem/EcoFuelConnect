@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { auth, optionalAuth } = require('../middleware/auth');
+// IoT routes commented out for now
+/*
 // @route   GET /api/dashboard/charts/iot-trends
 // @desc    Get IoT sensor trends and aggregated readings for charts
 // @access  Private
@@ -31,6 +33,7 @@ router.get('/charts/iot-trends', auth, async (req, res) => {
     res.status(500).json({ message: 'Error retrieving IoT sensor trends' });
   }
 });
+*/
 
 
 const Analytics = require('../models/Analytics');
@@ -51,12 +54,18 @@ router.get('/stats', auth, async (req, res) => {
     const totalUsers = await User.count({ where: { isActive: true } });
     const totalSchools = await User.count({ where: { role: 'school', isActive: true } });
     
-    // Get user's waste entries (as producer)
-    const userWasteResult = await WasteEntry.findAll({
-      where: { producerId: userId },
+    // Get ALL waste entries for system-wide stats
+    const allWasteResult = await WasteEntry.findAll({
       attributes: [[fn('SUM', col('estimatedWeight')), 'total']]
     });
-    const userWasteTotal = userWasteResult[0]?.getDataValue('total') || 0;
+    const totalWaste = parseFloat(allWasteResult[0]?.getDataValue('total') || 0);
+
+    // Get user's waste entries (as supplier)
+    const userWasteResult = await WasteEntry.findAll({
+      where: { supplierId: userId },
+      attributes: [[fn('SUM', col('estimatedWeight')), 'total']]
+    });
+    const userWasteTotal = parseFloat(userWasteResult[0]?.getDataValue('total') || 0);
 
     // Get user's fuel requests
     const userFuelResult = await FuelRequest.findAll({
@@ -68,7 +77,11 @@ router.get('/stats', auth, async (req, res) => {
     });
     const fuelStats = userFuelResult[0] || {};
 
-    // IoT sensor metrics
+    // Get total waste entries count
+    const wasteEntriesCount = await WasteEntry.count();
+
+    // IoT sensor metrics commented out for now
+    /*
     const IoTSensor = require('../models/IoTSensor');
     const IoTSensorReading = require('../models/IoTSensorReading');
     // Refactored to Sequelize
@@ -93,44 +106,38 @@ router.get('/stats', auth, async (req, res) => {
     // Automated IoT monitoring alerts
     const { monitorIoTSensors } = require('../services/iotMonitor');
     const iotMonitoring = await monitorIoTSensors();
-
-    // Provide stats including IoT metrics and monitoring alerts
+    */
     const stats = {
-      // Waste metrics
-      totalWaste: parseFloat(userWasteTotal) || 0,
-      dailyWaste: parseFloat(userWasteTotal) / 30 || 0,
-      userWasteContribution: parseFloat(userWasteTotal) || 0,
-      // Biogas production (mock data for now)
-      biogasProduced: parseFloat(userWasteTotal) * 0.3 || 0, // Rough estimate
-      biogasEfficiency: 75, // Mock data
+      // Waste metrics (SYSTEM-WIDE)
+      totalWaste: totalWaste,
+      dailyWaste: totalWaste / 30,
+      userWasteContribution: userWasteTotal,
+      wasteEntriesCount: wasteEntriesCount,
+      // Biogas production (calculated from waste)
+      biogasProduced: totalWaste * 0.3, // 0.3 m³ per kg
+      biogasEfficiency: 75,
       // Fuel requests
       fuelRequests: fuelStats.getDataValue ? fuelStats.getDataValue('total') || 0 : 0,
       fuelDelivered: fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0,
-      fuelRequestValue: 0, // Mock data
-      // Environmental impact (mock calculations)
-      carbonReduction: parseFloat(userWasteTotal) * 2.3 || 0,
-      energyGenerated: parseFloat(userWasteTotal) * 1.5 || 0,
-      forestSaved: Math.round((parseFloat(userWasteTotal) * 2.3 / 1000) * 100) / 100,
-      treesEquivalent: Math.floor((parseFloat(userWasteTotal) * 2.3) / 22),
+      fuelRequestValue: 0,
+      // Environmental impact (from total waste)
+      carbonReduction: totalWaste * 2.3, // 2.3 kg CO2 per kg waste
+      energyGenerated: totalWaste * 1.5,
+      forestSaved: Math.round((totalWaste * 2.3 / 1000) * 100) / 100,
+      treesEquivalent: Math.floor((totalWaste * 2.3) / 22),
       // Community engagement
       communityEngagement: totalUsers,
       activeUsers: totalUsers,
-      wasteSuppliers: await User.count({ where: { role: 'producer', isActive: true } }),
+      wasteSuppliers: await User.count({ where: { role: 'supplier', isActive: true } }),
       schoolsServed: totalSchools,
       // Educational and other metrics
       educationalMessages: Math.floor(totalUsers * 0.3),
-      monthlyTarget: 1500, // Can be made configurable
+      monthlyTarget: 1500,
       // Progress indicators
-      wasteProgress: Math.min(100, (parseFloat(userWasteTotal) / 1500) * 100),
-      biogasProgress: Math.min(100, ((parseFloat(userWasteTotal) * 0.3) / 600) * 100),
-      carbonProgress: Math.min(100, ((parseFloat(userWasteTotal) * 2.3) / 750) * 100),
-      // IoT metrics
-      iotSensorCount: sensorCount,
-      iotActiveSensors: activeSensors,
-      iotSensorHealth: sensorHealth,
-      iotLatestReadings: latestReadings,
-      iotMonitoringAlerts: iotMonitoring.alerts,
-      iotMonitoringCheckedAt: iotMonitoring.checkedAt
+      wasteProgress: Math.min(100, (totalWaste / 1500) * 100),
+      biogasProgress: Math.min(100, ((totalWaste * 0.3) / 600) * 100),
+      carbonProgress: Math.min(100, ((totalWaste * 2.3) / 750) * 100),
+  // IoT metrics removed for now
     };
 
     res.json({
@@ -164,11 +171,16 @@ router.get('/recent-activity', auth, async (req, res) => {
       .select('entryId wasteDetails quantity createdAt processing.status');
 
     // Get recent fuel requests
-    const recentFuel = await FuelRequest.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .limit(limit / 2)
-      .populate('user', 'firstName lastName')
-      .select('requestId fuelType quantity status createdAt totalCost');
+    const recentFuel = await FuelRequest.findAll({
+      where: { schoolId: userId },
+      order: [['createdAt', 'DESC']],
+      limit: Math.floor(limit / 2),
+      include: [
+        { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'] },
+        { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName'] }
+      ],
+      attributes: ['requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt', 'totalCost']
+    });
 
     // Combine and sort activities
     const activities = [

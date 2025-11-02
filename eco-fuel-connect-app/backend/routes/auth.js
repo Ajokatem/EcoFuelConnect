@@ -9,6 +9,26 @@ const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const router = express.Router();
 
+// @route   GET /api/users
+// @desc    Get active producers (for waste logging dropdown)
+// @access  Private
+router.get('/users', auth, async (req, res) => {
+  try {
+    const { role, isActive } = req.query;
+    const where = {};
+    // Only show active producers
+    where.role = 'producer';
+    where.isActive = true;
+    const producers = await User.findAll({
+      where,
+      attributes: ['id', 'firstName', 'lastName', 'organization', 'role', 'isActive']
+    });
+    res.json({ producers });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+});
+
 // Rate limiting for auth routes
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -92,16 +112,12 @@ router.post('/register', authLimiter, async (req, res) => {
         message: 'User with this email already exists'
       });
     }
-    // Role-specific validation - map producer to supplier for backward compatibility
-    let normalizedRole = role;
-    if (role === 'producer') {
-      normalizedRole = 'supplier';
-    }
-    const validRoles = ['admin', 'supplier', 'consumer', 'school'];
-    if (!validRoles.includes(normalizedRole)) {
+    // Role validation - allow producer as a valid role
+    const validRoles = ['admin', 'supplier', 'producer', 'consumer', 'school'];
+    if (!validRoles.includes(role)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid role. Must be one of: admin, supplier, consumer, school'
+        message: 'Invalid role. Must be one of: admin, supplier, producer, consumer, school'
       });
     }
     // Create user with role-specific fields
@@ -112,7 +128,7 @@ router.post('/register', authLimiter, async (req, res) => {
       password,
       phone,
       organization: organizationName || organization,
-      role: normalizedRole,
+      role,
       isActive: true
     };
     const user = await User.create(userData);
@@ -186,7 +202,7 @@ const generateToken = (userId) => {
 // @route   POST /api/auth/login
 // @desc    Login user with comprehensive response data
 // @access  Public
-router.post('/login', authLimiter, async (req, res) => {
+router.post('/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password, rememberMe = false } = req.body;
 
@@ -404,10 +420,12 @@ router.get('/me', auth, async (req, res) => {
         lastName: user.lastName,
         email: user.email,
         phone: user.phone,
-        organizationName: user.organizationName,
+        organization: user.organization || user.organizationName || '',
         role: user.role,
         address: user.address,
         isActive: user.isActive,
+        profilePhoto: user.profilePhoto || '',
+        coverPhoto: user.coverPhoto || '',
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -443,10 +461,15 @@ router.put('/profile', auth, async (req, res) => {
       ...(address && { address })
     };
 
-    const [updatedRowsCount] = await User.update(updateData, {
-      where: { id: req.user.id },
-      returning: true
-    });
+      const totalFuelResult = await FuelRequest.findAll({
+        where: { userId: req.user.id },
+        order: [['createdAt', 'DESC']],
+        limit: 10,
+        include: [
+          { model: User, as: 'school' },
+          { model: User, as: 'producer' }
+        ]
+      });
 
     if (updatedRowsCount === 0) {
       return res.status(404).json({

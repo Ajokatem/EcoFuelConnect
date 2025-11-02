@@ -13,6 +13,11 @@ import "./assets/css/sidebar-override.css";
 import AdminLayout from "./layouts/Admin.js";
 import AuthLayout from "./layouts/Auth.js";
 import Welcome from "./pages/Welcome.js";
+import About from "./pages/About.js";
+import Contact from "./pages/Contact.js";
+import Projects from "./pages/Projects.js";
+import Terms from "./pages/Terms.js";
+import Privacy from "./pages/Privacy.js";
 import ErrorBoundary from "./components/common/ErrorBoundary.js";
 import { LanguageProvider } from "./contexts/LanguageContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
@@ -26,6 +31,11 @@ ReactDOM.render(
           <BrowserRouter>
             <Switch>
               <Route exact path="/" component={Welcome} />
+              <Route exact path="/about" component={About} />
+              <Route exact path="/contact" component={Contact} />
+              <Route exact path="/projects" component={Projects} />
+              <Route exact path="/terms" component={Terms} />
+              <Route exact path="/privacy" component={Privacy} />
               <Route path="/admin" component={AdminLayout} />
               <Route path="/auth" component={AuthLayout} />
               <Redirect from="*" to="/" />

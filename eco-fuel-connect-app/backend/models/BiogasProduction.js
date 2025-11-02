@@ -17,7 +17,7 @@ const BiogasProduction = sequelize.define('BiogasProduction', {
   },
   plantId: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   productionDate: {
     type: DataTypes.DATE,

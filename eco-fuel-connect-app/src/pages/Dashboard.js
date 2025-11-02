@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import '../assets/css/dashboard-responsive.css';
 import { useLanguage } from "../contexts/LanguageContext";
 import { useHistory } from "react-router-dom";
 import {
@@ -33,24 +34,33 @@ function Dashboard() {
   });
 
   // Fetch dashboard analytics from backend API
+  const fetchDashboardData = async () => {
+    try {
+      const data = await dashboardService.getDashboardStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const data = await dashboardService.getDashboardStats();
-        setStats(data);
-      } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-      }
-    };
-
+    let intervalId;
     fetchDashboardData();
+    intervalId = setInterval(fetchDashboardData, 10000); // auto-refresh every 10 seconds
 
-    // No localStorage event listener needed. Real-time update handled by backend and React state/context.
+    // Listen for custom event to refresh dashboard data
+    const handleDashboardRefresh = () => {
+      fetchDashboardData();
+    };
+    window.addEventListener('dashboardRefresh', handleDashboardRefresh);
+    return () => {
+      window.removeEventListener('dashboardRefresh', handleDashboardRefresh);
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (
-  <Container fluid className="p-4" style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
-      
+    <Container fluid className="p-4" style={{ backgroundColor: "#f8fafc", minHeight: "100vh" }}>
       {/* Main Biogas Production Card (Sales Value Style) */}
       <Row className="mb-4">
         <Col md={8}>

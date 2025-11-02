@@ -4,44 +4,79 @@ import { Card, Container, Row, Col, Form, Button, Alert, Table, Badge, Tabs, Tab
 import wasteService from "../services/wasteService";
 
 function OrganicWasteLogging() {
-  const [formData, setFormData] = useState({ type: "", quantity: "", location: "", description: "" });
+  const [formData, setFormData] = useState({ type: "", quantity: "", location: "", description: "", producerId: "" });
+  const [producers, setProducers] = useState([]);
   const { translate } = useLanguage();
   const [wasteEntries, setWasteEntries] = useState([]);
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState("");
   const [alertType, setAlertType] = useState("success");
   const [activeTab, setActiveTab] = useState("log");
+  const [currentUser, setCurrentUser] = useState(null);
   
   const wasteTypes = [
-    { value: "food_scraps", label: "Food Scraps", fuelRatio: 0.8 },
-    { value: "market_waste", label: "Market Waste", fuelRatio: 0.7 },
-    { value: "restaurant_waste", label: "Restaurant Waste", fuelRatio: 0.9 },
-    { value: "agricultural_waste", label: "Agricultural Waste", fuelRatio: 0.6 }
+    { value: "food_scraps", label: "Food Scraps", fuelRatio: 0.5 },
+    { value: "agricultural_residue", label: "Agricultural Residue", fuelRatio: 0.4 },
+    { value: "animal_manure", label: "Animal Manure", fuelRatio: 0.6 },
+    { value: "mixed_organic", label: "Mixed Organic", fuelRatio: 0.4 }
   ];
 
   useEffect(() => {
-    const fetchWasteEntries = async () => {
+    // Get current user from localStorage
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    setCurrentUser(user);
+
+      const fetchWasteEntries = async () => {
       try {
-        const entries = await wasteService.getWasteEntries();
-        setWasteEntries(entries);
+        const response = await wasteService.getWasteEntries();
+        setWasteEntries(response.wasteEntries || []);
       } catch (error) {
         console.error("Error fetching waste entries:", error);
         setWasteEntries([]); // Show empty if backend fails
       }
     };
 
+    const fetchProducers = async () => {
+      try {
+        // Fetch active producers from backend
+        const response = await wasteService.getProducers();
+        setProducers(response.producers || []);
+      } catch (error) {
+        setProducers([]);
+      }
+    };
+
     fetchWasteEntries();
+    fetchProducers();
   }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Ensure producerId is always a number (or empty string)
+    if (name === "producerId") {
+      setFormData(prev => ({ ...prev, producerId: value === "" ? "" : Number(value) }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.type || !formData.quantity || !formData.location) {
+    // Validate required fields
+    if (!formData.type) {
+      setAlertMessage("Please select a waste type");
+      setAlertType("danger");
+      setShowAlert(true);
+      return;
+    }
+    if (!formData.quantity || !formData.location) {
       setAlertMessage("Please fill in all required fields");
+      setAlertType("danger");
+      setShowAlert(true);
+      return;
+    }
+    if (!formData.producerId || isNaN(formData.producerId)) {
+      setAlertMessage("Please select a producer");
       setAlertType("danger");
       setShowAlert(true);
       return;
@@ -51,37 +86,22 @@ function OrganicWasteLogging() {
       const selectedType = wasteTypes.find(t => t.value === formData.type);
       const estimatedFuel = selectedType ? (parseFloat(formData.quantity) * selectedType.fuelRatio).toFixed(2) : "0.00";
 
+      // Use selected producerId from form
       const wasteData = {
-        producerId: 1, // Default producer ID - you may need to get this from user context
+        producerId: Number(formData.producerId),
         wasteType: formData.type,
-        wasteSource: 'market', // Default source - you may want to add this to the form
+        wasteSource: 'market',
+        sourceLocation: formData.location,
         quantity: parseFloat(formData.quantity),
         unit: 'kg',
-        notes: formData.description,
+        qualityGrade: 'good',
         verificationMethod: 'manual_estimate',
-        location: formData.location,
-        estimatedFuelOutput: estimatedFuel,
-        date: new Date().toISOString(),
+        notes: formData.description,
         status: 'pending'
       };
 
-      const response = await wasteService.createWasteEntry(wasteData);
-      const newEntry = response.wasteEntry || response;
-      
-      // Add the new entry with proper structure for display
-      const displayEntry = {
-        ...newEntry,
-        id: newEntry.id || Date.now(),
-        type: formData.type,
-        quantity: formData.quantity,
-        location: formData.location,
-        description: formData.description,
-        estimatedFuelOutput: estimatedFuel,
-        date: new Date().toISOString(),
-        status: 'pending'
-      };
-      
-      setWasteEntries(prev => [displayEntry, ...prev]);
+      // Actually send entry to backend
+      await wasteService.createWasteEntry(wasteData);
 
       // Automatic dashboard refresh: fetch latest stats from backend and update React state/context
       if (window.dashboardService && window.dashboardService.getDashboardStats) {
@@ -93,11 +113,21 @@ function OrganicWasteLogging() {
       // Dispatch custom event to refresh report page
       window.dispatchEvent(new Event('reportRefresh'));
 
-      setFormData({ type: "", quantity: "", location: "", description: "" });
+      // Re-fetch entries so new entry appears
+      if (typeof wasteService.getWasteEntries === 'function') {
+        try {
+          const response = await wasteService.getWasteEntries();
+          setWasteEntries(response.wasteEntries || []);
+        } catch (err) {
+          // Ignore fetch error
+        }
+      }
+
+      // Reset all form fields including producerId
+      setFormData({ type: "", quantity: "", location: "", description: "", producerId: "" });
       setAlertMessage("Waste entry logged successfully!");
       setAlertType("success");
       setShowAlert(true);
-      
       // Auto-hide alert after 3 seconds
       setTimeout(() => setShowAlert(false), 3000);
     } catch (error) {
@@ -155,59 +185,76 @@ function OrganicWasteLogging() {
                       <Card>
                         <Card.Header><Card.Title as="h5">{translate("newEntry") || "New Entry"}</Card.Title></Card.Header>
                         <Card.Body>
-                          <Form onSubmit={handleSubmit}>
-                            <Form.Group className="mb-3">
-                              <Form.Label>{translate("wasteType") || "Waste Type"} *</Form.Label>
-                              <div className="d-flex justify-content-between mb-2" style={{ gap: "4px" }}>
-                                {wasteTypes.map(type => (
-                                  <Button
-                                    key={type.value}
-                                    onClick={() => setFormData({...formData, type: type.value})}
-                                    style={{
-                                      backgroundColor: formData.type === type.value ? "#28a745" : "#f8f9fa",
-                                      borderColor: formData.type === type.value ? "#28a745" : "#dee2e6",
-                                      color: formData.type === type.value ? "white" : "#495057",
-                                      borderRadius: "20px",
-                                      padding: "4px 8px",
-                                      fontSize: "0.75rem",
-                                      flex: "1",
-                                      whiteSpace: "nowrap",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis"
-                                    }}
-                                  >
-                                    {type.label}
-                                  </Button>
-                                ))}
-                              </div>
-                              {!formData.type && <div className="text-danger small">{translate("selectWasteType") || "Please select a waste type"}</div>}
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                              <Form.Label>{translate("quantity") || "Quantity"} (kg) *</Form.Label>
-                              <Form.Control type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} placeholder="Enter quantity in kg" min="0.1" step="0.1" required />
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                              <Form.Label>{translate("location") || "Location"} *</Form.Label>
-                              <Form.Control type="text" name="location" value={formData.location} onChange={handleInputChange} placeholder="Enter collection location" required />
-                            </Form.Group>
-                            <Form.Group className="mb-3">
-                              <Form.Label>{translate("description") || "Description"}</Form.Label>
-                              <Form.Control as="textarea" rows={3} name="description" value={formData.description} onChange={handleInputChange} placeholder="Additional details..." />
-                            </Form.Group>
-                            <Button 
-                              type="submit" 
-                              className="w-100"
-                              style={{
-                                backgroundColor: "#28a745",
-                                borderColor: "#28a745",
-                                color: "white",
-                                borderRadius: "20px",
-                                padding: "8px 16px"
-                              }}
-                            >
-                              {translate("logWasteEntry") || "Log Waste Entry"}
-                            </Button>
-                          </Form>
+                            <Form onSubmit={handleSubmit}>
+                              <Form.Group className="mb-3">
+                                <Form.Label>{translate("wasteType") || "Waste Type"} *</Form.Label>
+                                <div className="d-flex justify-content-between mb-2" style={{ gap: "4px" }}>
+                                  {wasteTypes.map(type => (
+                                    <Button
+                                      key={type.value}
+                                      onClick={() => setFormData({...formData, type: type.value})}
+                                      style={{
+                                        backgroundColor: formData.type === type.value ? "#28a745" : "#f8f9fa",
+                                        borderColor: formData.type === type.value ? "#28a745" : "#dee2e6",
+                                        color: formData.type === type.value ? "white" : "#495057",
+                                        borderRadius: "20px",
+                                        padding: "4px 8px",
+                                        fontSize: "0.75rem",
+                                        flex: "1",
+                                        whiteSpace: "nowrap",
+                                        overflow: "hidden",
+                                        textOverflow: "ellipsis"
+                                      }}
+                                    >
+                                      {type.label}
+                                    </Button>
+                                  ))}
+                                </div>
+                                {!formData.type && <div className="text-danger small">{translate("selectWasteType") || "Please select a waste type"}</div>}
+                              </Form.Group>
+                              <Form.Group className="mb-3">
+                                <Form.Label>{translate("quantity") || "Quantity"} (kg) *</Form.Label>
+                                <Form.Control type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} placeholder="Enter quantity in kg" min="0.1" step="0.1" required />
+                              </Form.Group>
+                              <Form.Group className="mb-3">
+                                <Form.Label>{translate("location") || "Location"} *</Form.Label>
+                                <Form.Control type="text" name="location" value={formData.location} onChange={handleInputChange} placeholder="Enter collection location" required />
+                              </Form.Group>
+                              <Form.Group className="mb-3">
+                                <Form.Label>{translate("description") || "Description"}</Form.Label>
+                                <Form.Control as="textarea" rows={3} name="description" value={formData.description} onChange={handleInputChange} placeholder="Additional details..." />
+                              </Form.Group>
+                              <Form.Group className="mb-3">
+                                <Form.Label>Send To Producer *</Form.Label>
+                                <Form.Select
+                                  name="producerId"
+                                  value={formData.producerId}
+                                  onChange={handleInputChange}
+                                  required
+                                >
+                                  <option value="">Select Producer</option>
+                                  {producers.map(prod => (
+                                    <option key={prod.id} value={prod.id}>
+                                      {prod.firstName} {prod.lastName} ({prod.organization || prod.role})
+                                    </option>
+                                  ))}
+                                </Form.Select>
+                                {!formData.producerId && <div className="text-danger small">Please select a producer</div>}
+                              </Form.Group>
+                              <Button 
+                                type="submit" 
+                                className="w-100"
+                                style={{
+                                  backgroundColor: "#28a745",
+                                  borderColor: "#28a745",
+                                  color: "white",
+                                  borderRadius: "20px",
+                                  padding: "8px 16px"
+                                }}
+                              >
+                                {translate("logWasteEntry") || "Log Waste Entry"}
+                              </Button>
+                            </Form>
                         </Card.Body>
                       </Card>
                     </Col>
@@ -234,11 +281,15 @@ function OrganicWasteLogging() {
                         <tbody>
                           {wasteEntries.map(entry => (
                             <tr key={entry.id}>
-                              <td>{new Date(entry.date).toLocaleDateString()}</td>
-                              <td>{wasteTypes.find(t => t.value === entry.type)?.label || entry.type}</td>
+                              <td>{
+                                entry.collectionTimestamp
+                                  ? new Date(entry.collectionTimestamp).toLocaleDateString()
+                                  : (entry.date ? new Date(entry.date).toLocaleDateString() : "Invalid Date")
+                              }</td>
+                              <td>{wasteTypes.find(t => t.value === (entry.wasteType || entry.type))?.label || entry.wasteType || entry.type}</td>
                               <td>{entry.quantity} kg</td>
-                              <td>{entry.location}</td>
-                              <td><Badge bg={entry.status === 'processed' ? 'success' : 'warning'}>{entry.status}</Badge></td>
+                              <td>{typeof entry.sourceLocation === 'string' ? entry.sourceLocation : ''}</td>
+                              <td><Badge bg={entry.status === 'processed' ? 'success' : entry.status === 'pending' ? 'warning' : 'secondary'}>{entry.status}</Badge></td>
                             </tr>
                           ))}
                         </tbody>

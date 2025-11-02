@@ -338,7 +338,7 @@ router.post('/', [
       producerId,
       wasteType,
       wasteSource,
-      sourceLocation: sourceLocation || {},
+      sourceLocation: req.body.location ? req.body.location : (sourceLocation || {}),
       quantity,
       unit,
       estimatedWeight,
@@ -357,33 +357,77 @@ router.post('/', [
       },
       notes,
       supplierNotes,
-      status: 'collected'
+      status: 'pending'
     });
 
     // Fetch with associations for response
-      const createdEntry = await WasteEntry.findByPk(wasteEntry.id, {
-        include: [
-          { model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] },
-          { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] }
-        ]
-      });
+    const createdEntry = await WasteEntry.findByPk(wasteEntry.id, {
+      include: [
+        { model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] },
+        { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'role'] }
+      ]
+    });
 
-      // Notify admin(s) about new waste entry
-      const Notification = require('../models/Notification');
-      const adminUsers = await User.findAll({ where: { role: 'admin', isActive: true } });
-      const notificationPromises = adminUsers.map(admin => Notification.create({
-        userId: admin.id,
+    // Notify admin(s) about new waste entry
+    const Notification = require('../models/Notification');
+    const adminUsers = await User.findAll({ where: { role: 'admin', isActive: true } });
+    const notificationPromises = adminUsers.map(admin => Notification.create({
+      userId: admin.id,
+      type: 'waste_entry',
+      title: 'Waste Entry Logged',
+      message: `New waste entry logged by ${req.user.firstName} ${req.user.lastName}. Waste type: ${createdEntry.wasteType}, Quantity: ${createdEntry.quantity} ${createdEntry.unit}.`,
+      isRead: false
+    }));
+    // Notify the producer
+    if (createdEntry.producer && createdEntry.producer.id) {
+      notificationPromises.push(Notification.create({
+        userId: createdEntry.producer.id,
         type: 'waste_entry',
-        title: 'Waste Entry Logged',
-        message: `New waste entry logged by ${req.user.firstName} ${req.user.lastName}. Waste type: ${createdEntry.wasteType}, Quantity: ${createdEntry.quantity} ${createdEntry.unit}.`,
-        read: false
+        title: 'New Waste Entry Received',
+        message: `You have received a new waste entry from ${req.user.firstName} ${req.user.lastName}. Waste type: ${createdEntry.wasteType}, Quantity: ${createdEntry.quantity} ${createdEntry.unit}.`,
+        isRead: false,
+        wasteEntryId: createdEntry.id
       }));
-      await Promise.all(notificationPromises);
+    }
+    // Notify the supplier (confirmation of logging)
+    notificationPromises.push(Notification.create({
+      userId: req.user.id,
+      type: 'waste_entry',
+      title: 'Waste Entry Submitted',
+      message: `Your waste entry for producer ${createdEntry.producer.firstName} ${createdEntry.producer.lastName} has been submitted and is pending approval.`,
+      isRead: false,
+      wasteEntryId: createdEntry.id
+    }));
+    // Add notification for supplier: Waste logged and pending
+    notificationPromises.push(Notification.create({
+      userId: req.user.id,
+      type: 'waste_entry',
+      title: 'Waste Pending',
+      message: `Your waste entry for ${createdEntry.wasteType} is pending and awaiting producer confirmation.`,
+      isRead: false,
+      wasteEntryId: createdEntry.id
+    }));
+    await Promise.all(notificationPromises);
+
+      // Calculate updated stats after creating entry
+      const { fn: seqFn, col: seqCol } = require('sequelize');
+      const totalWasteResult = await WasteEntry.findAll({
+        attributes: [[seqFn('SUM', seqCol('estimatedWeight')), 'total']]
+      });
+      const totalWaste = parseFloat(totalWasteResult[0]?.getDataValue('total') || 0);
+      const totalEntries = await WasteEntry.count();
 
       res.status(201).json({
         success: true,
         message: 'Waste entry created successfully',
-        wasteEntry: createdEntry
+        wasteEntry: createdEntry,
+        stats: {
+          totalWaste: totalWaste,
+          totalEntries: totalEntries,
+          biogasProduced: totalWaste * 0.3,
+          carbonReduction: totalWaste * 2.3,
+          treesEquivalent: Math.floor((totalWaste * 2.3) / 22)
+        }
       });
   } catch (error) {
     console.error('Error creating waste entry:', error.message);
@@ -449,20 +493,37 @@ router.post('/:id/verify', auth, async (req, res) => {
     }
     
     wasteEntry.verified = verified;
-    wasteEntry.verifiedBy = req.user._id;
+    wasteEntry.verifiedById = req.user.id;
     wasteEntry.verifiedAt = new Date();
-    
+
+    let notificationTitle = '';
+    let notificationMessage = '';
     if (!verified && rejectionReason) {
       wasteEntry.rejectionReason = rejectionReason;
       wasteEntry.status = 'collected'; // Reset status
+      notificationTitle = 'Waste Entry Rejected';
+      notificationMessage = `Your waste entry for producer ${req.user.firstName} ${req.user.lastName} was rejected. Reason: ${rejectionReason || 'No reason provided.'}`;
     } else if (verified) {
       wasteEntry.status = 'delivered';
       wasteEntry.deliveryTimestamp = new Date();
+      notificationTitle = 'Waste Entry Approved';
+      notificationMessage = `Your waste entry for producer ${req.user.firstName} ${req.user.lastName} was approved and is ready for collection.`;
     }
-    
+
     await wasteEntry.save();
     await wasteEntry.populate('verifiedBy', 'firstName lastName');
-    
+
+    // Notify supplier if supplierId exists
+    if (wasteEntry && wasteEntry.supplierId) {
+      await Notification.create({
+        userId: wasteEntry.supplierId,
+        type: 'waste_entry',
+        title: notificationTitle,
+        message: notificationMessage,
+        read: false,
+        wasteEntryId: wasteEntry.id
+      });
+    }
     res.json({
       message: verified ? 'Waste entry verified successfully' : 'Waste entry rejected',
       wasteEntry

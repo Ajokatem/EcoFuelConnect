@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useUser } from "../contexts/UserContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import {
   Container,
@@ -11,8 +12,23 @@ import {
   Badge
 } from "react-bootstrap";
 import fuelService from "../services/fuelService";
+import userService from "../services/userService";
 
 function FuelRequestManagement() {
+  const { user } = useUser();
+  // Route guard: Only allow schools and producers
+  if (user && user.role !== 'school' && user.role !== 'producer') {
+    return (
+      <div className="content" style={{ minHeight: "100vh", padding: "30px", backgroundColor: "#f8f9fa" }}>
+        <Container fluid>
+          <div className="text-center py-5">
+            <h2 className="text-danger">Access Denied</h2>
+            <p className="text-muted">You do not have permission to view this page.</p>
+          </div>
+        </Container>
+      </div>
+    );
+  }
   const { translate } = useLanguage();
   const [activeTab, setActiveTab] = useState('create');
   const [formData, setFormData] = useState({
@@ -23,7 +39,8 @@ function FuelRequestManagement() {
     urgency: 'normal',
     purpose: '',
     contactNumber: '',
-    additionalNotes: ''
+    additionalNotes: '',
+    producerId: ''
   });
   const [errors, setErrors] = useState({});
   const [showAlert, setShowAlert] = useState(false);
@@ -38,6 +55,7 @@ function FuelRequestManagement() {
     approved: 0,
     delivered: 0
   });
+  const [producers, setProducers] = useState([]);
 
   const fuelTypes = [
     { 
@@ -79,7 +97,16 @@ function FuelRequestManagement() {
 
   useEffect(() => {
     loadFuelRequests();
+    loadProducers();
   }, []);
+  const loadProducers = async () => {
+    try {
+      const result = await userService.getActiveProducers();
+      setProducers(result || []);
+    } catch (error) {
+      setProducers([]);
+    }
+  };
   
   useEffect(() => {
     calculateStats();
@@ -87,8 +114,8 @@ function FuelRequestManagement() {
 
   const loadFuelRequests = async () => {
     try {
-      const requests = await fuelService.getFuelRequests();
-      setFuelRequests(requests);
+      const response = await fuelService.getFuelRequests();
+      setFuelRequests(response.requests || []);
     } catch (error) {
       setFuelRequests([]); // Show empty if backend fails
     }
@@ -119,24 +146,21 @@ function FuelRequestManagement() {
 
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.fuelType) newErrors.fuelType = 'Please select fuel type';
     if (!formData.quantity || formData.quantity <= 0) newErrors.quantity = 'Please enter valid quantity';
     if (!formData.deliveryAddress.trim()) newErrors.deliveryAddress = 'Please enter delivery address';
     if (!formData.preferredDate) newErrors.preferredDate = 'Please select preferred date';
     if (!formData.contactNumber.trim()) newErrors.contactNumber = 'Please enter contact number';
     if (!formData.purpose.trim()) newErrors.purpose = 'Please specify purpose of fuel';
-    
+    if (!formData.producerId) newErrors.producerId = 'Please select a producer';
     // Validate phone number format
     if (formData.contactNumber && !/^\+?[\d\s\-\(\)]+$/.test(formData.contactNumber)) {
       newErrors.contactNumber = 'Please enter a valid phone number';
     }
-    
     // Validate future date
     if (formData.preferredDate && new Date(formData.preferredDate) < new Date()) {
       newErrors.preferredDate = 'Please select a future date';
     }
-    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -149,7 +173,15 @@ function FuelRequestManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    if (!user?.id) {
+      setAlertType('danger');
+      setAlertMessage('You must be logged in to submit a fuel request. Please log in and try again.');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 5000);
+      return;
+    }
+
     if (!validateForm()) {
       setAlertType('danger');
       setAlertMessage('Please fix the errors in the form before submitting.');
@@ -160,22 +192,23 @@ function FuelRequestManagement() {
 
     try {
       const selectedFuel = fuelTypes.find(fuel => fuel.value === formData.fuelType);
+      // Get user ID from context
       const requestData = {
         fuelType: formData.fuelType,
-        quantity: parseFloat(formData.quantity),
-        deliveryAddress: formData.deliveryAddress,
-        preferredDate: formData.preferredDate,
-        urgency: formData.urgency,
-        purpose: formData.purpose,
-        contactNumber: formData.contactNumber,
-        additionalNotes: formData.additionalNotes,
-        estimatedCost: parseFloat(calculateCost()),
+        quantityRequested: parseFloat(formData.quantity),
         unit: selectedFuel ? selectedFuel.unit : 'units',
-        fuelTypeLabel: selectedFuel ? selectedFuel.label : formData.fuelType
+        deliveryAddress: formData.deliveryAddress,
+        preferredDeliveryDate: formData.preferredDate,
+        priority: formData.urgency,
+        notes: formData.additionalNotes,
+        contactPerson: formData.purpose,
+        contactPhone: formData.contactNumber,
+        schoolId: user.id,
+        producerId: formData.producerId
       };
 
       const newRequest = await fuelService.createFuelRequest(requestData);
-      
+
       // Add proper display data
       const displayRequest = {
         ...newRequest,
@@ -184,9 +217,10 @@ function FuelRequestManagement() {
         status: 'pending',
         dateRequested: new Date().toISOString(),
         fuelTypeLabel: selectedFuel ? selectedFuel.label : formData.fuelType,
-        unit: selectedFuel ? selectedFuel.unit : 'units'
+        unit: selectedFuel ? selectedFuel.unit : 'units',
+        producerName: producers.find(p => p.id === formData.producerId)?.name || ''
       };
-      
+
       setFuelRequests(prev => [displayRequest, ...prev]);
 
       // Automatic dashboard refresh: fetch latest stats from backend and update React state/context
@@ -208,7 +242,8 @@ function FuelRequestManagement() {
         urgency: 'normal',
         purpose: '',
         contactNumber: '',
-        additionalNotes: ''
+        additionalNotes: '',
+        producerId: ''
       });
 
       setAlertType('success');
@@ -218,7 +253,7 @@ function FuelRequestManagement() {
 
       // Refresh data
       calculateStats();
-      
+
     } catch (error) {
       console.error('Fuel request error:', error);
       setAlertType('danger');
@@ -461,6 +496,49 @@ function FuelRequestManagement() {
                       </div>
                     </Col>
 
+                    {/* Producer Selection */}
+                    <Col lg="6" className="mb-4">
+                      <div style={{
+                        backgroundColor: "#f8f9fa",
+                        borderRadius: "15px",
+                        padding: "25px",
+                        border: "2px solid #e9ecef"
+                      }}>
+                        <h5 style={{ color: "#2c3e50", marginBottom: "20px", fontWeight: "600" }}>
+                          Select Producer *
+                        </h5>
+                        <Form.Group className="mb-3">
+                          <Form.Label style={{ fontWeight: "600", color: "#495057", marginBottom: "10px" }}>
+                            Producer
+                          </Form.Label>
+                          <Form.Select
+                            name="producerId"
+                            value={formData.producerId}
+                            onChange={handleInputChange}
+                            isInvalid={!!errors.producerId}
+                            style={{
+                              borderRadius: "10px",
+                              border: "2px solid #e9ecef",
+                              padding: "12px 16px",
+                              fontSize: "15px"
+                            }}
+                          >
+                            <option value="">Select Producer</option>
+                            {producers.map(prod => (
+                              <option key={prod.id} value={prod.id}>
+                                {prod.firstName} {prod.lastName} ({prod.organization || prod.role})
+                              </option>
+                            ))}
+                          </Form.Select>
+                          {errors.producerId && (
+                            <div style={{ color: "#dc3545", fontSize: "14px", marginTop: "5px" }}>
+                              {errors.producerId}
+                            </div>
+                          )}
+                        </Form.Group>
+                      </div>
+                    </Col>
+
                     {/* Delivery Details */}
                     <Col lg="6" className="mb-4">
                       <div style={{
@@ -472,7 +550,7 @@ function FuelRequestManagement() {
                         <h5 style={{ color: "#2c3e50", marginBottom: "20px", fontWeight: "600" }}>
                           Delivery Details
                         </h5>
-
+                        {/* ...existing code... */}
                         <Form.Group className="mb-3">
                           <Form.Label style={{ fontWeight: "600", color: "#495057", marginBottom: "10px" }}>
                             Delivery Address *
@@ -499,7 +577,7 @@ function FuelRequestManagement() {
                             </div>
                           )}
                         </Form.Group>
-
+                        {/* ...existing code... */}
                         <Row>
                           <Col md="6">
                             <Form.Group className="mb-3">
@@ -568,7 +646,7 @@ function FuelRequestManagement() {
                         <h5 style={{ color: "#2c3e50", marginBottom: "20px", fontWeight: "600" }}>
                           Additional Information
                         </h5>
-                        
+                        {/* ...existing code... */}
                         <Form.Group className="mb-3">
                           <Form.Label style={{ fontWeight: "600", color: "#495057", marginBottom: "10px" }}>
                             Purpose of Fuel *
@@ -593,7 +671,7 @@ function FuelRequestManagement() {
                             </div>
                           )}
                         </Form.Group>
-
+                        {/* ...existing code... */}
                         <Form.Group className="mb-3">
                           <Form.Label style={{ fontWeight: "600", color: "#495057", marginBottom: "10px" }}>
                             Priority Level
@@ -631,7 +709,7 @@ function FuelRequestManagement() {
                         <h5 style={{ color: "#2c3e50", marginBottom: "20px", fontWeight: "600" }}>
                           Additional Notes
                         </h5>
-                        
+                        {/* ...existing code... */}
                         <Form.Group className="mb-3">
                           <Form.Control
                             as="textarea"
@@ -649,8 +727,7 @@ function FuelRequestManagement() {
                             }}
                           />
                         </Form.Group>
-
-                        {/* Submit Button */}
+                        {/* ...existing code... */}
                         <div className="text-center mt-4">
                           <Button
                             type="submit"
@@ -813,6 +890,7 @@ function FuelRequestManagement() {
                   <p><strong>Quantity:</strong> {selectedRequest.quantity} {selectedRequest.unit}</p>
                   <p><strong>Purpose:</strong> {selectedRequest.purpose}</p>
                   <p><strong>Estimated Cost:</strong> ${selectedRequest.estimatedCost}</p>
+                  <p><strong>Producer:</strong> {selectedRequest.producerName || (producers.find(p => p.id === selectedRequest.producerId)?.name || '')}</p>
                 </Col>
                 <Col md="6">
                   <h6 style={{ color: "#28a745", fontWeight: "600", marginBottom: "15px" }}>

@@ -11,6 +11,8 @@ const { connectDB, sequelize } = require('./config/database');
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
+// Trust proxy for correct rate-limit IP detection
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({
@@ -54,6 +56,8 @@ const contentRoutes = require('./routes/content');
 const coursesRoutes = require('./routes/courses');
 const educationRoutes = require('./routes/education');
 const iotRoutes = require('./routes/iot');
+const notificationsRoutes = require('./routes/notifications');
+const messagesRoutes = require('./routes/messages');
 
 
 // Database connection and model associations
@@ -77,7 +81,8 @@ connectDB().then(async () => {
 
 // Routes
 
-app.use('/api/auth', authRoutes);
+
+app.use('/api', authRoutes);
 app.use('/api/dashboard', dashboardRoutes); 
 app.use('/api/fuel-requests', fuelRequestRoutes);
 app.use('/api/projects', projectRoutes);
@@ -88,6 +93,9 @@ app.use('/api/content', contentRoutes);
 app.use('/api/courses', coursesRoutes);
 app.use('/api/education', educationRoutes);
 app.use('/api/iot', iotRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/messages', messagesRoutes);
+app.use('/api/users', require('./routes/users'));
 app.use('/admin', adminRoutes);
 
 

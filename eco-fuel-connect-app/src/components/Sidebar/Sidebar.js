@@ -1,11 +1,18 @@
 import React, { useEffect } from "react";
 import { useLocation, NavLink } from "react-router-dom";
 import { Nav } from "react-bootstrap";
+import { useUser } from "../../contexts/UserContext";
 
 
 
 function Sidebar({ routes }) {
   const location = useLocation();
+  const { user } = useUser();
+
+  // Filter routes for sidebar: hide Reports for non-producers
+  const filteredRoutes = user && user.role !== "producer"
+    ? routes.filter(route => route.path !== "/reports")
+    : routes;
 
   // Force override sidebar styles
   useEffect(() => {
@@ -83,11 +90,11 @@ function Sidebar({ routes }) {
           </a>
           <a 
             href="/" 
-            className="simple-text fw-bold fs-4 text-white"
+            className="simple-text fw-bold text-white"
             style={{
-              fontWeight: '900',
-              fontSize: '1rem',
-              letterSpacing: '0.5px',
+              fontWeight: '700',
+              fontSize: '0.85rem',
+              letterSpacing: '0.3px',
               textShadow: '0 2px 4px rgba(0,0,0,0.3)',
               background: 'linear-gradient(135deg, #ffffff 0%, #d4f5e0 100%)',
               WebkitBackgroundClip: 'text',
@@ -101,7 +108,7 @@ function Sidebar({ routes }) {
           </a>
         </div>
         <Nav as="ul" className="list-unstyled ps-0">
-          {routes.map((route, key) => {
+          {filteredRoutes.map((route, key) => {
             if (route.redirect) return null;
             return (
               <li
@@ -126,15 +133,19 @@ function Sidebar({ routes }) {
                     fontFamily: '"Inter", "Segoe UI", sans-serif'
                   }}
                   onMouseEnter={(e) => {
-                    e.target.closest('.nav-link').style.background = 'rgba(255,255,255,0.15)';
-                    e.target.closest('.nav-link').style.transform = 'translateX(5px)';
-                    e.target.closest('.nav-link').style.color = '#d4f5e0';
+                    const navLink = e.target.closest('.nav-link');
+                    if (navLink) {
+                      navLink.style.background = 'rgba(255,255,255,0.15)';
+                      navLink.style.transform = 'translateX(5px)';
+                      navLink.style.color = '#d4f5e0';
+                    }
                   }}
                   onMouseLeave={(e) => {
-                    if (!e.target.closest('.nav-link').classList.contains('active')) {
-                      e.target.closest('.nav-link').style.background = 'transparent';
-                      e.target.closest('.nav-link').style.transform = 'translateX(0)';
-                      e.target.closest('.nav-link').style.color = 'white';
+                    const navLink = e.target.closest('.nav-link');
+                    if (navLink && !navLink.classList.contains('active')) {
+                      navLink.style.background = 'transparent';
+                      navLink.style.transform = 'translateX(0)';
+                      navLink.style.color = 'white';
                     }
                   }}
                 >

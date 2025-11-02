@@ -26,41 +26,21 @@ function UserProfile() {
     bio: ''
   });
 
-  // Load profile data from context if available, otherwise fetch from backend
+  // Always use context data for profile
   useEffect(() => {
-    const loadProfileData = async () => {
-      if (user) {
-        setProfileData({
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
-          email: user.email || '',
-          organization: user.organization || '',
-          phone: user.phone || '',
-          role: user.role || '',
-          bio: user.bio || ''
-        });
-        setProfilePhoto(user.profilePhoto || require("../assets/img/default-avatar.png"));
-        setCoverPhoto(user.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
-      } else {
-        try {
-          const profile = await require('../services/authService').default.getProfile();
-          setProfileData({
-            firstName: profile.firstName || '',
-            lastName: profile.lastName || '',
-            email: profile.email || '',
-            organization: profile.organization || '',
-            phone: profile.phone || '',
-            role: profile.role || '',
-            bio: profile.bio || ''
-          });
-          setProfilePhoto(profile.profilePhoto || require("../assets/img/default-avatar.png"));
-          setCoverPhoto(profile.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
-        } catch (error) {
-          console.error('Error loading profile data:', error);
-        }
-      }
-    };
-    loadProfileData();
+    if (user) {
+      setProfileData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        organization: user.organization || '',
+        phone: user.phone || '',
+        role: user.role || '',
+        bio: user.bio || ''
+      });
+      setProfilePhoto(user.profilePhoto || require("../assets/img/default-avatar.png"));
+      setCoverPhoto(user.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
+    }
   }, [user]);
 
   // Handle profile data changes

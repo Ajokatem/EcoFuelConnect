@@ -27,10 +27,6 @@ const Notification = sequelize.define('Notification', {
     type: DataTypes.TEXT,
     allowNull: false
   },
-  read: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  }
 }, {
   tableName: 'notifications',
   timestamps: true

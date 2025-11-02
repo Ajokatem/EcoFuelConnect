@@ -1,6 +1,17 @@
 import api from './api';
 
 class AuthService {
+  // Check if user is authenticated
+  isAuthenticated() {
+    // Example: check for token in localStorage
+    return !!localStorage.getItem('token');
+  }
+
+  // Get current user
+  getCurrentUser() {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user) : null;
+  }
   // Login user
   async login(credentials) {
     try {
@@ -17,7 +28,7 @@ class AuthService {
   // Register user
   async register(userData) {
     try {
-      const response = await api.post('/auth/register', userData);
+      const response = await api.post('/register', userData);
       const { token, user } = response.data;
       // Store token and user in React context or state management (handled in component)
       return response.data;

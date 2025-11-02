@@ -1,4 +1,6 @@
 const express = require('express');
+const ContactMessage = require('../models/contactmessage');
+const nodemailer = require('nodemailer');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const helmet = require('helmet');
@@ -39,35 +41,51 @@ router.post('/', validateContact, async (req, res) => {
     }
 
     const { firstName, lastName, email, subject, message } = req.body;
-    
-    // Simple in-memory storage for demo (replace with actual database)
-    const contactMessage = {
-      id: Date.now(),
-      firstName,
-      lastName,
-      email,
-      subject,
-      message,
-      timestamp: new Date().toISOString(),
-      status: 'received'
-    };
 
-    // Log the message (in production, save to database)
-    console.log('Contact message received:', contactMessage);
-
-    // Simulate email sending (replace with actual email service)
+    // Save to database
+    let savedMessage;
     try {
-      // In production, implement actual email sending here
-      console.log(`Email would be sent to admin about: ${subject}`);
-    } catch (emailError) {
-      console.error('Email sending failed:', emailError);
-      // Don't fail the request if email fails
+      savedMessage = await ContactMessage.create({
+        firstName,
+        lastName,
+        email,
+        subject,
+        message
+      });
+      console.log('Contact message saved to DB:', savedMessage.toJSON());
+    } catch (dbError) {
+      console.error('Failed to save contact message:', dbError);
+      return res.status(500).json({ success: false, error: 'Failed to save message to database.' });
     }
+
+        // Send email to admin using nodemailer
+        try {
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: process.env.CONTACT_EMAIL_USER,
+              pass: process.env.CONTACT_EMAIL_PASS
+            }
+          });
+
+          const mailOptions = {
+            from: `${firstName} ${lastName} <${email}>`,
+            to: process.env.CONTACT_EMAIL_RECEIVER,
+            subject: `[EcoFuelConnect Contact] ${subject}`,
+            text: `Message from ${firstName} ${lastName} (${email}):\n\n${message}`
+          };
+
+          await transporter.sendMail(mailOptions);
+          console.log('Contact email sent to admin:', mailOptions);
+        } catch (emailError) {
+          console.error('Email sending failed:', emailError);
+          // Don't fail the request if email fails
+        }
 
     res.json({ 
       success: true, 
       message: 'Message sent successfully! We will get back to you soon.',
-      messageId: contactMessage.id
+      messageId: savedMessage.id
     });
   } catch (err) {
     console.error('Contact form error:', err);
