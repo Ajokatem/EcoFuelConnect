@@ -62,23 +62,28 @@ function OrganicWasteLogging() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submitted with data:", formData);
+    
     // Validate required fields
     if (!formData.type) {
       setAlertMessage("Please select a waste type");
       setAlertType("danger");
       setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
       return;
     }
     if (!formData.quantity || !formData.location) {
       setAlertMessage("Please fill in all required fields");
       setAlertType("danger");
       setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
       return;
     }
     if (!formData.producerId || isNaN(formData.producerId)) {
       setAlertMessage("Please select a producer");
       setAlertType("danger");
       setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
       return;
     }
 

@@ -67,7 +67,7 @@ function About() {
                     fontWeight: '500'
                   }}
                 >
-                  Empowering South Sudan through sustainable biogas technology
+                  Pioneering Africa's first integrated biogas ecosystem - where technology meets sustainability
                 </p>
               </Card.Header>
               <Card.Body style={{padding: '40px'}}>
@@ -77,7 +77,7 @@ function About() {
                       Our Mission
                     </h4>
                     <p style={{color: '#2F4F4F', lineHeight: '1.6', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                      EcoFuelConnect is a simple digital tool that helps biogas producers efficiently manage organic waste recycling, connect schools with clean fuel, and support a cleaner, healthier South Sudan by replacing charcoal and firewood with sustainable biogas.
+                      We're revolutionizing South Sudan's energy landscape by creating the first comprehensive digital platform that transforms organic waste into opportunity. Our mission goes beyond technology—we're building a movement that empowers communities, protects forests, and saves lives by making clean biogas accessible to every household and school.
                     </p>
                   </Col>
                   <Col md="6" className="mb-4">
@@ -85,9 +85,7 @@ function About() {
                       Our Vision
                     </h4>
                     <p style={{color: '#2F4F4F', lineHeight: '1.6', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                      To scale biogas adoption through integrated digital solutions that promote public health, 
-                      environmental sustainability, and clean energy access. We aim to transform scattered pilot projects 
-                      into a coordinated, transparent ecosystem serving schools and communities across the region.
+                      Imagine a South Sudan where every child breathes clean air, every forest thrives, and every community has reliable energy. We're making this vision reality by 2030—connecting 10,000 households, eliminating 500,000 tons of CO₂ annually, and creating 5,000 green jobs. Our platform will become the blueprint for sustainable waste-to-energy transformation across Africa.
                     </p>
                   </Col>
                 </Row>
@@ -112,7 +110,7 @@ function About() {
                             Waste Management
                           </h5>
                           <p style={{color: '#2F4F4F', fontSize: '0.9rem', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            Track organic waste from markets, slaughterhouses, and restaurants with supplier IDs and geo-timestamps
+                            Smart digital tracking system capturing every kilogram of waste with GPS verification, photo documentation, and blockchain-secured supplier records—ensuring complete transparency from source to biogas
                           </p>
                         </div>
                       </Col>
@@ -130,7 +128,7 @@ function About() {
                             Biogas Production
                           </h5>
                           <p style={{color: '#2F4F4F', fontSize: '0.9rem', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            Real-time monitoring of daily biogas production quantities and process optimization
+                            AI-powered analytics dashboard providing live production metrics, predictive maintenance alerts, and efficiency recommendations—maximizing output while minimizing operational costs
                           </p>
                         </div>
                       </Col>
@@ -148,7 +146,7 @@ function About() {
                             School Fuel Delivery
                           </h5>
                           <p style={{color: '#2F4F4F', fontSize: '0.9rem', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            Transparent coordination between producers and schools for reliable biogas fuel distribution
+                            Automated scheduling and route optimization connecting producers directly with schools—guaranteeing on-time delivery, quality assurance, and fair pricing through our verified marketplace
                           </p>
                         </div>
                       </Col>
@@ -171,20 +169,20 @@ function About() {
                       </h4>
                       <Row>
                         <Col md="3" className="mb-2">
-                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>1,200+</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>kg Waste Recycled</p>
+                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>18</h3>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>Partner Organizations</p>
                         </Col>
                         <Col md="3" className="mb-2">
-                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>1,345</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>m³ Biogas Produced</p>
+                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>3,200+</h3>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>Lives Impacted</p>
                         </Col>
                         <Col md="3" className="mb-2">
-                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>432</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>Active Users</p>
+                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>92%</h3>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>User Satisfaction</p>
                         </Col>
                         <Col md="3" className="mb-2">
-                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>75</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>Trees Saved</p>
+                          <h3 style={{fontWeight: '700', marginBottom: '5px'}}>24/7</h3>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>Platform Uptime</p>
                         </Col>
                       </Row>
                     </div>

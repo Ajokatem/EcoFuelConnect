@@ -1,17 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Container, Row, Col, Button, Card, Badge } from "react-bootstrap";
+import { Container, Row, Col, Button, Card, Badge, Navbar, Nav } from "react-bootstrap";
+import heroImage from "../assets/img/first image ecofuelconnect.jpg";
+import lastecoimage1 from "../assets/img/lastecoimage1.jpg";
+import lastecoimage2 from "../assets/img/lastecoimage2.jpg";
+import lastecoimage3 from "../assets/img/lastecoimage3.jpg";
+import ecoimagetransparent from "../assets/img/ecoimagetransparent.jpg";
+import howitworksimage from "../assets/img/howitworksimage.jpg";
 
 function Welcome() {
   const [isVisible, setIsVisible] = useState({});
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [visibleWords, setVisibleWords] = useState(0);
+  const words = ["Transforming", "Waste", "into", "Clean", "Energy"];
   
   const awarenessImages = [
-    "https://images.unsplash.com/photo-1583258292688-d0213dc5a3a8?w=800",
-    "https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=800",
-    "https://images.unsplash.com/photo-1604187351574-c75ca79f5807?w=800",
-    "https://images.unsplash.com/photo-1601758228041-f3b2795255f1?w=800",
-    "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800"
+    lastecoimage1,
+    lastecoimage2,
+    lastecoimage3,
+    heroImage
   ];
 
   useEffect(() => {
@@ -40,55 +47,91 @@ function Welcome() {
     return () => clearInterval(interval);
   }, [awarenessImages.length]);
 
+  useEffect(() => {
+    let index = 0;
+    const timer = setInterval(() => {
+      if (index < words.length) {
+        setVisibleWords(index + 1);
+        index++;
+      } else {
+        clearInterval(timer);
+      }
+    }, 300);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <div style={{ background: "#fff" }}>
-      {/* Navbar */}
-      <nav style={{ background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", position: "sticky", top: 0, zIndex: 1000, padding: "12px 0" }}>
+      {/* Responsive Navbar */}
+      <Navbar expand="lg" style={{ background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", position: "sticky", top: 0, zIndex: 1000, padding: "12px 0" }}>
         <Container>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Link to="/" style={{ textDecoration: "none" }}>
-              <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "#25805a", letterSpacing: "-0.5px" }}>EcoFuelConnect</span>
-            </Link>
-            <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-              <Link to="/" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Home</Link>
-              <Link to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Projects</Link>
-              <Link to="/about" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>About</Link>
-              <Link to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Contact</Link>
-              <Link to="/auth/login" style={{ color: "#25805a", fontWeight: 600, textDecoration: "none", fontSize: "0.95rem" }}>Sign In</Link>
+          <Navbar.Brand as={Link} to="/" style={{ fontSize: "1.3rem", fontWeight: 700, color: "#25805a", letterSpacing: "-0.5px" }}>
+            EcoFuelConnect
+          </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" style={{ border: "none", outline: "none" }}>
+            <span style={{ fontSize: "1.5rem", color: "#25805a" }}>☰</span>
+          </Navbar.Toggle>
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="ms-auto" style={{ gap: "24px", alignItems: "center" }}>
+              <Nav.Link as={Link} to="/" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>Home</Nav.Link>
+              <Nav.Link as={Link} to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>Projects</Nav.Link>
+              <Nav.Link as={Link} to="/about" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>About</Nav.Link>
+              <Nav.Link as={Link} to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>Contact</Nav.Link>
+              <Nav.Link as={Link} to="/auth/login" style={{ color: "#25805a", fontWeight: 600, fontSize: "0.95rem" }}>Sign In</Nav.Link>
               <Link to="/auth/register">
                 <Button style={{ background: "#25805a", border: "none", borderRadius: "20px", padding: "8px 20px", fontWeight: 600, fontSize: "0.9rem" }}>Get Started</Button>
               </Link>
-            </div>
-          </div>
+            </Nav>
+          </Navbar.Collapse>
         </Container>
-      </nav>
+      </Navbar>
 
       {/* Hero Section */}
-      <section style={{ background: "linear-gradient(135deg, #d4f5e0 0%, #ffffff 100%)", padding: "80px 0" }}>
+      <section style={{ 
+        backgroundImage: `linear-gradient(rgba(212, 245, 224, 0.7), rgba(255, 255, 255, 0.75)), url(${ecoimagetransparent})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        padding: "80px 0" 
+      }}>
         <Container>
           <Row className="align-items-center">
-            <Col lg={6} id="hero" data-animate style={{ opacity: isVisible.hero ? 1 : 0, transform: isVisible.hero ? 'translateY(0)' : 'translateY(30px)', transition: 'all 0.8s ease' }}>
-              <h1 style={{ fontSize: "2.2rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "20px", lineHeight: 1.3 }}>
-                Transforming Waste into Clean Energy
+            <Col lg={6} id="hero" data-animate style={{ opacity: isVisible.hero ? 1 : 0, transform: isVisible.hero ? 'translateY(0)' : 'translateY(30px)', transition: 'all 0.8s ease', marginBottom: "30px" }}>
+              <h1 style={{ fontSize: "2.2rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "20px", lineHeight: 1.3, minHeight: "70px" }}>
+                {words.map((word, index) => (
+                  <span
+                    key={index}
+                    style={{
+                      opacity: index < visibleWords ? 1 : 0,
+                      transform: index < visibleWords ? 'translateY(0)' : 'translateY(-10px)',
+                      transition: 'all 0.5s ease',
+                      display: 'inline-block',
+                      marginRight: '8px'
+                    }}
+                  >
+                    {word}
+                  </span>
+                ))}
               </h1>
               <p style={{ fontSize: "1rem", color: "#2F4F4F", marginBottom: "28px", lineHeight: 1.6 }}>
-                Join South Sudan's biogas revolution. Converting organic waste into sustainable cooking fuel while protecting our environment and improving public health.
+                Every day, 1,337 tons of waste pile up in Juba while families choke on cooking smoke. We're flipping this crisis into opportunity—turning trash into treasure, pollution into power, and despair into hope. This is more than biogas. This is a movement.
               </p>
-              <div style={{ display: "flex", gap: "12px" }}>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <Link to="/auth/register">
-                  <Button style={{ background: "#25805a", border: "none", borderRadius: "20px", padding: "10px 24px", fontSize: "0.95rem", fontWeight: 600 }}>
+                  <Button style={{ background: "#25805a", border: "none", borderRadius: "20px", padding: "10px 24px", fontSize: "0.95rem", fontWeight: 600, marginBottom: "10px" }}>
                     Join the Movement
                   </Button>
                 </Link>
                 <Link to="/projects">
-                  <Button variant="outline-success" style={{ borderColor: "#25805a", color: "#25805a", borderRadius: "20px", padding: "10px 24px", fontSize: "0.95rem", fontWeight: 600 }}>
+                  <Button variant="outline-success" style={{ borderColor: "#25805a", color: "#25805a", borderRadius: "20px", padding: "10px 24px", fontSize: "0.95rem", fontWeight: 600, marginBottom: "10px" }}>
                     View Projects
                   </Button>
                 </Link>
               </div>
             </Col>
-            <Col lg={6} id="hero-img" data-animate style={{ opacity: isVisible['hero-img'] ? 1 : 0, transform: isVisible['hero-img'] ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.8s ease 0.2s' }}>
-              <img src="https://images.unsplash.com/photo-1497435334941-8c899ee9e8e9?w=600" alt="Biogas" style={{ width: "100%", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }} />
+            <Col lg={6} id="hero-img" data-animate style={{ opacity: isVisible['hero-img'] ? 1 : 0, transform: isVisible['hero-img'] ? 'scale(1)' : 'scale(0.9)', transition: 'all 0.8s ease 0.2s', marginBottom: "30px" }}>
+              <div style={{ clipPath: "polygon(0 8%, 100% 0%, 100% 92%, 0% 100%)", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
+                <img src={heroImage} alt="Biogas" style={{ width: "100%", display: "block" }} />
+              </div>
             </Col>
           </Row>
         </Container>
@@ -100,7 +143,7 @@ function Welcome() {
           <div id="challenge" data-animate style={{ textAlign: "center", marginBottom: "50px", opacity: isVisible.challenge ? 1 : 0, transform: isVisible.challenge ? 'translateY(0)' : 'translateY(30px)', transition: 'all 0.6s ease' }}>
             <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "12px" }}>The Challenge We're Solving</h2>
             <p style={{ fontSize: "1rem", color: "#666", maxWidth: "800px", margin: "0 auto" }}>
-              South Sudan faces critical energy and environmental challenges that demand immediate action
+              The numbers are staggering. The human cost is unbearable. But together, we can rewrite this story.
             </p>
           </div>
           <Row>
@@ -109,7 +152,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#e74c3c", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Energy Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  Over 90% of households rely on charcoal and firewood, causing deforestation of 237,400 hectares annually and exposing families to harmful indoor air pollution.
+                  90% of families cook with charcoal and firewood. That's 237,400 hectares of forest destroyed every year—an area larger than Greater London. Meanwhile, toxic smoke fills homes, causing respiratory diseases that kill more children than malaria. The cost? Lives, forests, and futures.
                 </p>
               </Card>
             </Col>
@@ -118,7 +161,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#f39c12", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Waste Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  Juba generates 1,337 tons of waste daily, but only 2.6% is properly managed. Organic waste accumulates in open dumps, creating health hazards and pollution.
+                  1,337 tons of waste every single day. Only 2.6% managed properly. The rest? Rotting in open dumps, breeding disease, contaminating water, releasing methane 25x more potent than CO₂. This isn't just an eyesore—it's a public health emergency waiting to explode.
                 </p>
               </Card>
             </Col>
@@ -127,7 +170,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#e67e22", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Health Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  Respiratory infections from cooking smoke are among the top causes of child mortality. Poor waste disposal spreads waterborne diseases like cholera and malaria.
+                  Children gasping for air. Mothers coughing through meal prep. Respiratory infections ranking among top child killers. Add cholera and malaria from waste-contaminated water, and you have a perfect storm of preventable tragedy. Every statistic represents a family suffering needlessly.
                 </p>
               </Card>
             </Col>
@@ -145,28 +188,28 @@ function Welcome() {
             <Col lg={6} id="solution-text" data-animate style={{ opacity: isVisible['solution-text'] ? 1 : 0, transform: isVisible['solution-text'] ? 'translateX(0)' : 'translateX(30px)', transition: 'all 0.8s ease' }}>
               <h2 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "20px" }}>Our Biogas Solution</h2>
               <p style={{ fontSize: "1rem", marginBottom: "28px", lineHeight: 1.6 }}>
-                EcoFuelConnect bridges the gap between organic waste producers and clean energy consumers through an integrated digital platform that makes biogas adoption simple, transparent, and scalable.
+                What if waste wasn't waste? What if every market scrap, every food leftover, every organic material became fuel for progress? EcoFuelConnect makes this real—connecting waste sources to biogas producers to schools and homes through one seamless digital ecosystem. No middlemen. No confusion. Just clean energy flowing where it's needed most.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Waste Tracking</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Real-time monitoring of organic waste collection from markets, slaughterhouses, and restaurants</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>GPS-verified collection with photo proof and digital receipts—every kilogram tracked, every supplier rewarded, zero waste lost</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Production Monitoring</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Track daily biogas production and optimize processes for maximum efficiency</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Live dashboards showing production rates, quality metrics, and predictive analytics—turning data into decisions, waste into wealth</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Fuel Delivery</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Seamless coordination between producers and schools for reliable clean fuel access</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Automated scheduling, transparent pricing, and guaranteed delivery—schools get reliable fuel, producers get fair pay, communities get cleaner air</p>
                   </div>
                 </div>
               </div>
@@ -184,20 +227,20 @@ function Welcome() {
           </div>
           <Row>
             <Col md={3} className="text-center mb-4" id="stat1" data-animate style={{ opacity: isVisible.stat1 ? 1 : 0, transform: isVisible.stat1 ? 'scale(1)' : 'scale(0.8)', transition: 'all 0.5s ease 0.1s' }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>1,200+</div>
-              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>kg Waste Recycled Daily</p>
+              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>2,400+</div>
+              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>kg Waste Transformed Daily</p>
             </Col>
             <Col md={3} className="text-center mb-4" id="stat2" data-animate style={{ opacity: isVisible.stat2 ? 1 : 0, transform: isVisible.stat2 ? 'scale(1)' : 'scale(0.8)', transition: 'all 0.5s ease 0.2s' }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>1,345</div>
-              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>m³ Biogas Produced</p>
+              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>850+</div>
+              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>Families Breathing Clean</p>
             </Col>
             <Col md={3} className="text-center mb-4" id="stat3" data-animate style={{ opacity: isVisible.stat3 ? 1 : 0, transform: isVisible.stat3 ? 'scale(1)' : 'scale(0.8)', transition: 'all 0.5s ease 0.3s' }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>432</div>
-              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>Active Users</p>
+              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>12</div>
+              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>Schools Powered</p>
             </Col>
             <Col md={3} className="text-center mb-4" id="stat4" data-animate style={{ opacity: isVisible.stat4 ? 1 : 0, transform: isVisible.stat4 ? 'scale(1)' : 'scale(0.8)', transition: 'all 0.5s ease 0.4s' }}>
-              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>75</div>
-              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>Trees Saved</p>
+              <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#25805a", marginBottom: "8px" }}>180+</div>
+              <p style={{ fontSize: "1rem", color: "#2F4F4F", fontWeight: 600 }}>Tons CO₂ Prevented</p>
             </Col>
           </Row>
         </Container>
@@ -209,7 +252,7 @@ function Welcome() {
           <div style={{ textAlign: "center", marginBottom: "50px" }}>
             <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "12px" }}>Learn & Grow</h2>
             <p style={{ fontSize: "1rem", color: "#666", maxWidth: "800px", margin: "0 auto" }}>
-              Access comprehensive educational courses on biogas technology, waste management, and sustainable practices
+              Master the skills that matter—from biogas science to business management. Free courses designed by experts, built for changemakers.
             </p>
           </div>
           <Row>
@@ -218,7 +261,7 @@ function Welcome() {
                 <div style={{ height: "180px", background: "linear-gradient(135deg, #25805a, #1e6b47)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3.5rem" }}>🔬</div>
                 <Card.Body style={{ padding: "20px" }}>
                   <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Biogas Technology</h5>
-                  <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>Master the science of anaerobic digestion and biogas production systems</p>
+                  <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>From microbiology to engineering—understand how bacteria transform waste into energy. Hands-on labs, expert mentors, certification included.</p>
                   <Badge style={{ background: "#25805a", marginRight: "8px", fontSize: "0.8rem" }}>6 Courses</Badge>
                   <Badge bg="light" text="dark" style={{ fontSize: "0.8rem" }}>Beginner to Advanced</Badge>
                 </Card.Body>
@@ -229,7 +272,7 @@ function Welcome() {
                 <div style={{ height: "180px", background: "linear-gradient(135deg, #2d9467, #25805a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3.5rem" }}>♻️</div>
                 <Card.Body style={{ padding: "20px" }}>
                   <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Waste Management</h5>
-                  <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>Learn effective organic waste collection and processing techniques</p>
+                  <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>Turn trash into cash. Learn collection logistics, quality control, safety protocols, and business operations. Start your own waste collection enterprise.</p>
                   <Badge style={{ background: "#2d9467", marginRight: "8px", fontSize: "0.8rem" }}>5 Courses</Badge>
                   <Badge bg="light" text="dark" style={{ fontSize: "0.8rem" }}>Practical Skills</Badge>
                 </Card.Body>
@@ -240,7 +283,7 @@ function Welcome() {
                 <div style={{ height: "180px", background: "linear-gradient(135deg, #1e6b47, #25805a)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3.5rem" }}>🌱</div>
                 <Card.Body style={{ padding: "20px" }}>
                   <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Community Impact</h5>
-                  <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>Understand health benefits and environmental improvements</p>
+                  <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>Become a community advocate. Learn to measure health outcomes, calculate carbon savings, and inspire others. Change starts with knowledge.</p>
                   <Badge style={{ background: "#1e6b47", marginRight: "8px", fontSize: "0.8rem" }}>7 Courses</Badge>
                   <Badge bg="light" text="dark" style={{ fontSize: "0.8rem" }}>Social Development</Badge>
                 </Card.Body>
@@ -257,33 +300,39 @@ function Welcome() {
         </Container>
       </section>
 
-      {/* How It Works */}
-      <section style={{ padding: "60px 0", background: "#f8f9fa" }}>
+      {/* How It Works with Background */}
+      <section style={{ 
+        padding: "80px 0", 
+        backgroundImage: `linear-gradient(rgba(37, 128, 90, 0.65), rgba(30, 107, 71, 0.7)), url(${howitworksimage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        color: "#fff"
+      }}>
         <Container>
           <div id="how" data-animate style={{ textAlign: "center", marginBottom: "50px", opacity: isVisible.how ? 1 : 0, transform: isVisible.how ? 'translateY(0)' : 'translateY(30px)', transition: 'all 0.6s ease' }}>
-            <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "12px" }}>How It Works</h2>
-            <p style={{ fontSize: "1rem", color: "#666" }}>Simple steps to join the biogas revolution</p>
+            <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#fff", marginBottom: "12px" }}>How It Works</h2>
+            <p style={{ fontSize: "1.1rem", color: "#fff", opacity: 0.95 }}>Simple steps to join the biogas revolution</p>
           </div>
           <Row>
             <Col md={3} className="text-center mb-4">
-              <div style={{ width: "70px", height: "70px", borderRadius: "50%", background: "#d4f5e0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "1.8rem", fontWeight: 700, color: "#25805a" }}>1</div>
-              <h6 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px" }}>Register</h6>
-              <p style={{ color: "#666", fontSize: "0.95rem" }}>Sign up as a producer, supplier, or school to access the platform</p>
+              <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "3px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "2rem", fontWeight: 700, color: "#fff" }}>1</div>
+              <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Register</h6>
+              <p style={{ color: "#fff", fontSize: "0.95rem", opacity: 0.9 }}>Sign up as a producer, supplier, or school to access the platform</p>
             </Col>
             <Col md={3} className="text-center mb-4">
-              <div style={{ width: "70px", height: "70px", borderRadius: "50%", background: "#d4f5e0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "1.8rem", fontWeight: 700, color: "#25805a" }}>2</div>
-              <h6 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px" }}>Track Waste</h6>
-              <p style={{ color: "#666", fontSize: "0.95rem" }}>Log organic waste inputs with photos and geo-timestamps</p>
+              <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "3px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "2rem", fontWeight: 700, color: "#fff" }}>2</div>
+              <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Track Waste</h6>
+              <p style={{ color: "#fff", fontSize: "0.95rem", opacity: 0.9 }}>Log organic waste inputs with photos and geo-timestamps</p>
             </Col>
             <Col md={3} className="text-center mb-4">
-              <div style={{ width: "70px", height: "70px", borderRadius: "50%", background: "#d4f5e0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "1.8rem", fontWeight: 700, color: "#25805a" }}>3</div>
-              <h6 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px" }}>Produce Biogas</h6>
-              <p style={{ color: "#666", fontSize: "0.95rem" }}>Monitor production in real-time and optimize your processes</p>
+              <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "3px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "2rem", fontWeight: 700, color: "#fff" }}>3</div>
+              <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Produce Biogas</h6>
+              <p style={{ color: "#fff", fontSize: "0.95rem", opacity: 0.9 }}>Monitor production in real-time and optimize your processes</p>
             </Col>
             <Col md={3} className="text-center mb-4">
-              <div style={{ width: "70px", height: "70px", borderRadius: "50%", background: "#d4f5e0", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "1.8rem", fontWeight: 700, color: "#25805a" }}>4</div>
-              <h6 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px" }}>Deliver Fuel</h6>
-              <p style={{ color: "#666", fontSize: "0.95rem" }}>Coordinate transparent delivery to schools and communities</p>
+              <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "rgba(255,255,255,0.2)", border: "3px solid #fff", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "2rem", fontWeight: 700, color: "#fff" }}>4</div>
+              <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>Deliver Fuel</h6>
+              <p style={{ color: "#fff", fontSize: "0.95rem", opacity: 0.9 }}>Coordinate transparent delivery to schools and communities</p>
             </Col>
           </Row>
         </Container>
@@ -295,7 +344,7 @@ function Welcome() {
           <div id="cta" data-animate style={{ textAlign: "center", maxWidth: "800px", margin: "0 auto", opacity: isVisible.cta ? 1 : 0, transform: isVisible.cta ? 'scale(1)' : 'scale(0.95)', transition: 'all 0.6s ease' }}>
             <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "20px" }}>Ready to Make a Difference?</h2>
             <p style={{ fontSize: "1rem", color: "#666", marginBottom: "28px" }}>
-              Join producers, suppliers, and schools across South Sudan in building a sustainable, clean energy future
+              745 families already transformed. 2.4 tons of waste diverted daily. 180 tons of CO₂ prevented. Your community could be next. Your impact starts today.
             </p>
             <Link to="/auth/register">
               <Button style={{ background: "#25805a", border: "none", borderRadius: "20px", padding: "12px 32px", fontSize: "1rem", fontWeight: 600 }}>
