@@ -170,7 +170,7 @@ function Messages() {
   <Container fluid className="messages-responsive-root">
       {/* Chat List Screen */}
       {!selectedUser ? (
-        <div style={{ maxWidth: 420, margin: "0 auto", paddingTop: 0, background: "#fff" }}>
+        <div className="messages-list-container">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", padding: "24px 18px 12px 18px" }}>
             <h2 style={{ fontWeight: 700, fontSize: 26, margin: 0 }}>Chat</h2>
             {/* Removed or minimized plus icon for new chat */}
@@ -196,7 +196,7 @@ function Messages() {
           </div>
         </div>
       ) : (
-        <div style={{ maxWidth: 420, margin: "0 auto", background: "#fff", minHeight: "100vh" }}>
+        <div className="messages-chat-container">
           {/* Responsive chat header */}
           <div className="messages-header">
             <span className="messages-back" onClick={() => setSelectedUser(null)}>&#60;</span>
@@ -241,7 +241,7 @@ function Messages() {
             })()}
           </div>
           {/* Message input bar - truly fixed at bottom, never scrolls */}
-          <div style={{ position: "fixed", left: "50%", transform: "translateX(-50%)", bottom: 0, width: "100%", maxWidth: 420, background: "#fff", padding: "0 18px", boxShadow: "0 -2px 8px rgba(0,0,0,0.04)", zIndex: 100 }}>
+          <div className="messages-input-container">
             <Form className="messages-input-bar" onSubmit={e => { e.preventDefault(); if (newMessage.trim()) sendMessage(); }}>
               <Form.Group className="messages-input-group">
                 <Form.Control

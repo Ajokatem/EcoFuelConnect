@@ -1,4 +1,4 @@
-// useLocalStorage removed. Use useState and backend APIs for persistent state.
+
 
 export const useSessionStorage = (key, initialValue) => {
   const [storedValue, setStoredValue] = useState(() => {

@@ -42,6 +42,8 @@ function FuelRequestManagement() {
     additionalNotes: '',
     producerId: ''
   });
+  const [gpsLocation, setGpsLocation] = useState(null);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   const [errors, setErrors] = useState({});
   const [showAlert, setShowAlert] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -98,7 +100,58 @@ function FuelRequestManagement() {
   useEffect(() => {
     loadFuelRequests();
     loadProducers();
+    captureGPSLocation();
   }, []);
+
+  const captureGPSLocation = () => {
+    if (navigator.geolocation) {
+      setLoadingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          };
+          setGpsLocation(location);
+          
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=18&addressdetails=1`
+            );
+            const data = await response.json();
+            
+            if (data && data.address) {
+              const addr = data.address;
+              const addressParts = [];
+              
+              if (addr.house_number) addressParts.push(addr.house_number);
+              if (addr.road) addressParts.push(addr.road);
+              if (addr.suburb || addr.neighbourhood) addressParts.push(addr.suburb || addr.neighbourhood);
+              if (addr.city || addr.town || addr.village) addressParts.push(addr.city || addr.town || addr.village);
+              if (addr.state) addressParts.push(addr.state);
+              if (addr.country) addressParts.push(addr.country);
+              
+              const readableAddress = addressParts.join(', ') || data.display_name;
+              
+              setFormData(prev => ({ 
+                ...prev, 
+                deliveryAddress: readableAddress
+              }));
+            }
+          } catch (error) {
+            console.error('Geocoding error:', error);
+          }
+          
+          setLoadingLocation(false);
+        },
+        (error) => {
+          console.error('GPS Error:', error);
+          setLoadingLocation(false);
+        }
+      );
+    }
+  };
   const loadProducers = async () => {
     try {
       const result = await userService.getActiveProducers();
@@ -215,7 +268,6 @@ function FuelRequestManagement() {
 
     try {
       const selectedFuel = fuelTypes.find(fuel => fuel.value === formData.fuelType);
-      // Get user ID from context
       const requestData = {
         fuelType: formData.fuelType,
         quantityRequested: parseFloat(formData.quantity),
@@ -230,31 +282,12 @@ function FuelRequestManagement() {
         producerId: formData.producerId
       };
 
+      console.log('Submitting fuel request:', requestData);
       const newRequest = await fuelService.createFuelRequest(requestData);
+      console.log('Backend response:', newRequest);
 
-      // Add proper display data
-      const displayRequest = {
-        ...newRequest,
-        id: newRequest.id || Date.now(),
-        requestNumber: newRequest.requestNumber || `REQ-${Date.now()}`,
-        status: 'pending',
-        dateRequested: new Date().toISOString(),
-        fuelTypeLabel: selectedFuel ? selectedFuel.label : formData.fuelType,
-        unit: selectedFuel ? selectedFuel.unit : 'units',
-        producerName: producers.find(p => p.id === formData.producerId)?.name || ''
-      };
-
-      setFuelRequests(prev => [displayRequest, ...prev]);
-
-      // Automatic dashboard refresh: fetch latest stats from backend and update React state/context
-      if (window.dashboardService && window.dashboardService.getDashboardStats) {
-        window.dashboardService.getDashboardStats().then(stats => {
-          // Update dashboard stats in React state/context (handled in parent/dashboard component)
-        });
-      }
-
-      // Dispatch custom event to refresh report page
-      window.dispatchEvent(new Event('reportRefresh'));
+      // Immediately fetch updated requests from backend
+      await loadFuelRequests();
 
       // Reset form
       setFormData({
@@ -270,12 +303,14 @@ function FuelRequestManagement() {
       });
 
       setAlertType('success');
-      setAlertMessage(`Fuel request submitted successfully! Request ID: ${displayRequest.requestNumber}`);
+      setAlertMessage(`Fuel request submitted successfully! Request ID: ${newRequest.requestNumber || newRequest.requestId || 'REQ-' + newRequest.id}`);
       setShowAlert(true);
-      setTimeout(() => setShowAlert(false), 5000);
-
-      // Refresh data
-      calculateStats();
+      
+      // Auto-switch to Manage Requests tab
+      setTimeout(() => {
+        setActiveTab('manage');
+        setShowAlert(false);
+      }, 1500);
 
     } catch (error) {
       console.error('Fuel request error:', error);
@@ -576,22 +611,47 @@ function FuelRequestManagement() {
                           <Form.Label style={{ fontWeight: "600", color: "#495057", marginBottom: "10px" }}>
                             Delivery Address *
                           </Form.Label>
-                          <Form.Control
-                            as="textarea"
-                            rows={3}
-                            name="deliveryAddress"
-                            value={formData.deliveryAddress}
-                            onChange={handleInputChange}
-                            placeholder="Enter complete delivery address with landmarks..."
-                            isInvalid={!!errors.deliveryAddress}
-                            style={{
-                              borderRadius: "10px",
-                              border: "2px solid #e9ecef",
-                              padding: "12px 16px",
-                              fontSize: "15px",
-                              resize: "vertical"
-                            }}
-                          />
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                            <Form.Control
+                              as="textarea"
+                              rows={3}
+                              name="deliveryAddress"
+                              value={formData.deliveryAddress}
+                              onChange={handleInputChange}
+                              placeholder={loadingLocation ? "Getting GPS location..." : "GPS address"}
+                              isInvalid={!!errors.deliveryAddress}
+                              readOnly={!!gpsLocation}
+                              style={{
+                                borderRadius: "10px",
+                                border: "2px solid #e9ecef",
+                                padding: "12px 16px",
+                                fontSize: "15px",
+                                resize: "vertical",
+                                flex: 1
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              onClick={captureGPSLocation}
+                              disabled={loadingLocation}
+                              style={{
+                                backgroundColor: "#28a745",
+                                border: "none",
+                                borderRadius: "10px",
+                                padding: "12px 16px",
+                                fontSize: "14px",
+                                fontWeight: "600",
+                                whiteSpace: "nowrap"
+                              }}
+                            >
+                              {loadingLocation ? 'Loading...' : 'Refresh GPS'}
+                            </Button>
+                          </div>
+                          {gpsLocation && (
+                            <div style={{ color: "#28a745", fontSize: "13px", marginTop: "5px" }}>
+                              ✓ GPS captured (Accuracy: {gpsLocation.accuracy.toFixed(0)}m)
+                            </div>
+                          )}
                           {errors.deliveryAddress && (
                             <div style={{ color: "#dc3545", fontSize: "14px", marginTop: "5px" }}>
                               {errors.deliveryAddress}
