@@ -402,8 +402,8 @@ function Register() {
                   {/* Terms and Privacy Policy */}
                   <Form.Group className="mb-3">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                      <Link to="/Terms.js" style={{color: '#25805a', textDecoration: 'underline', minWidth: 80, fontSize: '0.95em'}}>Terms</Link>
-                      <Link to="/Privacy.js" style={{color: '#25805a', textDecoration: 'underline', minWidth: 80, fontSize: '0.95em'}}>Privacy Policy</Link>
+                      <Link to="/terms" target="_blank" style={{color: '#25805a', textDecoration: 'underline', minWidth: 80, fontSize: '0.95em'}}>Terms</Link>
+                      <Link to="/privacy" target="_blank" style={{color: '#25805a', textDecoration: 'underline', minWidth: 80, fontSize: '0.95em'}}>Privacy Policy</Link>
                       <Button
                         variant="success"
                         size="sm"

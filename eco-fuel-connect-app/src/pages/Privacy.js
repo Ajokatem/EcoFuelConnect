@@ -1,37 +1,68 @@
 import React from "react";
+import { Container, Card } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
-const Privacy = () => (
-  <div style={{ padding: "2rem" }}>
-    <h1 style={{ fontSize: '2rem', marginBottom: 24 }}>EcoFuelConnect Privacy Policy</h1>
-    <p>Your privacy is important to us. This policy explains how EcoFuelConnect collects, uses, and protects your information.</p>
-    <h2 style={{ fontSize: '1.2rem', marginTop: 32 }}>1. Information We Collect</h2>
-    <ul>
-      <li>Personal details you provide during registration (name, email, organization, phone).</li>
-      <li>Waste logs, fuel requests, and other activity data you submit.</li>
-      <li>Technical data such as IP address, browser type, and usage statistics.</li>
-    </ul>
-    <h2 style={{ fontSize: '1.2rem', marginTop: 32 }}>2. How We Use Your Data</h2>
-    <ul>
-      <li>To operate and improve EcoFuelConnect services.</li>
-      <li>To personalize your experience and show relevant dashboard/report data.</li>
-      <li>To communicate important updates, notifications, and support messages.</li>
-    </ul>
-    <h2 style={{ fontSize: '1.2rem', marginTop: 32 }}>3. Data Sharing</h2>
-    <ul>
-      <li>We do not sell or share your personal data with third parties except as required by law or to operate the platform (e.g., email notifications).</li>
-    </ul>
-    <h2 style={{ fontSize: '1.2rem', marginTop: 32 }}>4. Data Security</h2>
-    <p>We use industry-standard security measures to protect your data. However, no system is 100% secure, so please use strong passwords and protect your account.</p>
-    <h2 style={{ fontSize: '1.2rem', marginTop: 32 }}>5. Your Rights</h2>
-    <ul>
-      <li>You may update your profile information at any time.</li>
-      <li>You may request deletion of your account and data by contacting support.</li>
-    </ul>
-    <h2 style={{ fontSize: '1.2rem', marginTop: 32 }}>6. Changes to Policy</h2>
-    <p>We may update this Privacy Policy as our services evolve. Continued use of EcoFuelConnect means you accept any changes.</p>
-    <h2 style={{ fontSize: '1.2rem', marginTop: 32 }}>7. Contact</h2>
-    <p>If you have questions about this policy, contact us at support@ecofuelconnect.com.</p>
-  </div>
-);
+function Privacy() {
+  return (
+    <Container fluid style={{ minHeight: '100vh', background: '#f8f9fa', padding: '40px 20px' }}>
+      <Card className="shadow-lg border-0" style={{ maxWidth: '900px', margin: '0 auto', borderRadius: '15px' }}>
+        <Card.Body className="p-5">
+          <div className="text-center mb-4">
+            <h2 style={{ color: '#25805a', fontWeight: '700' }}>Privacy Policy</h2>
+            <p style={{ color: '#666' }}>Last updated: January 2025</p>
+          </div>
+
+          <div style={{ color: '#2F4F4F', lineHeight: '1.8' }}>
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>1. Information We Collect</h4>
+            <p>
+              We collect information you provide directly to us, including name, email address, organization details, and waste logging data.
+            </p>
+
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>2. How We Use Your Information</h4>
+            <p>
+              We use the information we collect to provide, maintain, and improve our services, to process waste entries, and to communicate with you.
+            </p>
+
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>3. Information Sharing</h4>
+            <p>
+              We do not share your personal information with third parties except as described in this policy or with your consent.
+            </p>
+
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>4. Data Security</h4>
+            <p>
+              We take reasonable measures to help protect your personal information from loss, theft, misuse, and unauthorized access.
+            </p>
+
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>5. Your Rights</h4>
+            <p>
+              You have the right to access, update, or delete your personal information at any time through your account settings.
+            </p>
+
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>6. Cookies</h4>
+            <p>
+              We use cookies and similar tracking technologies to track activity on our service and hold certain information.
+            </p>
+
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>7. Changes to This Policy</h4>
+            <p>
+              We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page.
+            </p>
+
+            <h4 style={{ color: '#25805a', marginTop: '30px' }}>8. Contact Us</h4>
+            <p>
+              If you have any questions about this Privacy Policy, please contact us at a.biar@alustudent.com
+            </p>
+          </div>
+
+          <div className="text-center mt-5">
+            <Link to="/auth/register" style={{ color: '#25805a', textDecoration: 'none', fontWeight: '600' }}>
+              ← Back to Registration
+            </Link>
+          </div>
+        </Card.Body>
+      </Card>
+    </Container>
+  );
+}
 
 export default Privacy;

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { Container, Row, Col, Button, Card, Badge, Navbar, Nav } from "react-bootstrap";
+import { Link, useHistory } from "react-router-dom";
+import { Container, Row, Col, Button, Card, Badge, Navbar, Nav, Modal } from "react-bootstrap";
+import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
+import authService from "../services/authService";
 import heroImage from "../assets/img/first image ecofuelconnect.jpg";
 import lastecoimage1 from "../assets/img/lastecoimage1.jpg";
 import lastecoimage2 from "../assets/img/lastecoimage2.jpg";
@@ -9,9 +11,11 @@ import ecoimagetransparent from "../assets/img/ecoimagetransparent.jpg";
 import howitworksimage from "../assets/img/howitworksimage.jpg";
 
 function Welcome() {
+  const history = useHistory();
   const [isVisible, setIsVisible] = useState({});
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [visibleWords, setVisibleWords] = useState(0);
+  const [showGoogleModal, setShowGoogleModal] = useState(false);
   const words = ["Transforming", "Waste", "into", "Clean", "Energy"];
   
   const awarenessImages = [
@@ -60,8 +64,54 @@ function Welcome() {
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowGoogleModal(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      await authService.googleLogin({ credential: credentialResponse.credential });
+      setShowGoogleModal(false);
+      history.push("/admin/dashboard");
+    } catch (error) {
+      console.error("Google login failed:", error);
+    }
+  };
+
+  const handleGoogleError = () => {
+    console.error("Google authentication failed");
+  };
+
   return (
+    <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
     <div style={{ background: "#fff" }}>
+      {/* Google Sign-In Modal */}
+      <Modal show={showGoogleModal} onHide={() => setShowGoogleModal(false)} centered>
+        <Modal.Header closeButton style={{ border: 'none', paddingBottom: 0 }}>
+          <Modal.Title style={{ color: '#25805a', fontWeight: '700', width: '100%', textAlign: 'center' }}>
+            Quick Sign In
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ padding: '30px', textAlign: 'center' }}>
+          <p style={{ color: '#666', marginBottom: '25px', fontSize: '1rem' }}>
+            Continue with Google to access your EcoFuelConnect account
+          </p>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            size="large"
+            width="100%"
+          />
+          <div style={{ marginTop: '20px' }}>
+            <Link to="/auth/login" style={{ color: '#25805a', textDecoration: 'none', fontSize: '0.9rem' }}>
+              Or sign in with email
+            </Link>
+          </div>
+        </Modal.Body>
+      </Modal>
       {/* Responsive Navbar */}
       <Navbar expand="lg" style={{ background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", position: "sticky", top: 0, zIndex: 1000, padding: "12px 0" }}>
         <Container>
@@ -432,6 +482,7 @@ function Welcome() {
         </Container>
       </footer>
     </div>
+    </GoogleOAuthProvider>
   );
 }
 
