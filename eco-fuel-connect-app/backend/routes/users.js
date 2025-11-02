@@ -9,10 +9,13 @@ router.get('/', async (req, res) => {
     let where = {};
     if (role) where.role = role;
     if (isActive !== undefined) where.isActive = isActive === 'true';
+    
     const producers = await User.findAll({
       where,
-      attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone']
+      attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone', 'role']
     });
+    
+    console.log(`Fetched ${producers.length} producers`);
     res.json({ producers });
   } catch (error) {
     console.error('Error fetching users:', error);

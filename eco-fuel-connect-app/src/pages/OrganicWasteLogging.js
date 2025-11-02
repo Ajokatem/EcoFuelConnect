@@ -13,6 +13,8 @@ function OrganicWasteLogging() {
   const [alertType, setAlertType] = useState("success");
   const [activeTab, setActiveTab] = useState("log");
   const [currentUser, setCurrentUser] = useState(null);
+  const [gpsLocation, setGpsLocation] = useState(null);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   
   const wasteTypes = [
     { value: "food_scraps", label: "Food Scraps", fuelRatio: 0.5 },
@@ -26,13 +28,24 @@ function OrganicWasteLogging() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     setCurrentUser(user);
 
+    // Auto-capture GPS location on component mount
+    captureGPSLocation();
+
       const fetchWasteEntries = async () => {
       try {
         const response = await wasteService.getWasteEntries();
-        setWasteEntries(response.wasteEntries || []);
+        console.log('Initial fetch response:', response);
+        
+        if (response.wasteEntries) {
+          setWasteEntries(response.wasteEntries);
+        } else if (Array.isArray(response)) {
+          setWasteEntries(response);
+        } else {
+          setWasteEntries([]);
+        }
       } catch (error) {
         console.error("Error fetching waste entries:", error);
-        setWasteEntries([]); // Show empty if backend fails
+        setWasteEntries([]);
       }
     };
 
@@ -40,8 +53,14 @@ function OrganicWasteLogging() {
       try {
         // Fetch active producers from backend
         const response = await wasteService.getProducers();
-        setProducers(response.producers || []);
+        console.log('Producers fetched:', response);
+        setProducers(response.producers || response.users || []);
       } catch (error) {
+        console.error('Error fetching producers:', error);
+        setAlertMessage('Failed to load producers. Please refresh the page.');
+        setAlertType('warning');
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
         setProducers([]);
       }
     };
@@ -49,6 +68,78 @@ function OrganicWasteLogging() {
     fetchWasteEntries();
     fetchProducers();
   }, []);
+
+  const captureGPSLocation = () => {
+    if (navigator.geolocation) {
+      setLoadingLocation(true);
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          };
+          setGpsLocation(location);
+          
+          // Reverse geocode to get readable address
+          try {
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=18&addressdetails=1`
+            );
+            const data = await response.json();
+            
+            if (data && data.address) {
+              const addr = data.address;
+              const addressParts = [];
+              
+              // Build readable address
+              if (addr.house_number) addressParts.push(addr.house_number);
+              if (addr.road) addressParts.push(addr.road);
+              if (addr.suburb || addr.neighbourhood) addressParts.push(addr.suburb || addr.neighbourhood);
+              if (addr.city || addr.town || addr.village) addressParts.push(addr.city || addr.town || addr.village);
+              if (addr.state) addressParts.push(addr.state);
+              if (addr.country) addressParts.push(addr.country);
+              
+              const readableAddress = addressParts.join(', ') || data.display_name;
+              
+              setFormData(prev => ({ 
+                ...prev, 
+                location: readableAddress
+              }));
+            } else {
+              // Fallback to coordinates if geocoding fails
+              setFormData(prev => ({ 
+                ...prev, 
+                location: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` 
+              }));
+            }
+          } catch (error) {
+            console.error('Geocoding error:', error);
+            // Fallback to coordinates
+            setFormData(prev => ({ 
+              ...prev, 
+              location: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` 
+            }));
+          }
+          
+          setLoadingLocation(false);
+        },
+        (error) => {
+          console.error('GPS Error:', error);
+          setLoadingLocation(false);
+          setAlertMessage('Unable to get GPS location. Please enable location services.');
+          setAlertType('warning');
+          setShowAlert(true);
+          setTimeout(() => setShowAlert(false), 3000);
+        }
+      );
+    } else {
+      setAlertMessage('GPS not supported by your browser');
+      setAlertType('warning');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -105,36 +196,36 @@ function OrganicWasteLogging() {
         status: 'pending'
       };
 
-      // Actually send entry to backend
-      await wasteService.createWasteEntry(wasteData);
+      console.log('Sending waste data to backend:', wasteData);
+      
+      // Send entry to backend
+      const response = await wasteService.createWasteEntry(wasteData);
+      console.log('Backend response:', response);
 
-      // Automatic dashboard refresh: fetch latest stats from backend and update React state/context
-      if (window.dashboardService && window.dashboardService.getDashboardStats) {
-        window.dashboardService.getDashboardStats().then(stats => {
-          // Update dashboard stats in React state/context (handled in parent/dashboard component)
-        });
+      // Immediately fetch updated entries
+      const entriesResponse = await wasteService.getWasteEntries();
+      console.log('Fetched entries:', entriesResponse);
+      
+      // Update state with new entries
+      if (entriesResponse.wasteEntries) {
+        setWasteEntries(entriesResponse.wasteEntries);
+      } else if (Array.isArray(entriesResponse)) {
+        setWasteEntries(entriesResponse);
       }
 
-      // Dispatch custom event to refresh report page
-      window.dispatchEvent(new Event('reportRefresh'));
-
-      // Re-fetch entries so new entry appears
-      if (typeof wasteService.getWasteEntries === 'function') {
-        try {
-          const response = await wasteService.getWasteEntries();
-          setWasteEntries(response.wasteEntries || []);
-        } catch (err) {
-          // Ignore fetch error
-        }
-      }
-
-      // Reset all form fields including producerId
+      // Reset form and show success
       setFormData({ type: "", quantity: "", location: "", description: "", producerId: "" });
+      setGpsLocation(null);
       setAlertMessage("Waste entry logged successfully!");
       setAlertType("success");
       setShowAlert(true);
-      // Auto-hide alert after 3 seconds
-      setTimeout(() => setShowAlert(false), 3000);
+      
+      // Auto-switch to View Entries tab
+      setTimeout(() => {
+        setActiveTab("entries");
+        setShowAlert(false);
+      }, 1500);
+      
     } catch (error) {
       console.error("Error creating waste entry:", error);
       setAlertMessage(error.message || String(error) || "Failed to log waste entry. Please try again.");
@@ -223,7 +314,42 @@ function OrganicWasteLogging() {
                               </Form.Group>
                               <Form.Group className="mb-3">
                                 <Form.Label>{translate("location") || "Location"} *</Form.Label>
-                                <Form.Control type="text" name="location" value={formData.location} onChange={handleInputChange} placeholder="Enter collection location" required />
+                                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                  <Form.Control 
+                                    type="text" 
+                                    name="location" 
+                                    value={formData.location} 
+                                    onChange={handleInputChange} 
+                                    placeholder={loadingLocation ? "Getting GPS location..." : "GPS coordinates"} 
+                                    required 
+                                    readOnly={!!gpsLocation}
+                                    style={{ flex: 1 }}
+                                  />
+                                  <Button
+                                    type="button"
+                                    onClick={captureGPSLocation}
+                                    disabled={loadingLocation}
+                                    style={{
+                                      backgroundColor: "#28a745",
+                                      borderColor: "#28a745",
+                                      color: "white",
+                                      padding: "8px 12px",
+                                      fontSize: "0.85rem",
+                                      whiteSpace: "nowrap"
+                                    }}
+                                  >
+                                    {loadingLocation ? (
+                                      <span className="spinner-border spinner-border-sm" />
+                                    ) : (
+                                      "Refresh GPS"
+                                    )}
+                                  </Button>
+                                </div>
+                                {gpsLocation && (
+                                  <Form.Text className="text-success">
+                                    ✓ GPS captured (Accuracy: {gpsLocation.accuracy.toFixed(0)}m)
+                                  </Form.Text>
+                                )}
                               </Form.Group>
                               <Form.Group className="mb-3">
                                 <Form.Label>{translate("description") || "Description"}</Form.Label>

@@ -67,7 +67,7 @@ function Welcome() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setShowGoogleModal(true);
-    }, 2000);
+    }, 3000);
     return () => clearTimeout(timer);
   }, []);
 
@@ -88,30 +88,66 @@ function Welcome() {
   return (
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
     <div style={{ background: "#fff" }}>
-      {/* Google Sign-In Modal */}
-      <Modal show={showGoogleModal} onHide={() => setShowGoogleModal(false)} centered>
-        <Modal.Header closeButton style={{ border: 'none', paddingBottom: 0 }}>
-          <Modal.Title style={{ color: '#25805a', fontWeight: '700', width: '100%', textAlign: 'center' }}>
-            Quick Sign In
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body style={{ padding: '30px', textAlign: 'center' }}>
-          <p style={{ color: '#666', marginBottom: '25px', fontSize: '1rem' }}>
-            Continue with Google to access your EcoFuelConnect account
-          </p>
+      {/* Google Sign-In Popup - Top Right */}
+      {showGoogleModal && (
+        <div style={{
+          position: 'fixed',
+          top: '80px',
+          right: '20px',
+          zIndex: 9999,
+          background: '#fff',
+          borderRadius: '8px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          padding: '16px',
+          width: '300px',
+          animation: 'slideInRight 0.3s ease-out'
+        }}>
+          <style>{`
+            @keyframes slideInRight {
+              from {
+                transform: translateX(100%);
+                opacity: 0;
+              }
+              to {
+                transform: translateX(0);
+                opacity: 1;
+              }
+            }
+          `}</style>
+          <button
+            onClick={() => setShowGoogleModal(false)}
+            style={{
+              position: 'absolute',
+              top: '8px',
+              right: '8px',
+              background: 'transparent',
+              border: 'none',
+              fontSize: '18px',
+              color: '#999',
+              cursor: 'pointer',
+              padding: '4px',
+              lineHeight: 1
+            }}
+          >
+            ×
+          </button>
           <GoogleLogin
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
-            size="large"
-            width="100%"
+            size="medium"
+            width="268"
           />
-          <div style={{ marginTop: '20px' }}>
-            <Link to="/auth/login" style={{ color: '#25805a', textDecoration: 'none', fontSize: '0.9rem' }}>
-              Or sign in with email
+          <div style={{ marginTop: '12px', textAlign: 'center' }}>
+            <Link 
+              to="/auth/login" 
+              onClick={() => setShowGoogleModal(false)}
+              style={{ color: '#25805a', textDecoration: 'none', fontSize: '0.8rem' }}
+            >
+              Sign in with email
             </Link>
           </div>
-        </Modal.Body>
-      </Modal>
+        </div>
+      )}
       {/* Responsive Navbar */}
       <Navbar expand="lg" style={{ background: "#fff", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", position: "sticky", top: 0, zIndex: 1000, padding: "12px 0" }}>
         <Container>

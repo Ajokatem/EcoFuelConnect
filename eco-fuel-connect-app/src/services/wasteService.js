@@ -5,8 +5,10 @@ class WasteService {
   async getProducers() {
     try {
       const response = await api.get('/users?role=producer&isActive=true');
+      console.log('API Response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('API Error:', error);
       throw error.response?.data || { message: 'Failed to fetch producers' };
     }
   }
@@ -16,12 +18,18 @@ class WasteService {
       const queryString = new URLSearchParams(params).toString();
       const url = queryString ? `/waste-logging?${queryString}` : '/waste-logging';
       const response = await api.get(url);
+      console.log('getWasteEntries response:', response.data);
+      
       // Handle both formats: direct array or object with wasteEntries property
       if (Array.isArray(response.data)) {
+        return { wasteEntries: response.data };
+      }
+      if (response.data.wasteEntries) {
         return response.data;
       }
-      return response.data.wasteEntries || [];
+      return { wasteEntries: [] };
     } catch (error) {
+      console.error('getWasteEntries error:', error);
       throw error.response?.data || { message: 'Failed to fetch waste entries' };
     }
   }
