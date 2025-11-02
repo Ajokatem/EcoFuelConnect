@@ -3,7 +3,8 @@
     const groups = { Today: [], Yesterday: [], Earlier: [] };
     const now = new Date();
     notifications.forEach(n => {
-      const date = new Date(n.datetime);
+      // Use datetime if present, else fallback to createdAt
+      const date = new Date(n.datetime || n.createdAt);
       const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
       if (diffDays < 1 && date.getDate() === now.getDate()) {
         groups.Today.push(n);
@@ -90,6 +91,7 @@ function Notifications() {
   const formatDateTime = (datetime) => {
     const now = new Date();
     const date = new Date(datetime);
+    if (isNaN(date.getTime())) return "";
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
@@ -207,7 +209,7 @@ function Notifications() {
                                   {notification.message}
                                 </p>
                                 <small style={{ color: "#adb5bd" }}>
-                                  {formatDateTime(notification.datetime)}
+                                  {formatDateTime(notification.datetime || notification.createdAt)}
                                 </small>
                                 {/* Approve/Decline for waste entry notifications */}
                                 {notification.type === 'waste_entry' && notification.wasteEntryId && (

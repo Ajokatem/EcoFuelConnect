@@ -157,9 +157,15 @@ router.get('/', auth, async (req, res) => {
       });
 
     const total = await FuelRequest.count({ where });
+    // Add 'dateRequested' field for frontend compatibility
+    const requestsWithDate = requests.map(r => {
+      const obj = r.toJSON();
+      obj.dateRequested = obj.createdAt;
+      return obj;
+    });
     res.json({ 
       success: true,
-      requests, 
+      requests: requestsWithDate,
       total,
       totalPages: Math.ceil(total / parseInt(limit)),
       currentPage: parseInt(page)

@@ -10,7 +10,13 @@ router.get('/', auth, async (req, res) => {
       where: { userId: req.user.id },
       order: [['createdAt', 'DESC']]
     });
-    res.json(notifications);
+    // Add 'datetime' field for frontend compatibility
+    const notificationsWithDatetime = notifications.map(n => {
+      const obj = n.toJSON();
+      obj.datetime = obj.createdAt;
+      return obj;
+    });
+    res.json(notificationsWithDatetime);
   } catch (error) {
     console.error('Error fetching notifications:', error);
     res.status(500).json({ success: false, message: 'Error fetching notifications' });

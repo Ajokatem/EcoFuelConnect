@@ -115,7 +115,30 @@ function FuelRequestManagement() {
   const loadFuelRequests = async () => {
     try {
       const response = await fuelService.getFuelRequests();
-      setFuelRequests(response.requests || []);
+      // Map backend data to frontend display format
+      const mappedRequests = (response.requests || []).map(r => {
+        const selectedFuel = fuelTypes.find(fuel => fuel.value === r.fuelType);
+        return {
+          id: r.id,
+          requestNumber: r.requestId || r.requestNumber || `REQ-${r.id}`,
+          status: r.status,
+          fuelType: r.fuelType,
+          fuelTypeLabel: selectedFuel ? selectedFuel.label : r.fuelType,
+          quantity: r.quantityRequested,
+          unit: r.unit,
+          estimatedCost: selectedFuel && r.quantityRequested ? (parseFloat(r.quantityRequested) * selectedFuel.price).toFixed(2) : '0.00',
+          preferredDate: r.preferredDeliveryDate || r.preferredDate,
+          dateRequested: r.dateRequested || r.createdAt,
+          deliveryAddress: typeof r.deliveryAddress === 'string' ? r.deliveryAddress : (r.deliveryAddress?.address || ''),
+          urgency: r.priority || r.urgencyLevel || 'normal',
+          purpose: r.contactPerson || r.purpose,
+          contactNumber: r.contactPhone || r.contactNumber,
+          additionalNotes: r.notes || r.additionalNotes,
+          producerId: r.producerId,
+          producerName: r.producer?.organization || r.producer?.firstName || ''
+        };
+      });
+      setFuelRequests(mappedRequests);
     } catch (error) {
       setFuelRequests([]); // Show empty if backend fails
     }
@@ -312,13 +335,11 @@ function FuelRequestManagement() {
           </p>
         </div>
 
-        {/* Modern Tab Navigation */}
+        {/* Stats Cards */}
         <div className="mb-4">
-          <Row className="justify-content-center">
-            <Col lg="8">
+          <Row>
+            <Col lg="12">
               <div style={{
-                backgroundColor: "white",
-                borderRadius: "15px",
                 padding: "10px",
                 boxShadow: "0 4px 20px rgba(40, 167, 69, 0.1)",
                 border: "1px solid #e8f5e8"
