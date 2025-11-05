@@ -91,7 +91,6 @@ EcoFuelConnect is a web application designed to address the critical challenges 
 
 ## Testing Results
 
-### 1. Different Testing Strategies
 
 #### Screenshoots of the application
 ![Unit Test Results](src/assets/img/Screenshot%202025-10-07%20203530.png)

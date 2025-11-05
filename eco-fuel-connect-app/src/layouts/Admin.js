@@ -6,7 +6,7 @@ import AdminNavbar from "../components/Navbars/AdminNavbar";
 import Footer from "../components/Footer/Footer";
 import Sidebar from "../components/Sidebar/Sidebar";
 
-import { dashboardRoutes, getDashboardRoutesByRole, additionalAdminRoutes } from "../routes.js";
+import { dashboardRoutes, getDashboardRoutesByRole, getDashboardComponent, additionalAdminRoutes } from "../routes.js";
 import { useUser } from "../contexts/UserContext";
 
 function Admin() {
@@ -14,9 +14,21 @@ function Admin() {
   const location = useLocation();
   const mainPanel = React.useRef(null);
   const filteredRoutes = getDashboardRoutesByRole(user?.role);
+  const DashboardComponent = getDashboardComponent(user?.role);
+  
   const getRoutes = (routes) => {
     return routes.map((prop, key) => {
       if (prop.layout === "/admin") {
+        // Use role-specific dashboard for /dashboard route
+        if (prop.path === "/dashboard") {
+          return (
+            <Route
+              path={prop.layout + prop.path}
+              component={DashboardComponent}
+              key={key}
+            />
+          );
+        }
         return (
           <Route
             path={prop.layout + prop.path}

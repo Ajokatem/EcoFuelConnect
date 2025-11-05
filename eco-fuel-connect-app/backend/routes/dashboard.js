@@ -42,17 +42,20 @@ const FuelRequest = require('../models/FuelRequest');
 const User = require('../models/User');
 
 // @route   GET /api/dashboard/stats
-// @desc    Get dashboard statistics
+// @desc    Get dashboard statistics (role-based)
 // @access  Private
 router.get('/stats', auth, async (req, res) => {
   try {
     const { timeframe = 'month' } = req.query;
     const userId = req.user.id;
+    const userRole = req.user.role;
     const { fn, col, Op } = require('sequelize');
 
     // Get basic statistics using Sequelize
     const totalUsers = await User.count({ where: { isActive: true } });
     const totalSchools = await User.count({ where: { role: 'school', isActive: true } });
+    const totalSuppliers = await User.count({ where: { role: 'supplier', isActive: true } });
+    const totalProducers = await User.count({ where: { role: 'producer', isActive: true } });
     
     // Get ALL waste entries for system-wide stats
     const allWasteResult = await WasteEntry.findAll({
@@ -67,6 +70,10 @@ router.get('/stats', auth, async (req, res) => {
     });
     const userWasteTotal = parseFloat(userWasteResult[0]?.getDataValue('total') || 0);
 
+    // Get waste entries count
+    const wasteEntriesCount = await WasteEntry.count();
+    const userWasteEntriesCount = await WasteEntry.count({ where: { supplierId: userId } });
+
     // Get user's fuel requests
     const userFuelResult = await FuelRequest.findAll({
       where: { schoolId: userId },
@@ -76,6 +83,15 @@ router.get('/stats', auth, async (req, res) => {
       ]
     });
     const fuelStats = userFuelResult[0] || {};
+
+    // Get all fuel requests for system stats
+    const allFuelResult = await FuelRequest.findAll({
+      attributes: [
+        [fn('COUNT', '*'), 'total'],
+        [fn('SUM', col('quantityDelivered')), 'totalDelivered']
+      ]
+    });
+    const allFuelStats = allFuelResult[0] || {};
 
     // Get total waste entries count
     const wasteEntriesCount = await WasteEntry.count();
@@ -107,38 +123,88 @@ router.get('/stats', auth, async (req, res) => {
     const { monitorIoTSensors } = require('../services/iotMonitor');
     const iotMonitoring = await monitorIoTSensors();
     */
-    const stats = {
-      // Waste metrics (SYSTEM-WIDE)
-      totalWaste: totalWaste,
-      dailyWaste: totalWaste / 30,
-      userWasteContribution: userWasteTotal,
-      wasteEntriesCount: wasteEntriesCount,
-      // Biogas production (calculated from waste)
-      biogasProduced: totalWaste * 0.3, // 0.3 m³ per kg
-      biogasEfficiency: 75,
-      // Fuel requests
-      fuelRequests: fuelStats.getDataValue ? fuelStats.getDataValue('total') || 0 : 0,
-      fuelDelivered: fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0,
-      fuelRequestValue: 0,
-      // Environmental impact (from total waste)
-      carbonReduction: totalWaste * 2.3, // 2.3 kg CO2 per kg waste
-      energyGenerated: totalWaste * 1.5,
-      forestSaved: Math.round((totalWaste * 2.3 / 1000) * 100) / 100,
-      treesEquivalent: Math.floor((totalWaste * 2.3) / 22),
-      // Community engagement
-      communityEngagement: totalUsers,
-      activeUsers: totalUsers,
-      wasteSuppliers: await User.count({ where: { role: 'supplier', isActive: true } }),
-      schoolsServed: totalSchools,
-      // Educational and other metrics
-      educationalMessages: Math.floor(totalUsers * 0.3),
-      monthlyTarget: 1500,
-      // Progress indicators
-      wasteProgress: Math.min(100, (totalWaste / 1500) * 100),
-      biogasProgress: Math.min(100, ((totalWaste * 0.3) / 600) * 100),
-      carbonProgress: Math.min(100, ((totalWaste * 2.3) / 750) * 100),
-  // IoT metrics removed for now
-    };
+    // Build role-specific stats
+    let stats = {};
+
+    if (userRole === 'admin') {
+      // Admin gets full system stats
+      stats = {
+        totalUsers,
+        totalSchools,
+        totalSuppliers,
+        totalProducers,
+        totalWaste,
+        dailyWaste: totalWaste / 30,
+        biogasProduced: totalWaste * 0.3,
+        fuelRequests: allFuelStats.getDataValue ? allFuelStats.getDataValue('total') || 0 : 0,
+        fuelDelivered: allFuelStats.getDataValue ? allFuelStats.getDataValue('totalDelivered') || 0 : 0,
+        carbonReduction: totalWaste * 2.3,
+        wasteSuppliers: totalSuppliers,
+        schoolsServed: totalSchools,
+        activeUsers: totalUsers,
+        wasteEntriesCount,
+        monthlyTarget: 1500,
+      };
+    } else if (userRole === 'supplier') {
+      // Supplier gets their own contribution stats
+      stats = {
+        totalWasteSupplied: userWasteTotal,
+        userWasteContribution: userWasteTotal,
+        dailyWaste: userWasteTotal / 30,
+        monthlyWaste: userWasteTotal,
+        weeklyWaste: userWasteTotal / 4,
+        wasteEntriesCount: userWasteEntriesCount,
+        carbonImpact: userWasteTotal * 2.3,
+        earnings: userWasteTotal * 0.5,
+        biogasProduced: userWasteTotal * 0.3,
+        totalWaste: totalWaste, // System-wide for context
+      };
+    } else if (userRole === 'school') {
+      // School gets fuel request stats
+      stats = {
+        totalFuelRequests: fuelStats.getDataValue ? fuelStats.getDataValue('total') || 0 : 0,
+        fuelRequests: fuelStats.getDataValue ? fuelStats.getDataValue('total') || 0 : 0,
+        fuelDelivered: fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0,
+        deliveredFuel: fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0,
+        monthlyConsumption: (fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0) * 0.3,
+        costSavings: (fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0) * 150,
+        carbonOffset: (fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0) * 2.3,
+        studentsBenefited: 450,
+        biogasProduced: totalWaste * 0.3, // System-wide for context
+      };
+    } else if (userRole === 'producer') {
+      // Producer gets production stats
+      stats = {
+        totalWaste,
+        dailyWaste: totalWaste / 30,
+        biogasProduced: totalWaste * 0.3,
+        biogasEfficiency: 75,
+        fuelRequests: allFuelStats.getDataValue ? allFuelStats.getDataValue('total') || 0 : 0,
+        fuelDelivered: allFuelStats.getDataValue ? allFuelStats.getDataValue('totalDelivered') || 0 : 0,
+        carbonReduction: totalWaste * 2.3,
+        energyGenerated: totalWaste * 1.5,
+        forestSaved: Math.round((totalWaste * 2.3 / 1000) * 100) / 100,
+        treesEquivalent: Math.floor((totalWaste * 2.3) / 22),
+        communityEngagement: totalUsers,
+        activeUsers: totalUsers,
+        wasteSuppliers: totalSuppliers,
+        schoolsServed: totalSchools,
+        educationalMessages: Math.floor(totalUsers * 0.3),
+        monthlyTarget: 1500,
+        wasteProgress: Math.min(100, (totalWaste / 1500) * 100),
+        biogasProgress: Math.min(100, ((totalWaste * 0.3) / 600) * 100),
+        carbonProgress: Math.min(100, ((totalWaste * 2.3) / 750) * 100),
+        wasteEntriesCount,
+      };
+    } else {
+      // Default stats for other roles
+      stats = {
+        totalWaste,
+        biogasProduced: totalWaste * 0.3,
+        carbonReduction: totalWaste * 2.3,
+        schoolsServed: totalSchools,
+      };
+    }
 
     res.json({
       message: 'Dashboard statistics retrieved successfully',

@@ -1,5 +1,8 @@
 
 import Dashboard from "./pages/Dashboard.js";
+import AdminDashboard from "./pages/AdminDashboard.js";
+import SupplierDashboard from "./pages/SupplierDashboard.js";
+import SchoolDashboard from "./pages/SchoolDashboard.js";
 import UserProfile from "./pages/UserProfile.js";
 import FuelRequestManagement from "./pages/FuelRequestManagement.js";
 import Reports from "./pages/Reports.js";
@@ -46,7 +49,8 @@ export const dashboardRoutes = [
     name: "Educational Content",
     icon: "nc-icon nc-tv-2",
     component: EducationalContent,
-    layout: "/admin"
+    layout: "/admin",
+    adminOnly: true
   },
   {
     path: "/admin-content",
@@ -164,24 +168,44 @@ export const additionalAdminRoutes = [
 
 // Role-based route filtering
 export function getDashboardRoutesByRole(role) {
+  if (role === 'admin') {
+    // Admin: Full access to all routes
+    return dashboardRoutes;
+  }
   if (role === 'school') {
-    // Schools: No waste log page, only fuel requests, dashboard, profile, messages, notifications, reports, help, settings, educational content
+    // Schools: No waste log page, only fuel requests, dashboard, profile, messages, notifications, reports, help, settings
     return dashboardRoutes.filter(route =>
-      ["/dashboard", "/user", "/messages", "/fuel-request-management", "/reports", "/notifications", "/help", "/settings", "/educational-content"].includes(route.path)
+      ["/dashboard", "/user", "/messages", "/fuel-request-management", "/reports", "/notifications", "/help", "/settings"].includes(route.path)
     );
   }
   if (role === 'supplier') {
-    // Suppliers: No fuel request page, only waste logs, dashboard, profile, messages, notifications, reports, help, settings, educational content
+    // Suppliers: No fuel request page, only waste logs, dashboard, profile, messages, notifications, reports, help, settings
     return dashboardRoutes.filter(route =>
-      ["/dashboard", "/user", "/messages", "/organic-waste-logging", "/reports", "/notifications", "/help", "/settings", "/educational-content"].includes(route.path)
+      ["/dashboard", "/user", "/messages", "/organic-waste-logging", "/reports", "/notifications", "/help", "/settings"].includes(route.path)
     );
   }
   if (role === 'producer') {
-    // Producers: Only dashboard, user, messages, reports, notifications, help, settings, educational content
+    // Producers: Only dashboard, user, messages, reports, notifications, help, settings
     return dashboardRoutes.filter(route =>
-      ["/dashboard", "/user", "/messages", "/reports", "/notifications", "/help", "/settings", "/educational-content"].includes(route.path)
+      ["/dashboard", "/user", "/messages", "/reports", "/notifications", "/help", "/settings"].includes(route.path)
     );
   }
-  // Default: show all
-  return dashboardRoutes;
+  // Default: show all except admin-only routes
+  return dashboardRoutes.filter(route => !route.adminOnly);
+}
+
+// Get the appropriate dashboard component based on user role
+export function getDashboardComponent(role) {
+  switch(role) {
+    case 'admin':
+      return AdminDashboard;
+    case 'supplier':
+      return SupplierDashboard;
+    case 'school':
+      return SchoolDashboard;
+    case 'producer':
+      return Dashboard;
+    default:
+      return Dashboard;
+  }
 }

@@ -9,10 +9,14 @@ function Sidebar({ routes }) {
   const location = useLocation();
   const { user } = useUser();
 
-  // Filter routes for sidebar: hide Reports for non-producers
-  const filteredRoutes = user && user.role !== "producer"
-    ? routes.filter(route => route.path !== "/reports")
-    : routes;
+  // Filter routes for sidebar: hide admin-only routes for non-admins
+  const filteredRoutes = routes.filter(route => {
+    // Hide admin-only routes from non-admins
+    if (route.adminOnly && user?.role !== 'admin') {
+      return false;
+    }
+    return true;
+  });
 
   // Force override sidebar styles
   useEffect(() => {
