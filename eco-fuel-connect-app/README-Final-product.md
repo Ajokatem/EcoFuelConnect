@@ -85,7 +85,7 @@ EcoFuelConnect is a web application designed to address the critical challenges 
 
 ## Demo Video
 
-**Demo Video:** ![demo video](src/assets/img/Video_20251107_222128.mp4)
+**Demo Video:** [(https://youtu.be/mIgnjalYwWM)]
 
 ---
 
