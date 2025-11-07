@@ -93,9 +93,6 @@ router.get('/stats', auth, async (req, res) => {
     });
     const allFuelStats = allFuelResult[0] || {};
 
-    // Get total waste entries count
-    const wasteEntriesCount = await WasteEntry.count();
-
     // IoT sensor metrics commented out for now
     /*
     const IoTSensor = require('../models/IoTSensor');
@@ -227,47 +224,45 @@ router.get('/stats', auth, async (req, res) => {
 router.get('/recent-activity', auth, async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const userId = req.user.id;
+    const { Op } = require('sequelize');
 
     // Get recent waste entries
-    const recentWaste = await WasteEntry.find({ user: userId })
-      .sort({ createdAt: -1 })
-      .limit(limit / 2)
-      .populate('user', 'firstName lastName')
-      .select('entryId wasteDetails quantity createdAt processing.status');
-
-    // Get recent fuel requests
-    const recentFuel = await FuelRequest.findAll({
-      where: { schoolId: userId },
+    const recentWaste = await WasteEntry.findAll({
       order: [['createdAt', 'DESC']],
       limit: Math.floor(limit / 2),
       include: [
-        { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'] },
-        { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName'] }
+        { model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName'] }
       ],
-      attributes: ['requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt', 'totalCost']
+      attributes: ['id', 'wasteType', 'quantity', 'status', 'createdAt']
+    });
+
+    // Get recent fuel requests
+    const recentFuel = await FuelRequest.findAll({
+      order: [['createdAt', 'DESC']],
+      limit: Math.floor(limit / 2),
+      include: [
+        { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'] }
+      ],
+      attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt']
     });
 
     // Combine and sort activities
     const activities = [
       ...recentWaste.map(entry => ({
-        id: entry._id,
+        id: entry.id,
         type: 'waste_entry',
-        title: `Waste Entry: ${entry.wasteDetails.type.replace('_', ' ')}`,
-        description: `${entry.quantity.weight} ${entry.quantity.unit} of ${entry.wasteDetails.type.replace('_', ' ')} logged`,
-        status: entry.processing.status,
-        timestamp: entry.createdAt,
-        entryId: entry.entryId
+        title: `Waste Entry: ${entry.wasteType || 'Unknown'}`,
+        description: `${entry.quantity || 0} kg logged by ${entry.supplier?.firstName || 'User'}`,
+        status: entry.status || 'pending',
+        timestamp: entry.createdAt
       })),
       ...recentFuel.map(request => ({
-        id: request._id,
+        id: request.id,
         type: 'fuel_request',
-        title: `Fuel Request: ${request.fuelType}`,
-        description: `${request.quantity} units requested - ${request.status}`,
-        status: request.status,
-        timestamp: request.createdAt,
-        requestId: request.requestId,
-        totalCost: request.totalCost
+        title: `Fuel Request: ${request.fuelType || 'Biogas'}`,
+        description: `${request.quantityRequested || 0} units by ${request.school?.firstName || 'School'}`,
+        status: request.status || 'pending',
+        timestamp: request.createdAt
       }))
     ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
      .slice(0, limit);

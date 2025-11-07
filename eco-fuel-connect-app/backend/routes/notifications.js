@@ -23,6 +23,31 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
+// POST /api/notifications/:id/read - Mark notification as read
+router.post('/:id/read', auth, async (req, res) => {
+  try {
+    const notification = await Notification.findByPk(req.params.id);
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+
+    if (notification.userId !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    await notification.update({ read: true, isRead: true });
+
+    res.json({
+      success: true,
+      message: 'Notification marked as read'
+    });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ success: false, message: 'Error marking notification as read' });
+  }
+});
+
 // DELETE /api/notifications/:id - Delete notification
 router.delete('/:id', auth, async (req, res) => {
   try {

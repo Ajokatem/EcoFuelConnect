@@ -7,7 +7,7 @@ function EducationalContent() {
   const history = useHistory();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All Category');
-  const [sortBy, setSortBy] = useState('Sort by Latest');
+  const [sortBy, setSortBy] = useState('Sort by Popular');
   const [showAll, setShowAll] = useState(false);
 
   const educationalTopics = [
@@ -18,8 +18,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=400&q=80",
       category: "BIOGAS BASICS",
       rating: 4.5,
-      students: 435671,
-      price: "$16.00"
+      students: 245,
+      price: "Free"
     },
     {
       id: 2,
@@ -28,8 +28,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1611284446314-60a58ac0deb9?w=400&q=80",
       category: "WASTE MANAGEMENT",
       rating: 4.5,
-      students: 435671,
-      price: "$13.00"
+      students: 189,
+      price: "Free"
     },
     {
       id: 3,
@@ -38,8 +38,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=400&q=80",
       category: "ENVIRONMENT & HEALTH",
       rating: 4.5,
-      students: 435671,
-      price: "$13.00"
+      students: 256,
+      price: "Free"
     },
     {
       id: 4,
@@ -48,8 +48,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80",
       category: "COMMUNITY IMPACT",
       rating: 3.5,
-      students: 435671,
-      price: "$16.00"
+      students: 187,
+      price: "Free"
     },
     {
       id: 5,
@@ -58,8 +58,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1558346490-a72e53ae2d4f?w=400&q=80",
       category: "INNOVATION",
       rating: 4.5,
-      students: 435671,
-      price: "$13.00"
+      students: 234,
+      price: "Free"
     },
     {
       id: 6,
@@ -68,8 +68,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=400&q=80",
       category: "GETTING STARTED",
       rating: 4.5,
-      students: 435671,
-      price: "$13.00"
+      students: 278,
+      price: "Free"
     },
     {
       id: 7,
@@ -78,8 +78,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?w=400&q=80",
       category: "BIOGAS BASICS",
       rating: 4.0,
-      students: 328450,
-      price: "$15.00"
+      students: 176,
+      price: "Free"
     },
     {
       id: 8,
@@ -88,19 +88,10 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=400&q=80",
       category: "WASTE MANAGEMENT",
       rating: 4.2,
-      students: 298765,
-      price: "$12.00"
+      students: 165,
+      price: "Free"
     },
-    {
-      id: 9,
-      title: "Environmental Impact of Deforestation",
-      description: "Understanding how biogas helps prevent deforestation and protects South Sudan's ecosystems.",
-      image: "https://images.unsplash.com/photo-1569163139394-de4798aa62b6?w=400&q=80",
-      category: "ENVIRONMENT & HEALTH",
-      rating: 4.7,
-      students: 512340,
-      price: "$14.00"
-    },
+    
     {
       id: 10,
       title: "Women's Empowerment in Biogas",
@@ -108,8 +99,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1521737711867-e3b97375f902?w=400&q=80",
       category: "COMMUNITY IMPACT",
       rating: 4.8,
-      students: 445890,
-      price: "$15.00"
+      students: 334,
+      price: "Free"
     },
     {
       id: 11,
@@ -118,8 +109,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&q=80",
       category: "INNOVATION",
       rating: 4.3,
-      students: 267890,
-      price: "$18.00"
+      students: 154,
+      price: "Free"
     },
     {
       id: 12,
@@ -128,8 +119,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=400&q=80",
       category: "GETTING STARTED",
       rating: 4.6,
-      students: 389450,
-      price: "$16.00"
+      students: 223,
+      price: "Free"
     },
     {
       id: 13,
@@ -138,8 +129,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1581092160562-40aa08e78837?w=400&q=80",
       category: "BIOGAS BASICS",
       rating: 4.4,
-      students: 356780,
-      price: "$14.00"
+      students: 198,
+      price: "Free"
     },
     {
       id: 14,
@@ -148,8 +139,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1628863353691-0071c8c1874c?w=400&q=80",
       category: "WASTE MANAGEMENT",
       rating: 4.1,
-      students: 234560,
-      price: "$13.00"
+      students: 143,
+      price: "Free"
     },
     {
       id: 15,
@@ -158,8 +149,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80",
       category: "ENVIRONMENT & HEALTH",
       rating: 4.9,
-      students: 567890,
-      price: "$15.00"
+      students: 367,
+      price: "Free"
     },
     {
       id: 16,
@@ -168,8 +159,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=400&q=80",
       category: "COMMUNITY IMPACT",
       rating: 4.5,
-      students: 412340,
-      price: "$17.00"
+      students: 298,
+      price: "Free"
     },
     {
       id: 17,
@@ -178,8 +169,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?w=400&q=80",
       category: "INNOVATION",
       rating: 4.2,
-      students: 298450,
-      price: "$14.00"
+      students: 189,
+      price: "Free"
     },
     {
       id: 18,
@@ -188,8 +179,8 @@ function EducationalContent() {
       image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&q=80",
       category: "GETTING STARTED",
       rating: 4.7,
-      students: 478920,
-      price: "$16.00"
+      students: 289,
+      price: "Free"
     }
   ];
 
@@ -200,7 +191,12 @@ function EducationalContent() {
     .filter(topic =>
       topic.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       topic.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    )
+    .sort((a, b) => {
+      if (sortBy === 'Sort by Popular') return b.students - a.students;
+      if (sortBy === 'Sort by Rating') return b.rating - a.rating;
+      return 0;
+    });
 
   const displayedTopics = showAll ? filteredTopics : filteredTopics.slice(0, 6);
 
@@ -208,11 +204,8 @@ function EducationalContent() {
     <div style={{ background: "#f8f9fa", minHeight: "100vh", padding: "24px 0" }}>
       <Container fluid style={{ maxWidth: "1400px" }}>
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "32px" }}>
+        <div style={{ marginBottom: "32px" }}>
           <h2 style={{ fontSize: "2rem", fontWeight: 700, color: "#2F4F4F", margin: 0 }}>Courses</h2>
-          <Button style={{ background: "#25805a", border: "none", borderRadius: "8px", padding: "10px 24px", fontWeight: 600 }}>
-            + Add Content
-          </Button>
         </div>
 
         {/* Search and Filters */}
@@ -227,10 +220,9 @@ function EducationalContent() {
             />
           </div>
           <Form.Select style={{ width: "200px", borderRadius: "8px", padding: "12px 16px", border: "1px solid #ddd" }} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-            <option>Sort by Latest</option>
             <option>Sort by Popular</option>
+            <option>Sort by Latest</option>
             <option>Sort by Rating</option>
-            <option>Sort by Price</option>
           </Form.Select>
           <Form.Select style={{ width: "200px", borderRadius: "8px", padding: "12px 16px", border: "1px solid #ddd" }} value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)}>
             {categories.map(cat => (

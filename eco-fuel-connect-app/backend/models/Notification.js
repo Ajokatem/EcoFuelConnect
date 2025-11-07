@@ -27,6 +27,26 @@ const Notification = sequelize.define('Notification', {
     type: DataTypes.TEXT,
     allowNull: false
   },
+  read: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  isRead: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  wasteEntryId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  relatedId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  metadata: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  }
 }, {
   tableName: 'notifications',
   timestamps: true

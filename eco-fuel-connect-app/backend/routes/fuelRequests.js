@@ -279,4 +279,60 @@ router.patch('/:id/assign', auth, adminOnly, async (req, res) => {
   }
 });
 
+// POST /api/fuel-requests/:id/approve - Approve/Reject fuel request
+router.post('/:id/approve', auth, async (req, res) => {
+  try {
+    const { approved, rejectionReason } = req.body;
+    const fuelRequest = await FuelRequest.findByPk(req.params.id);
+    
+    if (!fuelRequest) {
+      return res.status(404).json({ success: false, message: 'Fuel request not found' });
+    }
+    
+    // Only producers and admins can approve
+    if (req.user.role !== 'admin' && req.user.role !== 'producer') {
+      return res.status(403).json({ success: false, message: 'Only producers can approve/reject fuel requests' });
+    }
+    
+    const Notification = require('../models/Notification');
+    
+    if (approved) {
+      fuelRequest.status = 'approved';
+      fuelRequest.approvedBy = req.user.id;
+      fuelRequest.approvedAt = new Date();
+      await fuelRequest.save();
+      
+      // Notify school
+      await Notification.create({
+        userId: fuelRequest.schoolId,
+        type: 'fuel_request',
+        title: 'Fuel Request Approved',
+        message: `Your fuel request for ${fuelRequest.fuelType} (${fuelRequest.quantityRequested} ${fuelRequest.unit}) has been approved!`,
+        isRead: false
+      });
+    } else {
+      fuelRequest.status = 'rejected';
+      fuelRequest.rejectionReason = rejectionReason || 'No reason provided';
+      await fuelRequest.save();
+      
+      // Notify school
+      await Notification.create({
+        userId: fuelRequest.schoolId,
+        type: 'fuel_request',
+        title: 'Fuel Request Rejected',
+        message: `Your fuel request was rejected. Reason: ${rejectionReason || 'No reason provided'}`,
+        isRead: false
+      });
+    }
+
+    res.json({
+      success: true,
+      message: approved ? 'Fuel request approved' : 'Fuel request rejected'
+    });
+  } catch (error) {
+    console.error('Error approving fuel request:', error);
+    res.status(500).json({ success: false, message: 'Error processing fuel request' });
+  }
+});
+
 module.exports = router;

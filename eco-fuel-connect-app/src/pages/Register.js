@@ -325,6 +325,7 @@ function Register() {
                       disabled={isLoading}
                     >
                       <option value="">Select role</option>
+                      <option value="admin">Admin</option>
                       <option value="school">School</option>
                       <option value="supplier">Supplier</option>
                       <option value="producer">Producer</option>

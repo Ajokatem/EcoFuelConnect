@@ -30,16 +30,17 @@ function SupplierDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const data = await dashboardService.getDashboardStats();
+      const response = await dashboardService.getDashboardStats();
+      const data = response.stats || response;
       setStats({
-        totalWasteSupplied: data.userWasteContribution || 0,
-        monthlyWaste: data.dailyWaste * 30 || 0,
-        weeklyWaste: data.dailyWaste * 7 || 0,
+        totalWasteSupplied: data.totalWasteSupplied || data.userWasteContribution || 0,
+        monthlyWaste: data.monthlyWaste || 0,
+        weeklyWaste: data.weeklyWaste || 0,
         totalEntries: data.wasteEntriesCount || 0,
         pendingPickups: Math.floor(Math.random() * 5),
         completedPickups: data.wasteEntriesCount || 0,
-        earnings: (data.userWasteContribution * 0.5) || 0,
-        carbonImpact: (data.userWasteContribution * 2.3) || 0,
+        earnings: data.earnings || 0,
+        carbonImpact: data.carbonImpact || 0,
       });
     } catch (error) {
       console.error("Error fetching supplier dashboard data:", error);
@@ -216,7 +217,7 @@ function SupplierDashboard() {
                 onClick={() => history.push('/admin/organic-waste-logging')}
                 style={{ borderRadius: "8px" }}
               >
-                <i className="nc-icon nc-planet me-2"></i>
+                <i className="nc-ico nc-plnet me-2"></i>
                 Log New Waste Entry
               </Button>
             </Card.Body>
@@ -249,27 +250,17 @@ function SupplierDashboard() {
               <h6 className="mb-3">Quick Actions</h6>
               <div className="d-grid gap-2">
                 <Button 
-                  variant="outline-success"
+                  variant="success"
                   onClick={() => history.push('/admin/organic-waste-logging')}
-                  style={{ borderRadius: "8px" }}
+                  style={{ backgroundColor: '#25805a', border: 'none', borderRadius: '8px', fontWeight: '600' }}
                 >
-                  <i className="nc-icon nc-planet me-2"></i>
                   New Entry
                 </Button>
                 <Button 
-                  variant="outline-primary"
-                  onClick={() => history.push('/admin/reports')}
-                  style={{ borderRadius: "8px" }}
-                >
-                  <i className="nc-icon nc-chart-pie-36 me-2"></i>
-                  View Reports
-                </Button>
-                <Button 
-                  variant="outline-info"
+                  variant="success"
                   onClick={() => history.push('/admin/messages')}
-                  style={{ borderRadius: "8px" }}
+                  style={{ backgroundColor: '#25805a', border: 'none', borderRadius: '8px', fontWeight: '600' }}
                 >
-                  <i className="nc-icon nc-email-85 me-2"></i>
                   Messages
                 </Button>
               </div>

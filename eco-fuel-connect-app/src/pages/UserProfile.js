@@ -26,7 +26,6 @@ function UserProfile() {
     bio: ''
   });
 
-  // Always use context data for profile
   useEffect(() => {
     if (user) {
       setProfileData({
@@ -38,28 +37,28 @@ function UserProfile() {
         role: user.role || '',
         bio: user.bio || ''
       });
-      setProfilePhoto(user.profilePhoto || require("../assets/img/default-avatar.png"));
-      setCoverPhoto(user.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
+      const savedProfile = localStorage.getItem(`profilePhoto_${user.id}`);
+      const savedCover = localStorage.getItem(`coverPhoto_${user.id}`);
+      setProfilePhoto(savedProfile || user.profilePhoto || require("../assets/img/default-avatar.png"));
+      setCoverPhoto(savedCover || user.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
     }
   }, [user]);
 
-  // Handle profile data changes
-  const handleProfileChange = async (field, value) => {
+  const handleProfileChange = (field, value) => {
     setProfileData(prev => ({
       ...prev,
       [field]: value
     }));
-    // TODO: Send updated profile data to backend API
   };
 
   const handlePhotoChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        setProfilePhoto(e.target.result);
-        // Persist to backend
-        await require('../services/authService').default.updateProfile({ profilePhoto: e.target.result });
+      reader.onload = (e) => {
+        const photoData = e.target.result;
+        setProfilePhoto(photoData);
+        localStorage.setItem(`profilePhoto_${user.id}`, photoData);
       };
       reader.readAsDataURL(file);
     }
@@ -69,10 +68,10 @@ function UserProfile() {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = async (e) => {
-        setCoverPhoto(e.target.result);
-        // Persist to backend
-        await require('../services/authService').default.updateProfile({ coverPhoto: e.target.result });
+      reader.onload = (e) => {
+        const coverData = e.target.result;
+        setCoverPhoto(coverData);
+        localStorage.setItem(`coverPhoto_${user.id}`, coverData);
       };
       reader.readAsDataURL(file);
     }
@@ -387,7 +386,26 @@ function UserProfile() {
                   </Row>
                   <Button
                     className="btn-fill pull-right"
-                    type="submit"
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        const response = await fetch('/api/users/profile', {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          credentials: 'include',
+                          body: JSON.stringify(profileData)
+                        });
+                        if (response.ok) {
+                          const updatedUser = await response.json();
+                          localStorage.setItem('user', JSON.stringify({ ...user, ...profileData }));
+                          alert('Profile updated successfully!');
+                        } else {
+                          alert('Failed to update profile');
+                        }
+                      } catch (error) {
+                        alert('Error updating profile');
+                      }
+                    }}
                     style={{
                       background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                       border: 'none',

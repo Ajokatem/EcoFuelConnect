@@ -30,16 +30,17 @@ function SchoolDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const data = await dashboardService.getDashboardStats();
+      const response = await dashboardService.getDashboardStats();
+      const data = response.stats || response;
       setStats({
-        totalFuelRequests: data.fuelRequests || 0,
-        pendingRequests: Math.floor(data.fuelRequests * 0.2) || 0,
-        approvedRequests: Math.floor(data.fuelRequests * 0.8) || 0,
-        deliveredFuel: data.fuelDelivered || 0,
-        monthlyConsumption: data.fuelDelivered * 0.3 || 0,
-        costSavings: (data.fuelDelivered * 150) || 0,
-        carbonOffset: (data.fuelDelivered * 2.3) || 0,
-        studentsBenefited: 450,
+        totalFuelRequests: Number(data.totalFuelRequests || data.fuelRequests || 0),
+        pendingRequests: Math.floor(Number(data.totalFuelRequests || data.fuelRequests || 0) * 0.2),
+        approvedRequests: Math.floor(Number(data.totalFuelRequests || data.fuelRequests || 0) * 0.8),
+        deliveredFuel: Number(data.deliveredFuel || data.fuelDelivered || 0),
+        monthlyConsumption: Number(data.monthlyConsumption || 0),
+        costSavings: Number(data.costSavings || 0),
+        carbonOffset: Number(data.carbonOffset || 0),
+        studentsBenefited: Number(data.studentsBenefited || 450),
       });
     } catch (error) {
       console.error("Error fetching school dashboard data:", error);
@@ -66,7 +67,7 @@ function SchoolDashboard() {
             <Card.Body className="p-4">
               <h6 className="text-white-50 mb-2">Total Fuel Delivered</h6>
               <h2 className="mb-1" style={{ fontSize: "2.5rem", fontWeight: "600" }}>
-                {stats.deliveredFuel.toFixed(2)} m³
+                {Number(stats.deliveredFuel).toFixed(2)} m³
               </h2>
               <div className="d-flex align-items-center">
                 <span className="text-white-50 me-2">Clean biogas fuel</span>
@@ -142,7 +143,7 @@ function SchoolDashboard() {
                 </div>
                 <div>
                   <h6 className="mb-0 text-muted">Cost Savings</h6>
-                  <h3 className="mb-0" style={{ color: "#059669" }}>SSP {stats.costSavings.toFixed(0)}</h3>
+                  <h3 className="mb-0" style={{ color: "#059669" }}>SSP {Number(stats.costSavings).toFixed(0)}</h3>
                 </div>
               </div>
               <small className="text-success">↗ vs traditional fuel</small>
@@ -161,7 +162,7 @@ function SchoolDashboard() {
                 </div>
                 <div>
                   <h6 className="mb-0 text-muted">Carbon Offset</h6>
-                  <h3 className="mb-0" style={{ color: "#059669" }}>{stats.carbonOffset.toFixed(0)} kg</h3>
+                  <h3 className="mb-0" style={{ color: "#059669" }}>{Number(stats.carbonOffset).toFixed(0)} kg</h3>
                 </div>
               </div>
               <small className="text-info">↗ CO₂ reduced</small>
@@ -223,7 +224,7 @@ function SchoolDashboard() {
                 onClick={() => history.push('/admin/fuel-request-management')}
                 style={{ borderRadius: "8px" }}
               >
-                <i className="nc-icon nc-delivery-fast me-2"></i>
+                <i className="nc-ico nc-deliveryast me-2"></i>
                 Submit New Fuel Request
               </Button>
             </Card.Body>
@@ -276,27 +277,17 @@ function SchoolDashboard() {
               <h6 className="mb-3">Quick Actions</h6>
               <div className="d-grid gap-2">
                 <Button 
-                  variant="outline-success"
+                  variant="success"
                   onClick={() => history.push('/admin/fuel-request-management')}
-                  style={{ borderRadius: "8px" }}
+                  style={{ backgroundColor: '#25805a', border: 'none', borderRadius: '8px', fontWeight: '600' }}
                 >
-                  <i className="nc-icon nc-delivery-fast me-2"></i>
                   New Request
                 </Button>
                 <Button 
-                  variant="outline-primary"
-                  onClick={() => history.push('/admin/reports')}
-                  style={{ borderRadius: "8px" }}
-                >
-                  <i className="nc-icon nc-chart-pie-36 me-2"></i>
-                  View Reports
-                </Button>
-                <Button 
-                  variant="outline-info"
+                  variant="success"
                   onClick={() => history.push('/admin/messages')}
-                  style={{ borderRadius: "8px" }}
+                  style={{ backgroundColor: '#25805a', border: 'none', borderRadius: '8px', fontWeight: '600' }}
                 >
-                  <i className="nc-icon nc-email-85 me-2"></i>
                   Messages
                 </Button>
               </div>

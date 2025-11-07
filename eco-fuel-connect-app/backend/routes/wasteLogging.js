@@ -479,58 +479,56 @@ router.put('/:id', auth, async (req, res) => {
 router.post('/:id/verify', auth, async (req, res) => {
   try {
     const { verified, rejectionReason } = req.body;
-    
-  const wasteEntry = await WasteEntry.findByPk(req.params.id);
+    const wasteEntry = await WasteEntry.findByPk(req.params.id);
     
     if (!wasteEntry) {
-      return res.status(404).json({ message: 'Waste entry not found' });
+      return res.status(404).json({ success: false, message: 'Waste entry not found' });
     }
     
     // Only producers and admins can verify
-    if (req.user.role !== 'admin' && 
-        (req.user.role !== 'producer' || !wasteEntry.producer.equals(req.user._id))) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (req.user.role !== 'admin' && req.user.role !== 'producer') {
+      return res.status(403).json({ success: false, message: 'Only producers can approve/reject waste entries' });
     }
     
-    wasteEntry.verified = verified;
-    wasteEntry.verifiedById = req.user.id;
-    wasteEntry.verifiedAt = new Date();
-
-    let notificationTitle = '';
-    let notificationMessage = '';
-    if (!verified && rejectionReason) {
-      wasteEntry.rejectionReason = rejectionReason;
-      wasteEntry.status = 'collected'; // Reset status
-      notificationTitle = 'Waste Entry Rejected';
-      notificationMessage = `Your waste entry for producer ${req.user.firstName} ${req.user.lastName} was rejected. Reason: ${rejectionReason || 'No reason provided.'}`;
-    } else if (verified) {
-      wasteEntry.status = 'delivered';
-      wasteEntry.deliveryTimestamp = new Date();
-      notificationTitle = 'Waste Entry Approved';
-      notificationMessage = `Your waste entry for producer ${req.user.firstName} ${req.user.lastName} was approved and is ready for collection.`;
-    }
-
-    await wasteEntry.save();
-    await wasteEntry.populate('verifiedBy', 'firstName lastName');
-
-    // Notify supplier if supplierId exists
-    if (wasteEntry && wasteEntry.supplierId) {
+    const Notification = require('../models/Notification');
+    
+    if (verified) {
+      wasteEntry.status = 'confirmed';
+      wasteEntry.verifiedById = req.user.id;
+      wasteEntry.verifiedAt = new Date();
+      await wasteEntry.save();
+      
+      // Notify supplier
       await Notification.create({
         userId: wasteEntry.supplierId,
         type: 'waste_entry',
-        title: notificationTitle,
-        message: notificationMessage,
-        read: false,
-        wasteEntryId: wasteEntry.id
+        title: 'Waste Entry Confirmed',
+        message: `Your waste entry (${wasteEntry.wasteType}, ${wasteEntry.quantity} ${wasteEntry.unit}) has been confirmed by the producer.`,
+        isRead: false
+      });
+    } else {
+      wasteEntry.status = 'rejected';
+      wasteEntry.rejectionReason = rejectionReason || 'No reason provided';
+      await wasteEntry.save();
+      
+      // Notify supplier
+      await Notification.create({
+        userId: wasteEntry.supplierId,
+        type: 'waste_entry',
+        title: 'Waste Entry Rejected',
+        message: `Your waste entry was rejected. Reason: ${rejectionReason || 'No reason provided'}`,
+        isRead: false
       });
     }
+
     res.json({
-      message: verified ? 'Waste entry verified successfully' : 'Waste entry rejected',
+      success: true,
+      message: verified ? 'Waste entry confirmed' : 'Waste entry rejected',
       wasteEntry
     });
   } catch (error) {
     console.error('Error verifying waste entry:', error);
-    res.status(500).json({ message: 'Error verifying waste entry' });
+    res.status(500).json({ success: false, message: 'Error verifying waste entry' });
   }
 });
 

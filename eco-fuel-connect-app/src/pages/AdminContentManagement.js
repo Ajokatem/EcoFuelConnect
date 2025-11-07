@@ -1,421 +1,287 @@
-import React, { useState, useEffect } from "react";
-import {
-  Button,
-  Card,
-  Container,
-  Row,
-  Col,
-  Form,
-  Table,
-  Badge,
-  Spinner,
-  Modal,
-  Alert
-} from "react-bootstrap";
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Button, Table, Modal, Form, Badge } from 'react-bootstrap';
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
-function AdminContentManagement() {
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+const AdminContentManagement = () => {
+  const [articles, setArticles] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [editingPost, setEditingPost] = useState(null);
-  const [alert, setAlert] = useState({ show: false, message: '', type: '' });
+  const [editingArticle, setEditingArticle] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     content: '',
     summary: '',
-    category: 'Biogas Basics',
-    tags: '',
-    published: false,
-    featured: false,
-    imageUrl: ''
+    category: 'getting-started',
+    difficulty: 'beginner',
+    videoUrl: '',
+    thumbnailUrl: '',
+    isPublished: true
   });
 
-  const categories = ['Biogas Basics', 'Waste Management', 'Environment & Health', 'Community Impact', 'Innovation', 'Getting Started'];
+  useEffect(() => {
+    fetchArticles();
+  }, []);
 
-  const fetchPosts = async () => {
+  const fetchArticles = async () => {
     try {
-      const response = await fetch('/api/content').catch(() => ({ ok: false, status: 0 }));
-      
-      if (!response.ok) {
-        if (response.status === 0) {
-          showAlert('Backend server is not running. Please start the server.', 'warning');
-        }
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
-      
-      const contentType = response.headers?.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        setPosts([]);
-        setLoading(false);
-        return;
-      }
-      
-      const data = await response.json();
-      setPosts(data.posts || []);
+      const response = await axios.get('/api/knowledge/articles');
+      setArticles(response.data.articles);
     } catch (error) {
-      console.error('Error fetching posts:', error.message);
-      setPosts([]);
-    } finally {
-      setLoading(false);
+      toast.error('Failed to load articles');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     try {
-      const token = localStorage.getItem('token');
-      const url = editingPost ? `/api/content/${editingPost._id}` : '/api/content';
-      const method = editingPost ? 'PUT' : 'POST';
-      
-      const submitData = {
-        ...formData,
-        tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag)
-      };
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(submitData)
-      }).catch(() => ({ ok: false, status: 0 }));
-
-      if (!response.ok) {
-        if (response.status === 0) {
-          showAlert('Backend server is not running. Please start the server.', 'danger');
-          return;
-        }
-        const contentType = response.headers?.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await response.json();
-          showAlert(data.error || 'Error saving post', 'danger');
-        } else {
-          showAlert('Server error - please try again later', 'danger');
-        }
-        return;
+      if (editingArticle) {
+        await axios.put(`/api/knowledge/articles/${editingArticle.id}`, formData, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        toast.success('Article updated!');
+      } else {
+        await axios.post('/api/knowledge/articles', formData, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        toast.success('Article created!');
       }
-
-      const data = await response.json();
-      showAlert(editingPost ? 'Post updated successfully!' : 'Post created successfully!', 'success');
       setShowModal(false);
+      fetchArticles();
       resetForm();
-      fetchPosts();
     } catch (error) {
-      console.error('Error saving post:', error);
-      showAlert('Network error - please check your connection', 'danger');
+      toast.error('Failed to save article');
     }
   };
 
-  const handleEdit = (post) => {
-    setEditingPost(post);
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this article?')) return;
+    try {
+      await axios.delete(`/api/knowledge/articles/${id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      toast.success('Article deleted');
+      fetchArticles();
+    } catch (error) {
+      toast.error('Failed to delete article');
+    }
+  };
+
+  const handleEdit = (article) => {
+    setEditingArticle(article);
     setFormData({
-      title: post.title,
-      content: post.content,
-      summary: post.summary,
-      category: post.category,
-      tags: post.tags.join(', '),
-      published: post.published,
-      featured: post.featured,
-      imageUrl: post.imageUrl || ''
+      title: article.title,
+      content: article.content,
+      summary: article.summary,
+      category: article.category,
+      difficulty: article.difficulty,
+      videoUrl: article.videoUrl || '',
+      thumbnailUrl: article.thumbnailUrl || '',
+      isPublished: article.isPublished
     });
     setShowModal(true);
   };
 
-  const handleDelete = async (postId) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) return;
-
-    try {
-      const response = await fetch(`/api/content/${postId}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        showAlert('Post deleted successfully!', 'success');
-        fetchPosts();
-      } else {
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await response.json();
-          showAlert(data.error || 'Error deleting post', 'danger');
-        } else {
-          showAlert('Server error - please try again later', 'danger');
-        }
-      }
-    } catch (error) {
-      console.error('Error deleting post:', error);
-      showAlert('Network error - please check your connection', 'danger');
-    }
-  };
-
   const resetForm = () => {
+    setEditingArticle(null);
     setFormData({
       title: '',
       content: '',
       summary: '',
-      category: 'Biogas Basics',
-      tags: '',
-      published: false,
-      featured: false,
-      imageUrl: ''
+      category: 'getting-started',
+      difficulty: 'beginner',
+      videoUrl: '',
+      thumbnailUrl: '',
+      isPublished: true
     });
-    setEditingPost(null);
   };
 
-  const showAlert = (message, type) => {
-    setAlert({ show: true, message, type });
-    setTimeout(() => setAlert({ show: false, message: '', type: '' }), 5000);
+  const setFeatured = async (articleId, order) => {
+    try {
+      await axios.post('/api/knowledge/featured', {
+        articleId,
+        displayOrder: order
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      toast.success('Featured article set!');
+    } catch (error) {
+      toast.error('Failed to set featured');
+    }
   };
-
-  useEffect(() => {
-    fetchPosts();
-  }, []);
 
   return (
-    <div style={{background: '#F9FAFB', minHeight: '100vh', paddingTop: '20px', paddingBottom: '20px'}}>
-      <Container fluid>
-        {/* Alert */}
-        {alert.show && (
-          <Alert variant={alert.type} dismissible onClose={() => setAlert({ show: false, message: '', type: '' })}>
-            {alert.message}
-          </Alert>
-        )}
-
-        {/* Header */}
-        <Row className="mb-4 align-items-center">
-          <Col md="8">
+    <Container fluid className="p-4" style={{ backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+      <Row className="mb-4">
+        <Col>
+          <div className="d-flex justify-content-between align-items-center">
             <div>
-              <h3 style={{color: '#2F4F4F', fontWeight: '600', fontSize: '1.5rem', marginBottom: '8px'}}>
-                Content Management
-              </h3>
-              <p style={{color: '#2F4F4F', opacity: '0.8', marginBottom: '0', fontSize: '0.95rem'}}>
-                Create and manage educational content about biogas, recycling, and sustainability
-              </p>
+              <h4 style={{ color: '#059669', fontWeight: '600' }}> Content Management</h4>
+              <p className="text-muted">Manage biogas knowledge articles and videos</p>
             </div>
-          </Col>
-          <Col md="4">
             <Button
-              style={{
-                background: 'linear-gradient(135deg, #25805a, #1e6b47)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontWeight: '600',
-                width: '100%'
-              }}
-              onClick={() => {
-                resetForm();
-                setShowModal(true);
-              }}
+              onClick={() => { resetForm(); setShowModal(true); }}
+              style={{ backgroundColor: '#25805a', border: 'none', fontWeight: '600' }}
             >
-              <i className="nc-icon nc-simple-add me-2"></i>
-              Create New Post
+              + Create Article
             </Button>
-          </Col>
-        </Row>
+          </div>
+        </Col>
+      </Row>
 
-        {/* Posts Table */}
-        <Row>
-          <Col>
-            <Card className="shadow-sm border-0">
-              <Card.Body>
-                {loading ? (
-                  <div className="text-center py-5">
-                    <Spinner animation="border" variant="success" />
-                    <p className="mt-3">Loading posts...</p>
-                  </div>
-                ) : (
-                  <Table responsive hover>
-                    <thead style={{backgroundColor: '#f8f9fa'}}>
-                      <tr>
-                        <th>Title</th>
-                        <th>Category</th>
-                        <th>Status</th>
-                        <th>Views</th>
-                        <th>Created</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {posts.map((post) => (
-                        <tr key={post._id}>
-                          <td>
-                            <strong>{post.title}</strong>
-                            <br />
-                            <small className="text-muted">{post.summary.substring(0, 100)}...</small>
-                          </td>
-                          <td>
-                            <Badge bg="secondary">{post.category}</Badge>
-                          </td>
-                          <td>
-                            <Badge bg={post.published ? 'success' : 'warning'}>
-                              {post.published ? 'Published' : 'Draft'}
-                            </Badge>
-                            {post.featured && (
-                              <Badge bg="info" className="ms-1">Featured</Badge>
-                            )}
-                          </td>
-                          <td>{post.viewCount}</td>
-                          <td>{new Date(post.createdAt).toLocaleDateString()}</td>
-                          <td>
-                            <Button
-                              variant="outline-primary"
-                              size="sm"
-                              className="me-2"
-                              onClick={() => handleEdit(post)}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => handleDelete(post._id)}
-                            >
-                              Delete
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                      {posts.length === 0 && (
-                        <tr>
-                          <td colSpan="6" className="text-center py-4">
-                            <i className="nc-icon nc-paper-2" style={{fontSize: '3rem', color: '#ccc'}}></i>
-                            <p className="mt-2 text-muted">No posts found. Create your first post!</p>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </Table>
-                )}
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+      <Row>
+        <Col>
+          <Card style={{ borderRadius: '12px', border: '1px solid #e5e7eb' }}>
+            <Card.Body>
+              <Table hover responsive>
+                <thead>
+                  <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Difficulty</th>
+                    <th>Views</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {articles.map((article) => (
+                    <tr key={article.id}>
+                      <td><strong>{article.title}</strong></td>
+                      <td><Badge bg="primary">{article.category}</Badge></td>
+                      <td><Badge bg="info">{article.difficulty}</Badge></td>
+                      <td>{article.views}</td>
+                      <td>
+                        <Badge bg={article.isPublished ? 'success' : 'secondary'}>
+                          {article.isPublished ? 'Published' : 'Draft'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Button size="sm" variant="outline-primary" onClick={() => handleEdit(article)} className="me-2">
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDelete(article.id)} className="me-2">
+                          Delete
+                        </Button>
+                        <Button size="sm" variant="outline-success" onClick={() => setFeatured(article.id, 1)}>
+                          Feature
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
-        {/* Create/Edit Modal */}
-        <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
-          <Modal.Header closeButton style={{background: '#f8f9fa', borderBottom: '2px solid #25805a'}}>
-            <Modal.Title style={{color: '#2F4F4F', fontWeight: '600'}}>
-              {editingPost ? 'Edit Post' : 'Create New Post'}
-            </Modal.Title>
-          </Modal.Header>
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+        <Modal.Header closeButton style={{ backgroundColor: '#25805a', color: 'white' }}>
+          <Modal.Title>{editingArticle ? 'Edit Article' : 'Create Article'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
           <Form onSubmit={handleSubmit}>
-            <Modal.Body style={{maxHeight: '70vh', overflowY: 'auto'}}>
-              <Row>
-                <Col md="8">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Title</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({...formData, title: e.target.value})}
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md="4">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Category</Form.Label>
-                    <Form.Select
-                      value={formData.category}
-                      onChange={(e) => setFormData({...formData, category: e.target.value})}
-                    >
-                      {categories.map(cat => (
-                        <option key={cat} value={cat}>{cat}</option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              </Row>
+            <Form.Group className="mb-3">
+              <Form.Label>Title</Form.Label>
+              <Form.Control
+                required
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              />
+            </Form.Group>
 
-              <Form.Group className="mb-3">
-                <Form.Label>Summary</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  value={formData.summary}
-                  onChange={(e) => setFormData({...formData, summary: e.target.value})}
-                  required
-                />
-              </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Summary</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                value={formData.summary}
+                onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
+              />
+            </Form.Group>
 
-              <Form.Group className="mb-3">
-                <Form.Label>Content</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={10}
-                  value={formData.content}
-                  onChange={(e) => setFormData({...formData, content: e.target.value})}
-                  required
-                  placeholder="Use # for headings, ## for subheadings, etc."
-                />
-              </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Content</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={6}
+                required
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+              />
+            </Form.Group>
 
-              <Row>
-                <Col md="6">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Tags (comma-separated)</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={formData.tags}
-                      onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                      placeholder="biogas, sustainability, environment"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col md="6">
-                  <Form.Group className="mb-3">
-                    <Form.Label>Image URL</Form.Label>
-                    <Form.Control
-                      type="url"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
-                      placeholder="https://example.com/image.jpg"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Category</Form.Label>
+                  <Form.Select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  >
+                    <option value="getting-started">Getting Started</option>
+                    <option value="maintenance">Maintenance</option>
+                    <option value="troubleshooting">Troubleshooting</option>
+                    <option value="best-practices">Best Practices</option>
+                    <option value="safety">Safety</option>
+                    <option value="operations">Operations</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Difficulty</Form.Label>
+                  <Form.Select
+                    value={formData.difficulty}
+                    onChange={(e) => setFormData({ ...formData, difficulty: e.target.value })}
+                  >
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
 
-              <Row>
-                <Col md="6">
-                  <Form.Check
-                    type="checkbox"
-                    label="Published"
-                    checked={formData.published}
-                    onChange={(e) => setFormData({...formData, published: e.target.checked})}
-                  />
-                </Col>
-                <Col md="6">
-                  <Form.Check
-                    type="checkbox"
-                    label="Featured"
-                    checked={formData.featured}
-                    onChange={(e) => setFormData({...formData, featured: e.target.checked})}
-                  />
-                </Col>
-              </Row>
-            </Modal.Body>
-            <Modal.Footer style={{background: '#f8f9fa'}}>
+            <Form.Group className="mb-3">
+              <Form.Label>Video URL (YouTube, Vimeo, etc.)</Form.Label>
+              <Form.Control
+                value={formData.videoUrl}
+                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                placeholder="https://youtube.com/watch?v=..."
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Thumbnail URL</Form.Label>
+              <Form.Control
+                value={formData.thumbnailUrl}
+                onChange={(e) => setFormData({ ...formData, thumbnailUrl: e.target.value })}
+                placeholder="https://..."
+              />
+            </Form.Group>
+
+            <Form.Check
+              type="checkbox"
+              label="Publish immediately"
+              checked={formData.isPublished}
+              onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+              className="mb-3"
+            />
+
+            <div className="d-flex gap-2">
+              <Button type="submit" style={{ backgroundColor: '#25805a', border: 'none', fontWeight: '600' }}>
+                {editingArticle ? 'Update' : 'Create'} Article
+              </Button>
               <Button variant="secondary" onClick={() => setShowModal(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="submit"
-                style={{
-                  background: 'linear-gradient(135deg, #25805a, #1e6b47)',
-                  border: 'none'
-                }}
-              >
-                {editingPost ? 'Update Post' : 'Create Post'}
-              </Button>
-            </Modal.Footer>
+            </div>
           </Form>
-        </Modal>
-      </Container>
-    </div>
+        </Modal.Body>
+      </Modal>
+    </Container>
   );
-}
+};
 
 export default AdminContentManagement;

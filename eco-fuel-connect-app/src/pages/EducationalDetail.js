@@ -440,7 +440,9 @@ Behavior Change:
     return (
       <Container className="mt-5">
         <div className="text-center">
-          <h3>Course not found</h3>
+          <h3>Course Content Coming Soon</h3>
+          <p className="text-muted mb-4">This course is currently being developed. Please check back soon for comprehensive content on biogas technology, troubleshooting, and maintenance.</p>
+          <p className="text-muted mb-4"><strong>Note:</strong> Courses 1 and 2 are currently available with full content covering biogas fundamentals, system operation, maintenance procedures, and troubleshooting guides.</p>
           <Button variant="success" onClick={() => history.push('/admin/educational-content')}>
             Back to Courses
           </Button>

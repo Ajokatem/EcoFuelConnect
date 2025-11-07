@@ -58,6 +58,9 @@ const educationRoutes = require('./routes/education');
 const iotRoutes = require('./routes/iot');
 const notificationsRoutes = require('./routes/notifications');
 const messagesRoutes = require('./routes/messages');
+const rewardsRoutes = require('./routes/rewards');
+const knowledgeRoutes = require('./routes/knowledge');
+const chatbotRoutes = require('./routes/chatbot');
 
 
 // Database connection and model associations
@@ -95,6 +98,9 @@ app.use('/api/education', educationRoutes);
 app.use('/api/iot', iotRoutes);
 app.use('/api/notifications', notificationsRoutes);
 app.use('/api/messages', messagesRoutes);
+app.use('/api/rewards', rewardsRoutes);
+app.use('/api/knowledge', knowledgeRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/users', require('./routes/users'));
 app.use('/admin', adminRoutes);
 
@@ -227,10 +233,10 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 EcoFuelConnect API server is running on port ${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api`);
-  console.log(`🛡️  Security middleware enabled`);
+  console.log(` EcoFuelConnect API server is running on port ${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` API Base URL: http://localhost:${PORT}/api`);
+  console.log(`  Security middleware enabled`);
 });
 
 module.exports = app;

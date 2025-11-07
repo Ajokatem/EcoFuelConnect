@@ -15,6 +15,14 @@ function Messages() {
   const [showProfile, setShowProfile] = useState(false);
   const [activeProducers, setActiveProducers] = useState([]);
 
+  useEffect(() => {
+    const footer = document.querySelector('footer');
+    if (footer) footer.style.display = 'none';
+    return () => {
+      if (footer) footer.style.display = '';
+    };
+  }, []);
+
   // Auto-select user from query param (for notification click)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -29,8 +37,17 @@ function Messages() {
   useEffect(() => {
     fetch("/api/messages/chat-users", { credentials: "include" })
       .then(res => res.json())
-      .then(data => setChatUsers(data.users || []));
-  }, [user]);
+      .then(data => {
+        const users = data.users || [];
+        // Sort by most recent message
+        const sorted = users.sort((a, b) => {
+          const aLast = getLastMessage(a.id).timestamp;
+          const bLast = getLastMessage(b.id).timestamp;
+          return bLast - aLast;
+        });
+        setChatUsers(sorted);
+      });
+  }, [user, messages]);
 
   // Fetch active producers for top scroll
   useEffect(() => {
@@ -53,6 +70,16 @@ function Messages() {
     }
   }, [selectedUser]);
 
+  const messagesEndRef = React.useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const sendMessage = () => {
     fetch("/api/messages", {
       method: "POST",
@@ -64,6 +91,11 @@ function Messages() {
       .then(data => {
         setMessages(prev => [...prev, data.message]);
         setNewMessage("");
+        // Move this conversation to top by updating chatUsers order
+        setChatUsers(prev => {
+          const updated = prev.filter(u => u.id !== selectedUser.id);
+          return [selectedUser, ...updated];
+        });
       });
   };
 
@@ -74,13 +106,14 @@ function Messages() {
 
   const getLastMessage = (userId) => {
     const msgs = Array.isArray(messages) ? messages.filter(m => m.senderId === userId || m.receiverId === userId) : [];
-    if (msgs.length === 0) return { text: '', time: '', unread: 0 };
+    if (msgs.length === 0) return { text: '', time: '', unread: 0, timestamp: 0 };
     const last = msgs[msgs.length - 1];
     const unread = msgs.filter(m => m.receiverId === user.id && !m.isRead).length;
     return {
       text: last.content,
       time: new Date(last.sentAt).toLocaleString(),
-      unread
+      unread,
+      timestamp: new Date(last.sentAt).getTime()
     };
   };
 
@@ -167,7 +200,7 @@ function Messages() {
   };
 
   return (
-  <Container fluid className="messages-responsive-root">
+  <Container fluid className="messages-responsive-root" style={{ paddingBottom: 0 }}>
       {/* Chat List Screen */}
       {!selectedUser ? (
         <div className="messages-list-container">
@@ -210,7 +243,7 @@ function Messages() {
             </div>
           </div>
           {/* Chat Thread - WhatsApp style, all white bubbles, scrollable area above input */}
-          <div style={{ background: "#fff", height: "calc(100vh - 120px)", overflowY: "auto", position: "relative", padding: "18px 0 80px 0" }}>
+          <div style={{ background: "#fff", height: "calc(100vh - 180px)", overflowY: "auto", position: "relative", padding: "18px 16px 20px 16px" }}>
             {messages.length === 0 && (
               <div className="messages-empty">No messages yet. Start the conversation!</div>
             )}
@@ -239,27 +272,28 @@ function Messages() {
                 );
               });
             })()}
+            <div ref={messagesEndRef} />
           </div>
-          {/* Message input bar - truly fixed at bottom, never scrolls */}
-          <div className="messages-input-container">
-            <Form className="messages-input-bar" onSubmit={e => { e.preventDefault(); if (newMessage.trim()) sendMessage(); }}>
-              <Form.Group className="messages-input-group">
+          {/* Message input bar - sticky at bottom of chat container */}
+          <div style={{ background: "#fff", borderTop: "1px solid #e4e6eb", padding: "12px 16px", position: "sticky", bottom: 0, left: 0, right: 0 }}>
+            <Form onSubmit={e => { e.preventDefault(); if (newMessage.trim()) sendMessage(); }} style={{ margin: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <Form.Control
                   type="text"
                   placeholder="Message..."
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   disabled={loading}
-                  className="messages-input"
+                  style={{ flex: 1, borderRadius: "20px", border: "1px solid #ccd0d5", padding: "8px 16px", fontSize: "15px", background: "#f0f2f5" }}
                 />
                 <Button
                   type="submit"
                   disabled={!newMessage.trim() || loading}
-                  className="messages-send-btn"
+                  style={{ background: "#0084ff", border: "none", color: "#fff", borderRadius: "50%", width: "36px", height: "36px", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0 }}
                 >
-                  <span className="messages-send-icon">➤</span>
+                  <span style={{ fontSize: "18px", lineHeight: 1 }}>➤</span>
                 </Button>
-              </Form.Group>
+              </div>
             </Form>
           </div>
         </div>

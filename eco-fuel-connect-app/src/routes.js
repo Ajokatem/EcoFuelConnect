@@ -8,6 +8,7 @@ import FuelRequestManagement from "./pages/FuelRequestManagement.js";
 import Reports from "./pages/Reports.js";
 import EducationalContent from "./pages/EducationalContent.js";
 import AdminContentManagement from "./pages/AdminContentManagement.js";
+import SupplierRewards from "./pages/SupplierRewards.js";
 import Help from "./pages/Help.js";
 import Notifications from "./pages/Notifications.js";
 import OrganicWasteLogging from "./pages/OrganicWasteLogging.js";
@@ -49,8 +50,7 @@ export const dashboardRoutes = [
     name: "Educational Content",
     icon: "nc-icon nc-tv-2",
     component: EducationalContent,
-    layout: "/admin",
-    adminOnly: true
+    layout: "/admin"
   },
   {
     path: "/admin-content",
@@ -66,6 +66,14 @@ export const dashboardRoutes = [
     icon: "nc-icon nc-planet",
     component: OrganicWasteLogging,
     layout: "/admin"
+  },
+  {
+    path: "/rewards",
+    name: "My Rewards",
+    icon: "nc-icon nc-money-coins",
+    component: SupplierRewards,
+    layout: "/admin",
+    supplierOnly: true
   },
   {
     path: "/fuel-request-management",
@@ -173,21 +181,21 @@ export function getDashboardRoutesByRole(role) {
     return dashboardRoutes;
   }
   if (role === 'school') {
-    // Schools: No waste log page, only fuel requests, dashboard, profile, messages, notifications, reports, help, settings
+    // Schools: No waste log, no reports - only fuel requests, dashboard, profile, messages, educational content, notifications, help, settings
     return dashboardRoutes.filter(route =>
-      ["/dashboard", "/user", "/messages", "/fuel-request-management", "/reports", "/notifications", "/help", "/settings"].includes(route.path)
+      ["/dashboard", "/user", "/messages", "/fuel-request-management", "/educational-content", "/notifications", "/help", "/settings"].includes(route.path)
     );
   }
   if (role === 'supplier') {
-    // Suppliers: No fuel request page, only waste logs, dashboard, profile, messages, notifications, reports, help, settings
+    // Suppliers: No fuel request, no reports - only waste logs, rewards, dashboard, profile, messages, educational content, notifications, help, settings
     return dashboardRoutes.filter(route =>
-      ["/dashboard", "/user", "/messages", "/organic-waste-logging", "/reports", "/notifications", "/help", "/settings"].includes(route.path)
+      ["/dashboard", "/user", "/messages", "/organic-waste-logging", "/rewards", "/educational-content", "/notifications", "/help", "/settings"].includes(route.path)
     );
   }
   if (role === 'producer') {
-    // Producers: Only dashboard, user, messages, reports, notifications, help, settings
+    // Producers: dashboard, user, messages, reports, educational content, notifications, help, settings
     return dashboardRoutes.filter(route =>
-      ["/dashboard", "/user", "/messages", "/reports", "/notifications", "/help", "/settings"].includes(route.path)
+      ["/dashboard", "/user", "/messages", "/reports", "/educational-content", "/notifications", "/help", "/settings"].includes(route.path)
     );
   }
   // Default: show all except admin-only routes

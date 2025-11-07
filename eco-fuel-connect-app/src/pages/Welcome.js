@@ -3,6 +3,8 @@ import { Link, useHistory } from "react-router-dom";
 import { Container, Row, Col, Button, Card, Badge, Navbar, Nav, Modal } from "react-bootstrap";
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import authService from "../services/authService";
+import axios from "axios";
+import ChatbotButton from "../components/ChatbotButton";
 import heroImage from "../assets/img/first image ecofuelconnect.jpg";
 import lastecoimage1 from "../assets/img/lastecoimage1.jpg";
 import lastecoimage2 from "../assets/img/lastecoimage2.jpg";
@@ -16,6 +18,7 @@ function Welcome() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [visibleWords, setVisibleWords] = useState(0);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [featuredArticles, setFeaturedArticles] = useState([]);
   const words = ["Transforming", "Waste", "into", "Clean", "Energy"];
   
   const awarenessImages = [
@@ -70,6 +73,19 @@ function Welcome() {
     }, 3000);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    fetchFeaturedArticles();
+  }, []);
+
+  const fetchFeaturedArticles = async () => {
+    try {
+      const response = await axios.get('/api/knowledge/featured');
+      setFeaturedArticles(response.data.articles || []);
+    } catch (error) {
+      console.error('Failed to load featured articles');
+    }
+  };
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -332,8 +348,42 @@ function Welcome() {
         </Container>
       </section>
 
+      {/* Featured Knowledge Articles */}
+      {featuredArticles.length > 0 && (
+        <section style={{ padding: "60px 0", background: "#fff" }}>
+          <Container>
+            <div style={{ textAlign: "center", marginBottom: "50px" }}>
+              <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "12px" }}>📖 Biogas Knowledge Hub</h2>
+              <p style={{ fontSize: "1rem", color: "#666", maxWidth: "800px", margin: "0 auto" }}>
+                Expert guides on biogas production, maintenance, and troubleshooting
+              </p>
+            </div>
+            <Row>
+              {featuredArticles.map((article) => (
+                <Col md={4} key={article.id} className="mb-4">
+                  <Card style={{ border: "none", borderRadius: "16px", overflow: "hidden", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", height: "100%", cursor: "pointer" }}>
+                    {article.thumbnailUrl && (
+                      <img src={article.thumbnailUrl} alt={article.title} style={{ height: "180px", width: "100%", objectFit: "cover" }} />
+                    )}
+                    <Card.Body style={{ padding: "20px" }}>
+                      <Badge style={{ background: "#25805a", marginBottom: "10px" }}>{article.category}</Badge>
+                      <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "10px", fontSize: "1.1rem" }}>{article.title}</h5>
+                      <p style={{ color: "#666", marginBottom: "14px", fontSize: "0.95rem" }}>{article.summary}</p>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <Badge bg="light" text="dark">{article.difficulty}</Badge>
+                        <small className="text-muted">{article.views} views</small>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Container>
+        </section>
+      )}
+
       {/* Educational Courses Section */}
-      <section style={{ padding: "60px 0", background: "#fff" }}>
+      <section style={{ padding: "60px 0", background: "#f8f9fa" }}>
         <Container>
           <div style={{ textAlign: "center", marginBottom: "50px" }}>
             <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "12px" }}>Learn & Grow</h2>
@@ -486,6 +536,9 @@ function Welcome() {
           </Row>
         </Container>
       </section>
+
+      {/* Chatbot Button */}
+      <ChatbotButton />
 
       {/* Footer */}
       <footer style={{ background: "linear-gradient(135deg, #25805a 0%, #1e6b47 100%)", color: "#fff", padding: "40px 0 20px" }}>
