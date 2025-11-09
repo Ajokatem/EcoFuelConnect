@@ -19,7 +19,8 @@ const connectDB = async () => {
     console.log(' MySQL connected successfully.');
   } catch (error) {
     console.error(' MySQL connection failed:', error);
-    throw error;
+    console.warn(' App will continue without database connection');
+    // Don't throw error - allow app to start without DB
   }
 };
 
