@@ -13,6 +13,7 @@ import {
   ProgressBar,
 } from "react-bootstrap";
 import dashboardService from "../services/dashboardService";
+import CoinRewards from "../components/CoinRewards";
 
 function SupplierDashboard() {
   const history = useHistory();
@@ -225,6 +226,10 @@ function SupplierDashboard() {
         </Col>
 
         <Col lg={4}>
+          <div style={{ marginBottom: "1rem" }}>
+            <CoinRewards />
+          </div>
+          
           <Card style={{ borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "1rem" }}>
             <Card.Body>
               <h6 className="mb-3">Monthly Progress</h6>

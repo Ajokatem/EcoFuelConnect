@@ -22,6 +22,7 @@ import Welcome from "./pages/Welcome.js";
 import Terms from "./pages/Terms.js";
 import Privacy from "./pages/Privacy.js";
 import EducationalDetail from "./pages/EducationalDetail.js";
+import AdminUserManagement from "./pages/AdminUserManagement.js";
 
 export const dashboardRoutes = [
   {
@@ -57,6 +58,14 @@ export const dashboardRoutes = [
     name: "Content Management",
     icon: "nc-icon nc-paper-2",
     component: AdminContentManagement,
+    layout: "/admin",
+    adminOnly: true
+  },
+  {
+    path: "/users",
+    name: "User Management",
+    icon: "nc-icon nc-single-02",
+    component: AdminUserManagement,
     layout: "/admin",
     adminOnly: true
   },

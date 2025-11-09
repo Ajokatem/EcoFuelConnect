@@ -409,6 +409,52 @@ router.post('/', [
     }));
     await Promise.all(notificationPromises);
 
+    // GAMIFIED COIN REWARD SYSTEM
+    const db = require('../config/database').sequelize;
+    
+    // Calculate coins based on waste quantity and quality
+    let coinsEarned = Math.floor(estimatedWeight * 0.5); // Base: 0.5 coins per kg
+    
+    // Quality multiplier
+    const qualityMultipliers = {
+      'excellent': 1.5,
+      'good': 1.2,
+      'fair': 1.0,
+      'poor': 0.8
+    };
+    coinsEarned = Math.floor(coinsEarned * (qualityMultipliers[qualityGrade] || 1.0));
+    
+    // Update or create user coins record
+    const [userCoins] = await db.query(`
+      INSERT INTO user_coins (userId, totalCoins, lifetimeCoins, lastEarned, createdAt, updatedAt)
+      VALUES (?, ?, ?, NOW(), NOW(), NOW())
+      ON DUPLICATE KEY UPDATE 
+        totalCoins = totalCoins + ?,
+        lifetimeCoins = lifetimeCoins + ?,
+        lastEarned = NOW(),
+        updatedAt = NOW()
+    `, [req.user.id, coinsEarned, coinsEarned, coinsEarned, coinsEarned]);
+    
+    // Log coin transaction
+    await db.query(`
+      INSERT INTO coin_transactions (userId, amount, type, description, wasteEntryId, createdAt)
+      VALUES (?, ?, 'earned', ?, ?, NOW())
+    `, [req.user.id, coinsEarned, `Earned ${coinsEarned} coins for logging ${estimatedWeight}kg of ${wasteType}`, createdEntry.id]);
+    
+    // Get updated coin balance
+    const [coinBalance] = await db.query(`
+      SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?
+    `, [req.user.id]);
+    
+    // Notify user about coins earned
+    await Notification.create({
+      userId: req.user.id,
+      type: 'reward',
+      title: '🪙 Coins Earned!',
+      message: `You earned ${coinsEarned} coins for logging waste! Total balance: ${coinBalance[0]?.totalCoins || coinsEarned} coins`,
+      read: false
+    });
+
       // Calculate updated stats after creating entry
       const { fn: seqFn, col: seqCol } = require('sequelize');
       const totalWasteResult = await WasteEntry.findAll({
@@ -421,6 +467,12 @@ router.post('/', [
         success: true,
         message: 'Waste entry created successfully',
         wasteEntry: createdEntry,
+        reward: {
+          coinsEarned,
+          totalCoins: coinBalance[0]?.totalCoins || coinsEarned,
+          lifetimeCoins: coinBalance[0]?.lifetimeCoins || coinsEarned,
+          message: `🎉 You earned ${coinsEarned} coins!`
+        },
         stats: {
           totalWaste: totalWaste,
           totalEntries: totalEntries,

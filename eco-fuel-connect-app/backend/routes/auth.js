@@ -507,6 +507,64 @@ router.put('/profile', auth, async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/forgot-password
+// @desc    Send password reset email
+// @access  Public
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const user = await User.findOne({ where: { email: email.toLowerCase() } });
+    
+    if (!user) {
+      return res.json({ success: true, message: 'If email exists, reset instructions sent' });
+    }
+
+    // Generate reset token
+    const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    
+    // In production, send email here
+    console.log(`Password reset link: http://localhost:3000/reset-password?token=${resetToken}`);
+
+    res.json({ success: true, message: 'Password reset instructions sent to your email' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password with token
+// @access  Public
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Token and new password required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByPk(decoded.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ success: true, message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(400).json({ success: false, message: 'Invalid or expired token' });
+  }
+});
+
 // @route   POST /api/auth/change-password
 // @desc    Change user password
 // @access  Private

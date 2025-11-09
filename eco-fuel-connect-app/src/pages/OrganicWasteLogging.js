@@ -81,48 +81,17 @@ function OrganicWasteLogging() {
           };
           setGpsLocation(location);
           
-          // Reverse geocode to get readable address
-          try {
-            const response = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${location.latitude}&lon=${location.longitude}&zoom=18&addressdetails=1`
-            );
-            const data = await response.json();
-            
-            if (data && data.address) {
-              const addr = data.address;
-              const addressParts = [];
-              
-              // Build readable address
-              if (addr.house_number) addressParts.push(addr.house_number);
-              if (addr.road) addressParts.push(addr.road);
-              if (addr.suburb || addr.neighbourhood) addressParts.push(addr.suburb || addr.neighbourhood);
-              if (addr.city || addr.town || addr.village) addressParts.push(addr.city || addr.town || addr.village);
-              if (addr.state) addressParts.push(addr.state);
-              if (addr.country) addressParts.push(addr.country);
-              
-              const readableAddress = addressParts.join(', ') || data.display_name;
-              
-              setFormData(prev => ({ 
-                ...prev, 
-                location: readableAddress
-              }));
-            } else {
-              // Fallback to coordinates if geocoding fails
-              setFormData(prev => ({ 
-                ...prev, 
-                location: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` 
-              }));
-            }
-          } catch (error) {
-            console.error('Geocoding error:', error);
-            // Fallback to coordinates
-            setFormData(prev => ({ 
-              ...prev, 
-              location: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` 
-            }));
-          }
+          // Use coordinates directly
+          setFormData(prev => ({ 
+            ...prev, 
+            location: `${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}` 
+          }));
           
           setLoadingLocation(false);
+          setAlertMessage('✓ GPS location captured');
+          setAlertType('success');
+          setShowAlert(true);
+          setTimeout(() => setShowAlert(false), 2000);
         },
         (error) => {
           console.error('GPS Error:', error);
@@ -252,11 +221,10 @@ function OrganicWasteLogging() {
                     onClick={() => setActiveTab("log")}
                     style={{
                       backgroundColor: activeTab === "log" ? "#28a745" : "#f8f9fa",
-                      borderColor: activeTab === "log" ? "#28a745" : "#dee2e6",
+                      border: activeTab === "log" ? "1px solid #28a745" : "1px solid #dee2e6",
                       color: activeTab === "log" ? "white" : "#495057",
                       borderRadius: "20px",
-                      padding: "8px 16px",
-                      border: "1px solid"
+                      padding: "8px 16px"
                     }}
                   >
                     {translate("logWaste") || "Log Waste"}
@@ -265,11 +233,10 @@ function OrganicWasteLogging() {
                     onClick={() => setActiveTab("entries")}
                     style={{
                       backgroundColor: activeTab === "entries" ? "#28a745" : "#f8f9fa",
-                      borderColor: activeTab === "entries" ? "#28a745" : "#dee2e6",
+                      border: activeTab === "entries" ? "1px solid #28a745" : "1px solid #dee2e6",
                       color: activeTab === "entries" ? "white" : "#495057",
                       borderRadius: "20px",
-                      padding: "8px 16px",
-                      border: "1px solid"
+                      padding: "8px 16px"
                     }}
                   >
                     {translate("viewEntries") || "View Entries"}
@@ -291,7 +258,7 @@ function OrganicWasteLogging() {
                                       onClick={() => setFormData({...formData, type: type.value})}
                                       style={{
                                         backgroundColor: formData.type === type.value ? "#28a745" : "#f8f9fa",
-                                        borderColor: formData.type === type.value ? "#28a745" : "#dee2e6",
+                                        border: formData.type === type.value ? "1px solid #28a745" : "1px solid #dee2e6",
                                         color: formData.type === type.value ? "white" : "#495057",
                                         borderRadius: "20px",
                                         padding: "4px 8px",
@@ -331,7 +298,7 @@ function OrganicWasteLogging() {
                                     disabled={loadingLocation}
                                     style={{
                                       backgroundColor: "#28a745",
-                                      borderColor: "#28a745",
+                                      border: "1px solid #28a745",
                                       color: "white",
                                       padding: "8px 12px",
                                       fontSize: "0.85rem",
@@ -377,7 +344,7 @@ function OrganicWasteLogging() {
                                 className="w-100"
                                 style={{
                                   backgroundColor: "#28a745",
-                                  borderColor: "#28a745",
+                                  border: "1px solid #28a745",
                                   color: "white",
                                   borderRadius: "20px",
                                   padding: "8px 16px"

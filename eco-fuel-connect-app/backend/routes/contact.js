@@ -1,5 +1,5 @@
 const express = require('express');
-const ContactMessage = require('../models/contactmessage');
+const ContactMessage = require('../models/ContactMessage');
 const nodemailer = require('nodemailer');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');

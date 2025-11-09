@@ -315,7 +315,7 @@ function Login() {
                     {errors.password && <Form.Text className="text-danger">{errors.password}</Form.Text>}
                   </Form.Group>
 
-                  <Form.Group className="mb-4">
+                  <div className="d-flex justify-content-between align-items-center mb-4">
                     <Form.Check
                       type="checkbox"
                       name="rememberMe"
@@ -328,7 +328,21 @@ function Login() {
                         fontFamily: '"Inter", "Segoe UI", sans-serif'
                       }}
                     />
-                  </Form.Group>
+                    <Link 
+                      to="/forgot-password" 
+                      style={{
+                        color: '#25805a',
+                        textDecoration: 'none',
+                        fontSize: '0.9rem',
+                        fontWeight: '500',
+                        fontFamily: '"Inter", "Segoe UI", sans-serif'
+                      }}
+                      onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                      onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+                    >
+                      Forgot Password?
+                    </Link>
+                  </div>
 
                   <Button
                     type="submit"

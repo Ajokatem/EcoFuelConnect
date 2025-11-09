@@ -18,7 +18,9 @@ import Contact from "./pages/Contact.js";
 import Projects from "./pages/Projects.js";
 import Terms from "./pages/Terms.js";
 import Privacy from "./pages/Privacy.js";
+import ForgotPassword from "./pages/ForgotPassword.js";
 import ErrorBoundary from "./components/common/ErrorBoundary.js";
+import CookieConsent from "./components/CookieConsent.js";
 import { LanguageProvider } from "./contexts/LanguageContext.js";
 import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { UserProvider } from "./contexts/UserContext.js";
@@ -36,10 +38,12 @@ ReactDOM.render(
               <Route exact path="/projects" component={Projects} />
               <Route exact path="/terms" component={Terms} />
               <Route exact path="/privacy" component={Privacy} />
+              <Route exact path="/forgot-password" component={ForgotPassword} />
               <Route path="/admin" component={AdminLayout} />
               <Route path="/auth" component={AuthLayout} />
               <Redirect from="*" to="/" />
             </Switch>
+            <CookieConsent />
           </BrowserRouter>
         </UserProvider>
       </ThemeProvider>
