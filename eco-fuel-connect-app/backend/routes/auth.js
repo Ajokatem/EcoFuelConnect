@@ -215,9 +215,19 @@ router.post('/auth/login', authLimiter, async (req, res) => {
     }
 
     // Find user
-    const user = await User.findOne({ 
-      where: { email: email.toLowerCase() }
-    });
+    let user;
+    try {
+      user = await User.findOne({ 
+        where: { email: email.toLowerCase() }
+      });
+    } catch (dbError) {
+      console.error('Database error:', dbError.message);
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection error. Please set up PostgreSQL on Render and add DATABASE_URL environment variable.'
+      });
+    }
+    
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -274,6 +284,15 @@ router.post('/auth/login', authLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
+    
+    // Check if it's a database connection error
+    if (error.name === 'SequelizeHostNotFoundError' || error.name === 'SequelizeConnectionError') {
+      return res.status(503).json({
+        success: false,
+        message: 'Database not connected. Please contact administrator to set up database.'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Server error during login'

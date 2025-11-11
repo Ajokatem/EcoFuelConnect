@@ -6,16 +6,31 @@ const BiogasChatbot = ({ show, onHide }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(true);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random()}`);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
     if (show && messages.length === 0) {
-      setMessages([{
-        type: 'bot',
-        text: 'Hi! I\'m your Biogas Assistant. Ask me anything about:\n\n• Starting biogas production\n• Daily maintenance\n• Troubleshooting issues\n• Safety procedures\n• Temperature control\n• Waste types and ratios\n\nWhat would you like to know?',
-        timestamp: new Date()
-      }]);
+      // Fetch suggestions first
+      axios.get('/api/chatbot/suggestions')
+        .then(res => {
+          setSuggestions(res.data.suggestions || []);
+          setMessages([{
+            type: 'bot',
+            text: 'Hi! 👋 I\'m your Biogas Assistant. Choose a question below or type your own:',
+            timestamp: new Date()
+          }]);
+        })
+        .catch(() => {
+          setSuggestions([]);
+          setMessages([{
+            type: 'bot',
+            text: 'Hi! 👋 I\'m your Biogas Assistant. Ask me anything about biogas production!',
+            timestamp: new Date()
+          }]);
+        });
     }
   }, [show, messages.length]);
 
@@ -23,19 +38,20 @@ const BiogasChatbot = ({ show, onHide }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
+  const handleSend = async (text = null) => {
+    const messageText = text || input;
+    if (!messageText.trim() || loading) return;
 
-    const userMessage = { type: 'user', text: input, timestamp: new Date() };
+    setShowSuggestions(false);
+    const userMessage = { type: 'user', text: messageText, timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
-    const currentInput = input;
     setInput('');
     setLoading(true);
 
     try {
       // Try API call first
       const response = await axios.post('/api/chatbot/query', {
-        message: currentInput,
+        message: messageText,
         sessionId,
         userId: localStorage.getItem('userId')
       });
@@ -60,7 +76,7 @@ const BiogasChatbot = ({ show, onHide }) => {
         'temperature': 'Optimal temperature: 30-40°C (86-104°F). Below 20°C: production slows. Above 45°C: bacteria die. Use insulation in cold weather.'
       };
       
-      const lowerInput = currentInput.toLowerCase();
+      const lowerInput = messageText.toLowerCase();
       let response = 'I\'m currently having trouble connecting to my knowledge base. However, I can still help! Try asking about: starting biogas production, maintenance, safety, or temperature control.';
       
       for (const [key, value] of Object.entries(fallbackResponses)) {
@@ -122,6 +138,39 @@ const BiogasChatbot = ({ show, onHide }) => {
           borderRadius: '12px',
           marginBottom: '16px'
         }}>
+          {showSuggestions && suggestions.length > 0 && (
+            <div style={{ marginBottom: '16px' }}>
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px', fontWeight: '600' }}>Quick Questions:</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {suggestions.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => handleSend(s.question)}
+                    style={{
+                      padding: '8px 14px',
+                      borderRadius: '20px',
+                      border: '1px solid #25805a',
+                      backgroundColor: 'white',
+                      color: '#25805a',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.backgroundColor = '#25805a';
+                      e.target.style.color = 'white';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.backgroundColor = 'white';
+                      e.target.style.color = '#25805a';
+                    }}
+                  >
+                    {s.icon} {s.question}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {messages.map((msg, idx) => (
             <div key={idx} style={{
               display: 'flex',
