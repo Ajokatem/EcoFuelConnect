@@ -65,6 +65,7 @@ const rewardsRoutes = require('./routes/rewards');
 const knowledgeRoutes = require('./routes/knowledge');
 const chatbotRoutes = require('./routes/chatbot');
 const usersRoutes = require('./routes/users');
+const imageAnalysisRoutes = require('./routes/imageAnalysis');
 
 // ----- Database Connection -----
 connectDB()
@@ -72,13 +73,13 @@ connectDB()
     try {
       const { defineAssociations } = require('./models/associations');
       defineAssociations();
-      console.log('✅ Database connected and model associations defined');
+      console.log(' Database connected and model associations defined');
     } catch (err) {
-      console.error('❌ Model association error:', err.message);
+      console.error(' Model association error:', err.message);
     }
   })
   .catch((err) => {
-    console.error('❌ Database connection failed:', err.message);
+    console.error(' Database connection failed:', err.message);
     process.exit(1);
   });
 
@@ -99,6 +100,7 @@ app.use('/api/messages', messagesRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/image-analysis', imageAnalysisRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/admin', adminRoutes);
 
@@ -146,7 +148,7 @@ app.get('/api/welcome-config', async (req, res) => {
         co2Saved: co2Saved || statistics.co2Saved,
       };
     } catch (dbError) {
-      console.log('⚠️ Welcome config database error:', dbError.message);
+      console.log(' Welcome config database error:', dbError.message);
     }
 
     res.json({
@@ -164,7 +166,7 @@ app.get('/api/welcome-config', async (req, res) => {
       },
     });
   } catch (error) {
-    console.error('❌ Welcome config error:', error.message);
+    console.error(' Welcome config error:', error.message);
     res.status(500).json({ success: false, message: 'Failed to load welcome configuration' });
   }
 });
@@ -183,10 +185,10 @@ app.use((req, res) => {
 // ----- Start Server -----
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 EcoFuelConnect API server running on port ${PORT}`);
-  console.log(`🌎 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🔗 API Base URL: ${process.env.API_BASE_URL || `http://localhost:${PORT}/api`}`);
-  console.log(`🔒 Security middleware enabled`);
+  console.log(` EcoFuelConnect API server running on port ${PORT}`);
+  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(` API Base URL: ${process.env.API_BASE_URL || `http://localhost:${PORT}/api`}`);
+  console.log(` Security middleware enabled`);
 });
 
 module.exports = app;

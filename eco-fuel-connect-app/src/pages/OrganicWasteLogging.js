@@ -2,9 +2,10 @@
 import { useLanguage } from "../contexts/LanguageContext";
 import { Card, Container, Row, Col, Form, Button, Alert, Table, Badge, Tabs, Tab } from "react-bootstrap";
 import wasteService from "../services/wasteService";
+import api from "../services/api";
 
 function OrganicWasteLogging() {
-  const [formData, setFormData] = useState({ type: "", quantity: "", location: "", description: "", producerId: "" });
+  const [formData, setFormData] = useState({ type: "", quantity: "", location: "", description: "", producerId: "", imageBase64: "" });
   const [producers, setProducers] = useState([]);
   const { translate } = useLanguage();
   const [wasteEntries, setWasteEntries] = useState([]);
@@ -15,6 +16,7 @@ function OrganicWasteLogging() {
   const [currentUser, setCurrentUser] = useState(null);
   const [gpsLocation, setGpsLocation] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
+  const [analyzingImage, setAnalyzingImage] = useState(false);
   
   const wasteTypes = [
     { value: "food_scraps", label: "Food Scraps", fuelRatio: 0.5 },
@@ -112,12 +114,66 @@ function OrganicWasteLogging() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    // Ensure producerId is always a number (or empty string)
     if (name === "producerId") {
       setFormData(prev => ({ ...prev, producerId: value === "" ? "" : Number(value) }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setAlertMessage('Please upload an image file');
+      setAlertType('danger');
+      setShowAlert(true);
+      setTimeout(() => setShowAlert(false), 3000);
+      return;
+    }
+
+    setAnalyzingImage(true);
+    setAlertMessage('🔍 AI analyzing image...');
+    setAlertType('info');
+    setShowAlert(true);
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64 = reader.result;
+      setFormData(prev => ({ ...prev, imageBase64: base64 }));
+      
+      try {
+        console.log('Sending image to AI for analysis...');
+        const response = await api.post('/image-analysis/estimate-weight', {
+          imageBase64: base64,
+          wasteType: formData.type || 'organic waste'
+        });
+        
+        console.log('AI Response:', response.data);
+        
+        if (response.data.success && response.data.estimatedWeight > 0) {
+          setFormData(prev => ({ ...prev, quantity: response.data.estimatedWeight.toString() }));
+          setAlertMessage(`✓ AI estimated weight: ${response.data.estimatedWeight} kg`);
+          setAlertType('success');
+        } else {
+          setAlertMessage('Could not estimate weight. Please enter manually.');
+          setAlertType('info');
+        }
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 4000);
+      } catch (error) {
+        console.error('Image analysis error:', error);
+        console.error('Error details:', error.response?.data || error.message);
+        setAlertMessage('Image analysis failed. Please enter weight manually.');
+        setAlertType('warning');
+        setShowAlert(true);
+        setTimeout(() => setShowAlert(false), 3000);
+      } finally {
+        setAnalyzingImage(false);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -182,10 +238,16 @@ function OrganicWasteLogging() {
         setWasteEntries(entriesResponse);
       }
 
-      // Reset form and show success
-      setFormData({ type: "", quantity: "", location: "", description: "", producerId: "" });
+      // Reset form and show success with coin reward
+      setFormData({ type: "", quantity: "", location: "", description: "", producerId: "", imageBase64: "" });
       setGpsLocation(null);
-      setAlertMessage("Waste entry logged successfully!");
+      
+      // Show coin reward if available
+      if (response.reward && response.reward.coinsEarned > 0) {
+        setAlertMessage(`🎉 Waste logged! You earned ${response.reward.coinsEarned} coins! Total: ${response.reward.totalCoins} coins`);
+      } else {
+        setAlertMessage("Waste entry logged successfully!");
+      }
       setAlertType("success");
       setShowAlert(true);
       
@@ -193,7 +255,7 @@ function OrganicWasteLogging() {
       setTimeout(() => {
         setActiveTab("entries");
         setShowAlert(false);
-      }, 1500);
+      }, 3000);
       
     } catch (error) {
       console.error("Error creating waste entry:", error);
@@ -276,8 +338,33 @@ function OrganicWasteLogging() {
                                 {!formData.type && <div className="text-danger small">{translate("selectWasteType") || "Please select a waste type"}</div>}
                               </Form.Group>
                               <Form.Group className="mb-3">
+                                <Form.Label>📸 Upload Waste Photo (AI will estimate weight)</Form.Label>
+                                <Form.Control 
+                                  type="file" 
+                                  accept="image/*" 
+                                  onChange={handleImageUpload}
+                                  disabled={analyzingImage}
+                                />
+                                {analyzingImage && (
+                                  <Form.Text className="text-info">
+                                    <span className="spinner-border spinner-border-sm me-2" />
+                                    AI analyzing image...
+                                  </Form.Text>
+                                )}
+                              </Form.Group>
+                              <Form.Group className="mb-3">
                                 <Form.Label>{translate("quantity") || "Quantity"} (kg) *</Form.Label>
-                                <Form.Control type="number" name="quantity" value={formData.quantity} onChange={handleInputChange} placeholder="Enter quantity in kg" min="0.1" step="0.1" required />
+                                <Form.Control 
+                                  type="number" 
+                                  name="quantity" 
+                                  value={formData.quantity} 
+                                  onChange={handleInputChange} 
+                                  placeholder={analyzingImage ? "AI estimating..." : "Enter or AI will estimate"} 
+                                  min="0.1" 
+                                  step="0.1" 
+                                  required 
+                                  disabled={analyzingImage}
+                                />
                               </Form.Group>
                               <Form.Group className="mb-3">
                                 <Form.Label>{translate("location") || "Location"} *</Form.Label>

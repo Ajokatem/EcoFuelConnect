@@ -425,26 +425,26 @@ router.post('/', [
     coinsEarned = Math.floor(coinsEarned * (qualityMultipliers[qualityGrade] || 1.0));
     
     // Update or create user coins record
-    const [userCoins] = await db.query(`
-      INSERT INTO user_coins (userId, totalCoins, lifetimeCoins, lastEarned, createdAt, updatedAt)
-      VALUES (?, ?, ?, NOW(), NOW(), NOW())
-      ON DUPLICATE KEY UPDATE 
-        totalCoins = totalCoins + ?,
-        lifetimeCoins = lifetimeCoins + ?,
-        lastEarned = NOW(),
-        updatedAt = NOW()
-    `, [req.user.id, coinsEarned, coinsEarned, coinsEarned, coinsEarned]);
+    await db.query(
+      `INSERT INTO user_coins (userId, totalCoins, lifetimeCoins, lastEarned, createdAt, updatedAt)
+       VALUES (${req.user.id}, ${coinsEarned}, ${coinsEarned}, NOW(), NOW(), NOW())
+       ON DUPLICATE KEY UPDATE 
+         totalCoins = totalCoins + ${coinsEarned},
+         lifetimeCoins = lifetimeCoins + ${coinsEarned},
+         lastEarned = NOW(),
+         updatedAt = NOW()`
+    );
     
     // Log coin transaction
-    await db.query(`
-      INSERT INTO coin_transactions (userId, amount, type, description, wasteEntryId, createdAt)
-      VALUES (?, ?, 'earned', ?, ?, NOW())
-    `, [req.user.id, coinsEarned, `Earned ${coinsEarned} coins for logging ${estimatedWeight}kg of ${wasteType}`, createdEntry.id]);
+    await db.query(
+      `INSERT INTO coin_transactions (userId, amount, type, description, wasteEntryId, createdAt)
+       VALUES (${req.user.id}, ${coinsEarned}, 'earned', '${`Earned ${coinsEarned} coins for logging ${estimatedWeight}kg of ${wasteType}`.replace(/'/g, "''")}', ${createdEntry.id}, NOW())`
+    );
     
     // Get updated coin balance
-    const [coinBalance] = await db.query(`
-      SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?
-    `, [req.user.id]);
+    const [coinBalance] = await db.query(
+      `SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ${req.user.id}`
+    );
     
     // Notify user about coins earned
     await Notification.create({
@@ -452,7 +452,7 @@ router.post('/', [
       type: 'reward',
       title: '🪙 Coins Earned!',
       message: `You earned ${coinsEarned} coins for logging waste! Total balance: ${coinBalance[0]?.totalCoins || coinsEarned} coins`,
-      read: false
+      isRead: false
     });
 
       // Calculate updated stats after creating entry
@@ -471,7 +471,7 @@ router.post('/', [
           coinsEarned,
           totalCoins: coinBalance[0]?.totalCoins || coinsEarned,
           lifetimeCoins: coinBalance[0]?.lifetimeCoins || coinsEarned,
-          message: `🎉 You earned ${coinsEarned} coins!`
+          message: ` You earned ${coinsEarned} coins!`
         },
         stats: {
           totalWaste: totalWaste,
