@@ -1,29 +1,45 @@
 import axios from 'axios';
 
+// Determine base URL based on environment
+const baseURL =
+  process.env.REACT_APP_ENV === 'production'
+    ? process.env.REACT_APP_API_URL || 'https://ecofuelconnect-backend.onrender.com/api'
+    : process.env.REACT_APP_API_URL_LOCAL || 'http://localhost:5000/api';
+
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true
+  withCredentials: true,
 });
 
-// Request interceptor to add auth token
-// To set auth token, use api.defaults.headers.common['Authorization'] = `Bearer <token>` from React context/state
-
-// Response interceptor for error handling
-api.interceptors.response.use(
-  (response) => {
-    return response;
+// ✅ Request interceptor (optional: attach token)
+api.interceptors.request.use(
+  (config) => {
+    // Example: if you’re storing token in localStorage or context
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   },
+  (error) => Promise.reject(error)
+);
+
+// ✅ Response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
-      // Clear token/user from React context or state management (handled in component)
-      // Don't redirect here - let the component handle it
-      // Components should check authentication state and redirect accordingly
+      console.warn('Unauthorized: Token may have expired or is invalid.');
+      // Components should handle logout or redirect
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout. Please check your network connection.');
+    } else if (!error.response) {
+      console.error('Network error: Backend may be unreachable.');
     }
     return Promise.reject(error);
   }
