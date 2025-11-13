@@ -202,7 +202,7 @@ const generateToken = (userId) => {
 // @route   POST /api/auth/login
 // @desc    Login user with comprehensive response data
 // @access  Public
-router.post('/auth/login', authLimiter, async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { email, password, rememberMe = false } = req.body;
 

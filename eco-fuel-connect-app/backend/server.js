@@ -6,13 +6,13 @@ const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { connectDB } = require('./config/database');
+const morgan = require('morgan');
 
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 app.set('trust proxy', 1); // Trust proxy for correct IP detection behind proxies/load balancers
-
 // ----- Security Middleware -----
 app.use(
   helmet({
@@ -26,6 +26,9 @@ app.use(
     },
   })
 );
+
+if(process.env.NODE_ENV === 'development')
+  app.use(morgan("combined"));
 
 // ----- Rate Limiting -----
 const limiter = rateLimit({

@@ -30,7 +30,7 @@
     "eject": "react-scripts eject",
     "lint": "eslint src/",
     "security-audit": "npm audit",
-    "server": "cd backend && npm start",
+    "server": "cd backend && nodemon server.js",
     "dev": "concurrently \"npm run server\" \"npm start\""
   },
   "devDependencies": {
