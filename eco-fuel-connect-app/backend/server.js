@@ -194,9 +194,18 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Something went wrong!', error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error' });
 });
 
-// ----- 404 Handler -----
-app.use((req, res) => {
-  res.status(404).json({ message: 'API endpoint not found', path: req.originalUrl, method: req.method });
+// ----- SPA Routing Support -----
+app.get('*', (req, res) => {
+  // Only handle non-API routes
+  if (!req.path.startsWith('/api/')) {
+    res.json({
+      message: 'EcoFuelConnect Frontend Route',
+      path: req.originalUrl,
+      note: 'This is a backend API server. Frontend should handle this route.'
+    });
+  } else {
+    res.status(404).json({ message: 'API endpoint not found', path: req.originalUrl, method: req.method });
+  }
 });
 
 // ----- Start Server -----
