@@ -107,6 +107,20 @@ app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/admin', adminRoutes);
 
+// ----- Static Files -----
+app.get('/manifest.json', (req, res) => {
+  res.json({
+    name: 'EcoFuelConnect',
+    short_name: 'EcoFuel',
+    description: 'Transforming Organic Waste into Clean Energy',
+    start_url: '/',
+    display: 'standalone',
+    theme_color: '#22c55e',
+    background_color: '#ffffff',
+    icons: []
+  });
+});
+
 // ----- Health Check -----
 app.get('/api/health', (req, res) => {
   res.json({
