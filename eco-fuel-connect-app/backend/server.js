@@ -194,6 +194,25 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: 'Something went wrong!', error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error' });
 });
 
+// ----- Frontend Route Redirects -----
+app.all('/register', (req, res) => {
+  res.status(200).json({
+    message: 'Registration endpoint',
+    correctEndpoint: '/api/auth/register',
+    method: 'POST',
+    note: 'Use /api/auth/register for actual registration'
+  });
+});
+
+app.all('/login', (req, res) => {
+  res.status(200).json({
+    message: 'Login endpoint',
+    correctEndpoint: '/api/auth/login',
+    method: 'POST',
+    note: 'Use /api/auth/login for actual login'
+  });
+});
+
 // ----- SPA Routing Support -----
 app.get('*', (req, res) => {
   // Only handle non-API routes
