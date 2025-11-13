@@ -68,7 +68,7 @@ const rewardsRoutes = require('./routes/rewards');
 const knowledgeRoutes = require('./routes/knowledge');
 const chatbotRoutes = require('./routes/chatbot');
 const usersRoutes = require('./routes/users');
-const imageAnalysisRoutes = require('./routes/imageAnalysis');
+// const imageAnalysisRoutes = require('./routes/imageAnalysis');
 
 // ----- Database Connection -----
 connectDB()
@@ -103,7 +103,7 @@ app.use('/api/messages', messagesRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/chatbot', chatbotRoutes);
-app.use('/api/image-analysis', imageAnalysisRoutes);
+// app.use('/api/image-analysis', imageAnalysisRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/admin', adminRoutes);
 
