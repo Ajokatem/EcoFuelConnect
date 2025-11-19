@@ -3,7 +3,7 @@ import { Link, useHistory } from "react-router-dom";
 import { Container, Row, Col, Button, Card, Badge, Navbar, Nav, Modal } from "react-bootstrap";
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import authService from "../services/authService";
-import axios from "axios";
+import api from "../services/api";
 import ChatbotButton from "../components/ChatbotButton";
 import heroImage from "../assets/img/first image ecofuelconnect.jpg";
 import lastecoimage1 from "../assets/img/lastecoimage1.jpg";
@@ -80,10 +80,11 @@ function Welcome() {
 
   const fetchFeaturedArticles = async () => {
     try {
-      const response = await axios.get('/api/knowledge/featured');
+      const response = await api.get('/knowledge/featured');
       setFeaturedArticles(response.data.articles || []);
     } catch (error) {
-      console.error('Failed to load featured articles');
+      // Silently fail - featured articles are optional
+      setFeaturedArticles([]);
     }
   };
 
