@@ -76,7 +76,7 @@ const rewardsRoutes = require('./routes/rewards');
 const knowledgeRoutes = require('./routes/knowledge');
 const chatbotRoutes = require('./routes/chatbot');
 const usersRoutes = require('./routes/users');
-const environmentalRoutes = require('./routes/environmental');
+// const environmentalRoutes = require('./routes/environmental');
 // const imageAnalysisRoutes = require('./routes/imageAnalysis');
 
 // ----- Database Connection -----
@@ -114,7 +114,7 @@ app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 // app.use('/api/image-analysis', imageAnalysisRoutes);
 app.use('/api/users', usersRoutes);
-app.use('/api/environmental', environmentalRoutes);
+// app.use('/api/environmental', environmentalRoutes);
 app.use('/admin', adminRoutes);
 
 // ----- Static Files -----
