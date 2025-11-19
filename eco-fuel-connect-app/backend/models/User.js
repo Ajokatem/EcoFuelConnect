@@ -127,6 +127,14 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING(500),
     allowNull: true
   },
+  profilePhoto: {
+    type: DataTypes.STRING(500),
+    allowNull: true
+  },
+  bio: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
   // lastLogin: {
   //   type: DataTypes.DATE,
   //   allowNull: true

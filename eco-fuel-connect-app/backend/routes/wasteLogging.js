@@ -75,6 +75,15 @@ router.get('/', auth, async (req, res) => {
     } = req.query;
     // Build Sequelize where clause with proper sanitization
     let where = {};
+    
+    // Schools should not access waste logs at all
+    if (req.user.role === 'school') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Schools cannot access waste logs. Please use Fuel Requests page instead.' 
+      });
+    }
+    
     if (req.user.role === 'supplier') {
       where.supplierId = parseInt(req.user.id);
     } else if (req.user.role === 'producer') {
@@ -302,9 +311,13 @@ router.post('/', [
       gpsAccuracy
     } = req.body;
 
-    // Validate supplier role
-    if (req.user.role !== 'supplier' && req.user.role !== 'admin') {
-      return res.status(403).json({ success: false, message: 'Only suppliers can create waste entries' });
+    // Validate supplier role - schools cannot log waste
+    if (req.user.role === 'school') {
+      return res.status(403).json({ success: false, message: 'Schools cannot log waste. Only suppliers and producers can log waste entries.' });
+    }
+    
+    if (req.user.role !== 'supplier' && req.user.role !== 'producer' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Only suppliers and producers can create waste entries' });
     }
 
     // Validate producer exists and is active (accept supplier or producer role)

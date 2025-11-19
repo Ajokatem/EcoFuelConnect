@@ -6,26 +6,32 @@ const { auth } = require('../middleware/auth');
 // PUT /api/users/profile - Update user profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { firstName, lastName, email, organization, phone, bio } = req.body;
+    const { firstName, lastName, email, organization, phone, bio, profilePhoto } = req.body;
     const user = await User.findByPk(req.user.id);
     
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
     
+    // Update user fields
     await user.update({
-      firstName: firstName || user.firstName,
-      lastName: lastName || user.lastName,
-      email: email || user.email,
-      organization: organization || user.organization,
-      phone: phone || user.phone,
-      bio: bio || user.bio
+      firstName: firstName !== undefined ? firstName : user.firstName,
+      lastName: lastName !== undefined ? lastName : user.lastName,
+      email: email !== undefined ? email : user.email,
+      organization: organization !== undefined ? organization : user.organization,
+      phone: phone !== undefined ? phone : user.phone,
+      bio: bio !== undefined ? bio : user.bio,
+      profilePhoto: profilePhoto !== undefined ? profilePhoto : user.profilePhoto
     });
     
-    res.json({ success: true, user });
+    // Return updated user without password
+    const updatedUser = user.toJSON();
+    delete updatedUser.password;
+    
+    res.json({ success: true, user: updatedUser, message: 'Profile updated successfully' });
   } catch (error) {
     console.error('Error updating profile:', error);
-    res.status(500).json({ error: 'Failed to update profile' });
+    res.status(500).json({ success: false, error: 'Failed to update profile', message: error.message });
   }
 });
 
@@ -39,7 +45,8 @@ router.get('/', auth, async (req, res) => {
     
     const users = await User.findAll({
       where,
-      attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone', 'role', 'isActive', 'createdAt']
+      attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone', 'role', 'isActive', 'profilePhoto', 'profileImage', 'bio', 'createdAt'],
+      order: [['createdAt', 'DESC']]
     });
     
     res.json({ success: true, users, producers: users });

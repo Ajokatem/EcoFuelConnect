@@ -5,31 +5,22 @@ const Message = require('../models/Message');
 const { Op } = require('sequelize');
 const Notification = require('../models/Notification');
 
-// Get all users who have messaged the current producer (for chat list)
+// Get all users for chat - show ALL active users so anyone can chat with anyone
 router.get('/chat-users', auth, async (req, res) => {
   try {
     const currentUserId = req.user.id;
-    const currentUser = await require('../models/User').findByPk(currentUserId);
-    let users = [];
-    if (currentUser.role === 'producer') {
-      // Producers: show users who have messaged them
-      const messages = await Message.findAll({
-        where: { receiverId: currentUserId },
-        attributes: ['senderId'],
-        group: ['senderId']
-      });
-      const senderIds = messages.map(m => m.senderId);
-      users = await require('../models/User').findAll({
-        where: { id: senderIds },
-        attributes: ['id', 'firstName', 'lastName', 'role', 'organization', 'email', 'phone']
-      });
-    } else {
-      // School/Supplier: show all active producers
-      users = await require('../models/User').findAll({
-        where: { role: 'producer', isActive: true },
-        attributes: ['id', 'firstName', 'lastName', 'role', 'organization', 'email', 'phone']
-      });
-    }
+    const User = require('../models/User');
+    
+    // Show ALL active users except current user
+    const users = await User.findAll({
+      where: { 
+        isActive: true,
+        id: { [Op.ne]: currentUserId } // Exclude self
+      },
+      attributes: ['id', 'firstName', 'lastName', 'role', 'organization', 'email', 'phone', 'profilePhoto', 'profileImage', 'bio'],
+      order: [['createdAt', 'DESC']]
+    });
+    
     res.json({ users });
   } catch (error) {
     console.error('Error fetching chat users:', error);
