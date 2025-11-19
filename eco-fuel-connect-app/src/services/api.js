@@ -1,58 +1,65 @@
-import axios from 'axios';
+import axios from "axios";
 
-// Force production API URL for now
-const baseURL = 'https://ecofuelconnect-backend.onrender.com/api';
+/**
+ * BACKEND URL LOGIC
+ * -----------------
+ * React ONLY exposes env vars starting with REACT_APP_...
+ * So we use REACT_APP_BACKEND_URL for production
+ * And fallback to localhost in development.
+ */
 
+const baseURL =
+  process.env.REACT_APP_BACKEND_URL ||
+  "http://localhost:5000/api";
 
-// Debug logging
-console.log('API Configuration:', {
+// Debug logging to confirm correct URL at build/runtime
+console.log("🔧 API Configuration:", {
   NODE_ENV: process.env.NODE_ENV,
-  REACT_APP_ENV: process.env.REACT_APP_ENV,
-  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
-  baseURL
+  BACKEND_ENV_VAR: process.env.REACT_APP_BACKEND_URL,
+  FINAL_BASE_URL: baseURL,
 });
 
-// Create axios instance
+// Axios instance
 const api = axios.create({
   baseURL,
-  timeout: 15000, // increase timeout for slower networks
+  timeout: 15000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
-  withCredentials: true, // send cookies with requests
+  withCredentials: true, // IMPORTANT: Cookies/JWT
 });
 
-// Attach token automatically if present in localStorage
+// Automatically attach token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response) {
-      // Backend returned a response
-      if (error.response.status === 401) {
-        console.warn('Unauthorized: Token may be expired or invalid.');
-        // Optional: trigger logout in frontend here
-      } else if (error.response.status === 404) {
-        console.warn(`API endpoint not found: ${error.config.url}`);
-      } else if (error.response.status === 405) {
-        console.warn(`Method not allowed: ${error.config.method} on ${error.config.url}`);
-      }
-    } else if (error.code === 'ECONNABORTED') {
-      console.error('Request timeout. Check your network connection.');
+      const status = error.response.status;
+      const url = error.config?.url || "unknown";
+
+      if (status === 401) console.warn("401 Unauthorized");
+      if (status === 404) console.warn(`404 Not Found → ${url}`);
+      if (status === 405) console.warn(`405 Method Not Allowed → ${url}`);
+    } else if (error.code === "ECONNABORTED") {
+      console.error("⏳ Request timeout");
     } else {
-      console.error('Network error: Backend may be unreachable.');
+      console.error("🌐 Network error — backend unreachable");
     }
+
     return Promise.reject(error);
   }
 );
