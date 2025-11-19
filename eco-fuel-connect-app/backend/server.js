@@ -86,7 +86,8 @@ connectDB()
       const { sequelize } = require('./config/database');
       
       // Sync database tables (creates all tables)
-      await sequelize.sync({ force: false, alter: false });
+      // Use alter: true for production to create missing tables without dropping existing ones
+      await sequelize.sync({ force: false, alter: true });
       console.log(' Database tables synced successfully');
     } catch (err) {
       console.error(' Database sync error:', err.message);
