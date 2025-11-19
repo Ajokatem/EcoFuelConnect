@@ -135,8 +135,7 @@ function Messages() {
     </div>
   );
 
-  // WhatsApp-style chat bubbles
-  // TikTok-style chat bubbles
+
   const ChatThread = () => {
     let lastDate = null;
     return (

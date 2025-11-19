@@ -357,7 +357,7 @@ router.post('/', [
       },
       notes,
       supplierNotes,
-      status: 'pending'
+      status: 'logged'
     });
 
     // Fetch with associations for response

@@ -87,6 +87,18 @@ router.post('/', auth, async (req, res) => {
         metadata: JSON.stringify({ senderId: req.user.id, receiverId, messageId: message.id })
       });
     }
+    // Emit real-time message to receiver if they're online
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user_${receiverId}`).emit('new_message', {
+        id: message.id,
+        senderId: req.user.id,
+        senderName: `${req.user.firstName} ${req.user.lastName}`,
+        content: message.content,
+        sentAt: message.sentAt
+      });
+    }
+    
     res.json({ success: true, message });
   } catch (error) {
     console.error('Error sending message:', error);

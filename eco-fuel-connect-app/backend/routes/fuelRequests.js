@@ -84,20 +84,22 @@ router.post('/', [
       });
       // Notify producer
       if (producerId) {
+        const User = require('../models/User');
+        const school = await User.findByPk(schoolId);
+        const schoolName = school ? `${school.firstName} ${school.lastName} (${school.organization || 'School'})` : `School ID ${schoolId}`;
+        
         await Notification.create({
           userId: producerId,
           type: 'fuel_request',
           title: 'New Fuel Request Received',
-          message: `You have received a new fuel request from school ID ${schoolId} for ${fuelType} (${quantityRequested} ${unit}). Please review and approve or decline.`,
+          message: `You have received a new fuel request from ${schoolName} for ${fuelType} (${quantityRequested} ${unit}). Please review and approve or decline.`,
           isRead: false,
           relatedId: fuelRequest.id
         });
         // Send email to producer
         try {
           const { sendMail } = require('../utils/mailer');
-          const User = require('../models/User');
           const producer = await User.findByPk(producerId);
-          const school = await User.findByPk(schoolId);
           if (producer && producer.email) {
             await sendMail({
               to: producer.email,
@@ -115,14 +117,24 @@ router.post('/', [
       res.status(201).json({ 
         success: true,
         message: 'Fuel request created successfully', 
-        request: fuelRequest 
+        request: fuelRequest,
+        toast: {
+          type: 'success',
+          title: 'Request Submitted!',
+          message: `Your fuel request for ${fuelType} (${quantityRequested} ${unit}) has been submitted successfully.`
+        }
       });
   } catch (error) {
     console.error('Error creating fuel request:', error.message);
     res.status(500).json({ 
       success: false,
       error: 'Failed to create fuel request', 
-      details: error.message 
+      details: error.message,
+      toast: {
+        type: 'error',
+        title: 'Request Failed',
+        message: 'Unable to submit your fuel request. Please try again.'
+      }
     });
   }
 });

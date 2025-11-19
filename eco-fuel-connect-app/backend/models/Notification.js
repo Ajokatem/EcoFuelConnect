@@ -30,6 +30,13 @@ const Notification = sequelize.define('Notification', {
   read: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  status: {
+    type: DataTypes.STRING,
+    defaultValue: 'unread',
+    validate: {
+      isIn: [['unread', 'pending', 'confirmed', 'read']]
+    }
   }
 }, {
   tableName: 'notifications',

@@ -5,6 +5,7 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const { connectDB } = require('./config/database');
 const morgan = require('morgan');
 
@@ -13,6 +14,10 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 
 const app = express();
 app.set('trust proxy', 1); // Trust proxy for correct IP detection behind proxies/load balancers
+
+// ----- Performance Optimizations -----
+app.use(compression()); // Enable gzip compression
+app.disable('x-powered-by'); // Remove Express signature
 // ----- Security Middleware -----
 app.use(
   helmet({
@@ -33,8 +38,11 @@ if(process.env.NODE_ENV === 'development')
 // ----- Rate Limiting -----
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
+  max: 200, // Increased for load testing
   message: { success: false, message: 'Too many requests from this IP, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => req.path === '/api/health' || req.path === '/manifest.json'
 });
 app.use(limiter);
 
@@ -68,6 +76,7 @@ const rewardsRoutes = require('./routes/rewards');
 const knowledgeRoutes = require('./routes/knowledge');
 const chatbotRoutes = require('./routes/chatbot');
 const usersRoutes = require('./routes/users');
+const environmentalRoutes = require('./routes/environmental');
 // const imageAnalysisRoutes = require('./routes/imageAnalysis');
 
 // ----- Database Connection -----
@@ -105,6 +114,7 @@ app.use('/api/knowledge', knowledgeRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 // app.use('/api/image-analysis', imageAnalysisRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/environmental', environmentalRoutes);
 app.use('/admin', adminRoutes);
 
 // ----- Static Files -----
@@ -213,13 +223,51 @@ app.all('/login', (req, res) => {
   });
 });
 
+// Handle other common frontend routes
+app.all('/dashboard', (req, res) => {
+  res.status(200).json({
+    message: 'Dashboard endpoint',
+    correctEndpoint: '/api/dashboard/stats',
+    method: 'GET',
+    note: 'Use /api/dashboard/stats for dashboard data'
+  });
+});
+
+app.all('/waste-logging', (req, res) => {
+  res.status(200).json({
+    message: 'Waste logging endpoint',
+    correctEndpoint: '/api/waste-logging',
+    method: 'GET/POST',
+    note: 'Use /api/waste-logging for waste operations'
+  });
+});
+
+app.all('/fuel-requests', (req, res) => {
+  res.status(200).json({
+    message: 'Fuel requests endpoint',
+    correctEndpoint: '/api/fuel-requests',
+    method: 'GET/POST',
+    note: 'Use /api/fuel-requests for fuel operations'
+  });
+});
+
+app.all('/messages', (req, res) => {
+  res.status(200).json({
+    message: 'Messages endpoint',
+    correctEndpoint: '/api/messages',
+    method: 'GET/POST',
+    note: 'Use /api/messages for messaging operations'
+  });
+});
+
 // ----- SPA Routing Support -----
-app.get('*', (req, res) => {
+app.all('*', (req, res) => {
   // Only handle non-API routes
   if (!req.path.startsWith('/api/')) {
     res.json({
       message: 'EcoFuelConnect Frontend Route',
       path: req.originalUrl,
+      method: req.method,
       note: 'This is a backend API server. Frontend should handle this route.'
     });
   } else {

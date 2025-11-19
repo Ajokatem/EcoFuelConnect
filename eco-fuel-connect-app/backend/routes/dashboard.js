@@ -41,14 +41,59 @@ const WasteEntry = require('../models/WasteEntry');
 const FuelRequest = require('../models/FuelRequest');
 const User = require('../models/User');
 
+// @route   GET /api/dashboard/producer/stats
+// @desc    Get producer dashboard statistics
+// @access  Private
+router.get('/producer/stats', auth, async (req, res) => {
+  if (req.user.role !== 'producer') {
+    return res.status(403).json({ message: 'Access denied. Producer role required.' });
+  }
+  return getDashboardStats(req, res, 'producer');
+});
+
+// @route   GET /api/dashboard/supplier/stats
+// @desc    Get supplier dashboard statistics
+// @access  Private
+router.get('/supplier/stats', auth, async (req, res) => {
+  if (req.user.role !== 'supplier') {
+    return res.status(403).json({ message: 'Access denied. Supplier role required.' });
+  }
+  return getDashboardStats(req, res, 'supplier');
+});
+
+// @route   GET /api/dashboard/school/stats
+// @desc    Get school dashboard statistics
+// @access  Private
+router.get('/school/stats', auth, async (req, res) => {
+  if (req.user.role !== 'school') {
+    return res.status(403).json({ message: 'Access denied. School role required.' });
+  }
+  return getDashboardStats(req, res, 'school');
+});
+
+// @route   GET /api/dashboard/admin/stats
+// @desc    Get admin dashboard statistics
+// @access  Private
+router.get('/admin/stats', auth, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied. Admin role required.' });
+  }
+  return getDashboardStats(req, res, 'admin');
+});
+
 // @route   GET /api/dashboard/stats
-// @desc    Get dashboard statistics (role-based)
+// @desc    Get dashboard statistics (role-based) - Legacy support
 // @access  Private
 router.get('/stats', auth, async (req, res) => {
+  return getDashboardStats(req, res, req.user.role);
+});
+
+// Shared function for dashboard stats
+async function getDashboardStats(req, res, userRole) {
   try {
     const { timeframe = 'month' } = req.query;
     const userId = req.user.id;
-    const userRole = req.user.role;
+    // userRole is now passed as parameter
     const { fn, col, Op } = require('sequelize');
 
     // Get basic statistics using Sequelize
@@ -216,7 +261,7 @@ router.get('/stats', auth, async (req, res) => {
       message: 'Error retrieving dashboard statistics'
     });
   }
-});
+}
 
 // @route   GET /api/dashboard/recent-activity
 // @desc    Get recent activity feed

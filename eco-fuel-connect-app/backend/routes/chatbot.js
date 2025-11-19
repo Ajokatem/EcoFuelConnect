@@ -10,9 +10,9 @@ const getAIResponse = async (message) => {
   
   // Comprehensive biogas knowledge base
   const responses = {
-    'hi': 'Hello! 👋 I\'m your Biogas Assistant. I can help you with biogas production, maintenance, troubleshooting, and safety. What would you like to know?',
-    'hello': 'Hi there! 👋 I\'m here to help with all your biogas questions. Ask me anything!',
-    'hey': 'Hey! 👋 Ready to help with biogas production. What\'s your question?',
+    'hi': 'Hello!  I\'m your Biogas Assistant. I can help you with biogas production, maintenance, troubleshooting, and safety. What would you like to know?',
+    'hello': 'Hi there!  I\'m here to help with all your biogas questions. Ask me anything!',
+    'hey': 'Hey!  Ready to help with biogas production. What\'s your question?',
     'what is biogas': 'Biogas is a renewable energy produced when bacteria break down organic waste in an oxygen-free environment. It contains 50-75% methane (CH4) and can be used for cooking, heating, and electricity generation.',
     'how to start': 'To start biogas production: 1) Build/buy a digester, 2) Fill with water (50%), 3) Add starter (cow dung), 4) Feed daily with organic waste, 5) Maintain 20-35°C, 6) Wait 15-30 days for gas production.',
     'temperature': 'Optimal temperature: 30-35°C. Minimum: 20°C. Tips: Insulate digester, use black paint for heat absorption, consider underground installation, add hot water if needed.',
@@ -54,13 +54,13 @@ const getAIResponse = async (message) => {
 router.get('/suggestions', (req, res) => {
   const suggestions = [
     { id: 1, question: 'What is biogas?', icon: '💡' },
-    { id: 2, question: 'How do I start producing biogas?', icon: '🚀' },
-    { id: 3, question: 'Why is my digester not working?', icon: '⚠️' },
-    { id: 4, question: 'How to control temperature?', icon: '🌡️' },
-    { id: 5, question: 'How to check for gas leaks?', icon: '🔍' },
-    { id: 6, question: 'What waste can I use?', icon: '♻️' },
-    { id: 7, question: 'How to maintain pH levels?', icon: '⚗️' },
-    { id: 8, question: 'What are safety precautions?', icon: '🛡️' }
+    { id: 2, question: 'How do I start producing biogas?', icon: '' },
+    { id: 3, question: 'Why is my digester not working?', icon: '' },
+    { id: 4, question: 'How to control temperature?', icon: '' },
+    { id: 5, question: 'How to check for gas leaks?', icon: '' },
+    { id: 6, question: 'What waste can I use?', icon: '' },
+    { id: 7, question: 'How to maintain pH levels?', icon: '' },
+    { id: 8, question: 'What are safety precautions?', icon: '' }
   ];
   res.json({ success: true, suggestions });
 });
