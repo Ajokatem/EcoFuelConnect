@@ -66,6 +66,5 @@
     "clean-energy"
   ],
   "author": "Ajok Atem Beek Biar",
-  "license": "MIT",
-  "proxy": "http://localhost:5000"
+  "license": "MIT"
 }

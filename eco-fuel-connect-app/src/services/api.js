@@ -1,10 +1,7 @@
 import axios from 'axios';
 
-// Base URL from environment variables
-const baseURL =
-  process.env.NODE_ENV === 'production' || process.env.REACT_APP_ENV === 'production'
-    ? process.env.REACT_APP_API_URL || 'https://ecofuelconnect-backend.onrender.com/api'
-    : process.env.REACT_APP_API_URL_LOCAL || 'http://localhost:5000/api';
+// Force production API URL for now
+const baseURL = 'https://ecofuelconnect-backend.onrender.com/api';
 
 // Debug logging
 console.log('API Configuration:', {
