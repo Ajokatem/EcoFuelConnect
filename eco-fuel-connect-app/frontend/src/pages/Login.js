@@ -101,26 +101,15 @@ function Login() {
         rememberMe: formData.rememberMe
       });
 
-      showSuccessAlert("Login successful! Setting up your profile...");
+      // Update context with user data and token
+      updateUser(response.user, response.token);
+      
+      showSuccessAlert(`Welcome back, ${response.user.firstName}!`);
 
-      // Always fetch full profile after login and update context ONLY after profile is available
-      let fullProfile = response.user;
-      if (response.token) {
-        try {
-          // Set token in axios before fetching profile
-          updateUser(response.user, response.token);
-          fullProfile = await authService.getProfile();
-        } catch (profileError) {
-          // If profile fetch fails, fallback to login response
-        }
-      }
-      // Update context with full profile (guaranteed after profile fetch)
-      updateUser(fullProfile, response.token);
-
-      // Redirect to dashboard after success message
+      // Redirect based on role after success message
       setTimeout(() => {
         history.push("/admin/dashboard");
-      }, 1500);
+      }, 1000);
 
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || "Login failed. Please check your credentials and try again.";

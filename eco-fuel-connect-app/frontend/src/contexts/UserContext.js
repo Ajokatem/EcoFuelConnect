@@ -13,7 +13,7 @@ export const UserProvider = ({ children }) => {
   // Restore user and token from localStorage on initial load
   const [user, setUser] = useState(() => {
     try {
-      const storedUser = localStorage.getItem('profileUser');
+      const storedUser = localStorage.getItem('user');
       return storedUser ? JSON.parse(storedUser) : null;
     } catch {
       return null;
@@ -21,7 +21,7 @@ export const UserProvider = ({ children }) => {
   });
   const [token, setToken] = useState(() => {
     try {
-      return localStorage.getItem('profileToken') || null;
+      return localStorage.getItem('token') || null;
     } catch {
       return null;
     }
@@ -34,14 +34,14 @@ export const UserProvider = ({ children }) => {
     // Persist to localStorage
     try {
       if (userData) {
-        localStorage.setItem('profileUser', JSON.stringify(userData));
+        localStorage.setItem('user', JSON.stringify(userData));
       } else {
-        localStorage.removeItem('profileUser');
+        localStorage.removeItem('user');
       }
       if (jwtToken) {
-        localStorage.setItem('profileToken', jwtToken);
+        localStorage.setItem('token', jwtToken);
       } else {
-        localStorage.removeItem('profileToken');
+        localStorage.removeItem('token');
       }
     } catch {}
     if (jwtToken) {

@@ -395,15 +395,25 @@ function UserProfile() {
                           credentials: 'include',
                           body: JSON.stringify(profileData)
                         });
-                        if (response.ok) {
-                          const updatedUser = await response.json();
-                          localStorage.setItem('user', JSON.stringify({ ...user, ...profileData }));
-                          alert('Profile updated successfully!');
+                        
+                        const result = await response.json();
+                        
+                        if (response.ok && result.success) {
+                          // Update localStorage with new user data
+                          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                          const updatedUser = { ...currentUser, ...result.user };
+                          localStorage.setItem('user', JSON.stringify(updatedUser));
+                          
+                          alert('✓ Profile updated successfully!');
+                          
+                          // Reload page to reflect changes
+                          setTimeout(() => window.location.reload(), 1000);
                         } else {
-                          alert('Failed to update profile');
+                          alert('Failed to update profile: ' + (result.message || result.error || 'Unknown error'));
                         }
                       } catch (error) {
-                        alert('Error updating profile');
+                        console.error('Profile update error:', error);
+                        alert('Error updating profile: ' + error.message);
                       }
                     }}
                     style={{
