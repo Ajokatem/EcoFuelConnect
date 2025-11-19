@@ -83,15 +83,17 @@ const usersRoutes = require('./routes/users');
 connectDB()
   .then(async () => {
     try {
-      const { defineAssociations } = require('./models/associations');
       const { sequelize } = require('./config/database');
+      const { defineAssociations } = require('./models/associations');
+      
+      // Define associations first
       defineAssociations();
       
-      // Sync database tables
+      // Then sync database tables
       await sequelize.sync({ alter: process.env.NODE_ENV === 'production' });
       console.log(' Database connected, tables synced, and model associations defined');
     } catch (err) {
-      console.error(' Model association error:', err.message);
+      console.error(' Database sync error:', err.message);
     }
   })
   .catch((err) => {
