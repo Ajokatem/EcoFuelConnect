@@ -84,14 +84,15 @@ connectDB()
   .then(async () => {
     try {
       const { sequelize } = require('./config/database');
-      const { defineAssociations } = require('./models/associations');
       
-      // Define associations first
-      defineAssociations();
-      
-      // Then sync database tables
+      // Sync database tables FIRST (creates tables)
       await sequelize.sync({ alter: process.env.NODE_ENV === 'production' });
-      console.log(' Database connected, tables synced, and model associations defined');
+      console.log(' Database tables synced');
+      
+      // Then define associations AFTER tables exist
+      const { defineAssociations } = require('./models/associations');
+      defineAssociations();
+      console.log(' Model associations defined');
     } catch (err) {
       console.error(' Database sync error:', err.message);
     }
