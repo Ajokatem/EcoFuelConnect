@@ -74,7 +74,7 @@ const notificationsRoutes = require('./routes/notifications');
 const messagesRoutes = require('./routes/messages');
 const rewardsRoutes = require('./routes/rewards');
 const knowledgeRoutes = require('./routes/knowledge');
-const chatbotRoutes = require('./routes/chatbot');
+// const chatbotRoutes = require('./routes/chatbot'); // Temporarily disabled
 const usersRoutes = require('./routes/users');
 // const environmentalRoutes = require('./routes/environmental');
 // const imageAnalysisRoutes = require('./routes/imageAnalysis');
@@ -114,7 +114,7 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
-app.use('/api/chatbot', chatbotRoutes);
+// app.use('/api/chatbot', chatbotRoutes); // Temporarily disabled
 // app.use('/api/image-analysis', imageAnalysisRoutes);
 app.use('/api/users', usersRoutes);
 // app.use('/api/environmental', environmentalRoutes);
