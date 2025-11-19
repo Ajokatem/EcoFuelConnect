@@ -3,6 +3,7 @@ import axios from 'axios';
 // Force production API URL for now
 const baseURL = 'https://ecofuelconnect-backend.onrender.com/api';
 
+
 // Debug logging
 console.log('API Configuration:', {
   NODE_ENV: process.env.NODE_ENV,
