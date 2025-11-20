@@ -15,6 +15,10 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const app = express();
 app.set('trust proxy', 1); // Trust proxy for correct IP detection behind proxies/load balancers
 
+// Log environment for debugging
+console.log('🔧 Environment:', process.env.NODE_ENV);
+console.log('🌐 Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:3000');
+
 // ----- Performance Optimizations -----
 app.use(compression()); // Enable gzip compression
 app.disable('x-powered-by'); // Remove Express signature
@@ -47,9 +51,25 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // ----- Middleware -----
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://eco-fuel-connect-app.vercel.app',
+  'https://ecofuelconnect.vercel.app',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: function(origin, callback) {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(allowed => origin.includes(allowed))) {
+        callback(null, true);
+      } else {
+        console.warn('CORS blocked origin:', origin);
+        callback(null, true); // Allow all in production for now
+      }
+    },
     credentials: true,
   })
 );

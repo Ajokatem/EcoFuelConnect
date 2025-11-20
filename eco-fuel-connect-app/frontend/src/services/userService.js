@@ -1,12 +1,16 @@
 // src/services/userService.js
-import axios from 'axios';
+import api from './api';
 
 const userService = {
   getActiveProducers: async () => {
-    // Call backend API directly on port 5000
-    const response = await axios.get('http://localhost:5000/api/users?role=producer&isActive=true', { withCredentials: true });
-    // The backend should return { producers: [...] }
-    return response.data.producers || [];
+    try {
+      const response = await api.get('/users?role=producer&isActive=true');
+      console.log('getActiveProducers response:', response.data);
+      return response.data.producers || response.data.users || [];
+    } catch (error) {
+      console.error('getActiveProducers error:', error);
+      return [];
+    }
   }
 };
 
