@@ -344,7 +344,7 @@ function EducationalContent() {
                         <Badge style={{ background: "#25805a", fontSize: "0.7rem" }}>{video.category}</Badge>
                         <span style={{ fontSize: "0.85rem", color: "#666" }}>⏱ {video.duration}</span>
                         <Badge bg="info" style={{ fontSize: "0.7rem" }}>
-                          {currentLanguage === 'en' ? '🇦🇷 Arabic' : currentLanguage === 'fr' ? '🇦🇷 Arabe' : currentLanguage === 'ar' ? '🇦🇷 عربي' : currentLanguage === 'sw' ? '🇦🇷 Kiarabu' : '🇦🇷 Arabic'}
+                          {currentLanguage === 'en' ? '🇦🇷 Arabic' : currentLanguage === 'fr' ? '🇦🇷 Arabe' : currentLanguage === 'ar' ? '🇦🇷 عربي' : currentLanguage === 'sw' ? '🇦🇷 Kiarabu' : currentLanguage === 'din' ? '🇦🇷 Arabic' : '🇦🇷 Arabic'}
                         </Badge>
                       </div>
                       <h5 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "8px" }}>{video.title}</h5>
