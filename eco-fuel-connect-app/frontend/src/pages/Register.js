@@ -325,10 +325,9 @@ function Register() {
                       disabled={isLoading}
                     >
                       <option value="">Select role</option>
-                      <option value="admin">Admin</option>
                       <option value="school">School</option>
-                      <option value="supplier">Supplier</option>
-                      <option value="producer">Producer</option>
+                      <option value="supplier">Waste Supplier</option>
+                      <option value="producer">Biogas Producer</option>
                     </Form.Select>
                     {errors.role && <Form.Text className="text-danger">{errors.role}</Form.Text>}
                   </Form.Group>

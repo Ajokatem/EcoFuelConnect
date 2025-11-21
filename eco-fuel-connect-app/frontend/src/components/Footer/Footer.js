@@ -24,7 +24,7 @@ class Footer extends Component {
             <ul className="footer-menu d-flex justify-content-center list-unstyled mb-3">
               <li className="mx-3">
                 <Link 
-                  to="/" 
+                  to="/admin/help" 
                   className="text-decoration-none"
                   style={{
                     color: 'rgba(255, 255, 255, 0.9)',
@@ -35,12 +35,12 @@ class Footer extends Component {
                   onMouseEnter={e => e.target.style.color = 'white'}
                   onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 >
-                  {translate('home')}
+                  {translate('help')}
                 </Link>
               </li>
               <li className="mx-3">
                 <Link 
-                  to="/admin/about" 
+                  to="/privacy" 
                   className="text-decoration-none"
                   style={{
                     color: 'rgba(255, 255, 255, 0.9)',
@@ -51,12 +51,12 @@ class Footer extends Component {
                   onMouseEnter={e => e.target.style.color = 'white'}
                   onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 >
-                  {translate('about')}
+                  {translate('privacy')}
                 </Link>
               </li>
               <li className="mx-3">
                 <Link 
-                  to="/admin/projects" 
+                  to="/terms" 
                   className="text-decoration-none"
                   style={{
                     color: 'rgba(255, 255, 255, 0.9)',
@@ -67,23 +67,7 @@ class Footer extends Component {
                   onMouseEnter={e => e.target.style.color = 'white'}
                   onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 >
-                  {translate('projects')}
-                </Link>
-              </li>
-              <li className="mx-3">
-                <Link 
-                  to="/admin/contact" 
-                  className="text-decoration-none"
-                  style={{
-                    color: 'rgba(255, 255, 255, 0.9)',
-                    fontFamily: '"Inter", "Segoe UI", sans-serif',
-                    fontSize: '0.95rem',
-                    transition: 'all 0.3s ease'
-                  }}
-                  onMouseEnter={e => e.target.style.color = 'white'}
-                  onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
-                >
-                  {translate('contact')}
+                  {translate('terms')}
                 </Link>
               </li>
             </ul>

@@ -292,7 +292,7 @@ function Welcome() {
                 ))}
               </h1>
               <p style={{ fontSize: "1rem", color: "#2F4F4F", marginBottom: "28px", lineHeight: 1.6 }}>
-                Every day, 1,337 tons of waste pile up in Juba while families choke on cooking smoke. We're flipping this crisis into opportunity—turning trash into treasure, pollution into power, and despair into hope. This is more than biogas. This is a movement.
+                Join South Sudan's digital revolution in clean energy. Our platform connects waste suppliers, biogas producers, and schools through real-time tracking, automated delivery, and transparent operations. Track waste collection with GPS verification, monitor biogas production with live dashboards, earn rewards for contributions, and access educational resources—all in one seamless ecosystem.
               </p>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <Link to="/auth/register">
@@ -322,7 +322,7 @@ function Welcome() {
           <div id="challenge" data-animate style={{ textAlign: "center", marginBottom: "50px", opacity: isVisible.challenge ? 1 : 0, transform: isVisible.challenge ? 'translateY(0)' : 'translateY(30px)', transition: 'all 0.6s ease' }}>
             <h2 style={{ fontSize: "1.8rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "12px" }}>The Challenge We're Solving</h2>
             <p style={{ fontSize: "1rem", color: "#666", maxWidth: "800px", margin: "0 auto" }}>
-              The numbers are staggering. The human cost is unbearable. But together, we can rewrite this story.
+              South Sudan faces critical challenges in waste management and clean energy access. Our platform provides the digital infrastructure to transform these challenges into opportunities.
             </p>
           </div>
           <Row>
@@ -331,7 +331,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#e74c3c", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Energy Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  90% of families cook with charcoal and firewood. That's 237,400 hectares of forest destroyed every year—an area larger than Greater London. Meanwhile, toxic smoke fills homes, causing respiratory diseases that kill more children than malaria. The cost? Lives, forests, and futures.
+                  90% of families rely on charcoal and firewood for cooking, destroying 237,400 hectares of forest annually. Indoor air pollution from cooking smoke causes severe respiratory diseases. Our platform enables schools and communities to transition to clean biogas fuel through transparent supply chains and reliable delivery systems.
                 </p>
               </Card>
             </Col>
@@ -340,7 +340,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#f39c12", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Waste Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  1,337 tons of waste every single day. Only 2.6% managed properly. The rest? Rotting in open dumps, breeding disease, contaminating water, releasing methane 25x more potent than CO₂. This isn't just an eyesore—it's a public health emergency waiting to explode.
+                  Juba generates 1,337 tons of waste daily with only 2.6% properly managed. Our platform digitizes waste collection with GPS tracking, photo verification, and supplier rewards. Real-time dashboards show waste-to-biogas conversion rates, helping producers optimize operations while suppliers earn coins for every kilogram contributed.
                 </p>
               </Card>
             </Col>
@@ -349,7 +349,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#e67e22", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Health Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  Children gasping for air. Mothers coughing through meal prep. Respiratory infections ranking among top child killers. Add cholera and malaria from waste-contaminated water, and you have a perfect storm of preventable tragedy. Every statistic represents a family suffering needlessly.
+                  Respiratory infections from cooking smoke and diseases from contaminated water affect thousands. Our platform tracks environmental impact metrics—CO₂ reduction, forest preservation, and health improvements—giving communities data-driven insights into how biogas adoption creates measurable health benefits for families and schools.
                 </p>
               </Card>
             </Col>
@@ -367,28 +367,28 @@ function Welcome() {
             <Col lg={6} id="solution-text" data-animate style={{ opacity: isVisible['solution-text'] ? 1 : 0, transform: isVisible['solution-text'] ? 'translateX(0)' : 'translateX(30px)', transition: 'all 0.8s ease' }}>
               <h2 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "20px" }}>Our Biogas Solution</h2>
               <p style={{ fontSize: "1rem", marginBottom: "28px", lineHeight: 1.6 }}>
-                What if waste wasn't waste? What if every market scrap, every food leftover, every organic material became fuel for progress? EcoFuelConnect makes this real—connecting waste sources to biogas producers to schools and homes through one seamless digital ecosystem. No middlemen. No confusion. Just clean energy flowing where it's needed most.
+                EcoFuelConnect is a comprehensive digital platform featuring: GPS-verified waste tracking with photo proof and instant supplier rewards • Live production dashboards with predictive analytics and quality monitoring • Automated school fuel requests with transparent pricing and delivery scheduling • Educational courses on biogas technology, waste management, and environmental impact • Real-time messaging between suppliers, producers, and schools • Coin rewards system converting contributions into tangible value.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Waste Tracking</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>GPS-verified collection with photo proof and digital receipts—every kilogram tracked, every supplier rewarded, zero waste lost</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Mobile-friendly waste logging with GPS coordinates, photo uploads, and instant coin rewards. Suppliers track their contributions and earnings in real-time through personalized dashboards.</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Production Monitoring</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Live dashboards showing production rates, quality metrics, and predictive analytics—turning data into decisions, waste into wealth</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Producers access real-time biogas production metrics, weekly activity charts, supplier performance data, and school delivery schedules—all optimized for mobile and desktop viewing.</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Fuel Delivery</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Automated scheduling, transparent pricing, and guaranteed delivery—schools get reliable fuel, producers get fair pay, communities get cleaner air</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Schools submit fuel requests through intuitive forms, track delivery status, view consumption history, and communicate directly with producers—ensuring reliable energy for cooking and operations.</p>
                   </div>
                 </div>
               </div>

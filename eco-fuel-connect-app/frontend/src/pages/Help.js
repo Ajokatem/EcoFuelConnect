@@ -13,24 +13,34 @@ function Help() {
 
   const helpTopics = [
     {
-      title: "Logging Organic Waste",
-      content: "Record daily organic waste collection from markets, slaughterhouses, and restaurants. Include waste type, quantity, source location, and supplier ID for accurate tracking and biogas production optimization.",
+      title: "Waste Tracking & Rewards",
+      content: "Suppliers log waste with GPS verification and photo proof. Each entry earns coins (100 coins = $1 USD). View your dashboard to track total contributions, monthly waste supplied, earnings, and recent activity. Access the coin rewards panel to see lifetime earnings and cash value.",
       icon: "nc-icon nc-world-2"
     },
     {
-      title: "Monitoring Biogas Production",
-      content: "Track daily biogas production volumes, monitor system performance, and access production analytics. Use the dashboard to optimize processes and ensure consistent fuel output for delivery to schools.",
+      title: "Producer Dashboard & Analytics",
+      content: "Producers access comprehensive dashboards showing biogas production (rounded to 1 decimal), weekly activity charts with real data from the last 7 days, top waste suppliers with active status indicators, and school performance metrics including deliveries and revenue. All data updates in real-time.",
       icon: "nc-icon nc-chart-bar-32"
     },
     {
-      title: "School Fuel Requests",
-      content: "Schools can submit biogas fuel requests specifying quantity needed and delivery preferences. Track request status, delivery scheduling, and maintain transparent communication with producers.",
+      title: "School Fuel Management",
+      content: "Schools submit fuel requests through simple forms, track delivery status with real-time updates, view consumption history and cost savings, and communicate directly with producers via the messaging system. Dashboard shows total fuel delivered, monthly consumption, and carbon offset achieved.",
       icon: "nc-icon nc-delivery-fast"
     },
     {
-      title: "Educational Resources",
-      content: "Access educational content about hygiene practices, environmental benefits of biogas, safe handling procedures, and waste management best practices to support community awareness and adoption.",
+      title: "Educational Courses & Knowledge Hub",
+      content: "Access free courses on biogas technology (6 courses), waste management (5 courses), and community impact (7 courses). Browse the knowledge hub for expert articles on production, maintenance, and troubleshooting. Track your progress and earn certifications to advance your skills.",
       icon: "nc-icon nc-bulb-63"
+    },
+    {
+      title: "Real-Time Messaging",
+      content: "Communicate directly with other platform users through the integrated messaging system. Suppliers can contact producers about pickups, schools can coordinate deliveries, and producers can update all parties on production status. Messages are organized by conversation with read/unread indicators.",
+      icon: "nc-icon nc-email-85"
+    },
+    {
+      title: "Reports & Analytics",
+      content: "Generate comprehensive reports showing waste collection trends, biogas production efficiency, fuel delivery statistics, and environmental impact metrics. Export data for compliance, funding applications, or stakeholder presentations. View charts for waste trends, biogas production, and fuel requests over customizable time periods.",
+      icon: "nc-icon nc-chart-pie-36"
     }
   ];
 
@@ -99,11 +109,13 @@ function Help() {
                     marginBottom: "0",
                     fontWeight: "500"
                   }}>
-                    Welcome to <strong>EcoFuelConnect</strong>! This comprehensive web application connects biogas producers and users through 
-                    transparent systems for real-time biogas production tracking, efficient waste recycling management, 
-                    and reliable biogas fuel delivery. Targeting schools as major customers, the platform addresses the 
-                    critical challenges of organic waste management where only 2.6% of daily waste is properly collected, 
-                    while promoting clean energy access and reducing dependence on harmful charcoal and firewood.
+                    Welcome to <strong>EcoFuelConnect</strong>! Our platform digitizes the entire biogas supply chain with features including: 
+                    <strong>GPS-verified waste tracking</strong> with photo proof and instant coin rewards • 
+                    <strong>Live producer dashboards</strong> showing real-time biogas production, weekly activity, and supplier/school performance • 
+                    <strong>Automated school fuel requests</strong> with delivery tracking and consumption analytics • 
+                    <strong>Educational courses</strong> on biogas technology, waste management, and community impact • 
+                    <strong>Real-time messaging</strong> between all platform users • 
+                    <strong>Comprehensive reports</strong> with environmental impact metrics and trend analysis.
                   </p>
                 </Card>
               </Col>
