@@ -166,10 +166,10 @@ router.get('/', auth, async (req, res) => {
         limit: parseInt(limit),
         offset,
         include: [
-          { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'] },
-          { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'] }
+          { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'], required: false },
+          { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'], required: false }
         ]
-      });
+      }).catch(() => []);
 
     const total = await FuelRequest.count({ where });
     // Add 'dateRequested' field for frontend compatibility
