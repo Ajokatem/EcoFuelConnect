@@ -137,6 +137,7 @@ router.post('/register', authLimiter, async (req, res) => {
     });
     res.status(201).json({
       success: true,
+      token,
       message: 'User registered successfully! Welcome to EcoFuelConnect!',
       user: {
         id: user.id,
@@ -270,6 +271,7 @@ router.post('/login', authLimiter, async (req, res) => {
 
     res.json({
       success: true,
+      token,
       message: `Welcome back, ${user.firstName}!`,
       redirectTo: dashboardRoutes[user.role] || '/dashboard',
       user: {
