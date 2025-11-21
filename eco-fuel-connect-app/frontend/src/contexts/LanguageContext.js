@@ -1020,6 +1020,261 @@ const translations = {
     earned: "Imepatikana",
     selectLanguage: "Chagua Lugha",
     chooseYourLanguage: "Chagua lugha yako"
+  },
+  
+  din: {
+    // Welcome Page (Dinka)
+    welcomeTitle: "Cï wëu ke EcoFuelConnect",
+    welcomeSubtitle: "Cï wäär de yic ke mac alëu ke cukic de thukul ke Sudan Kec",
+    getStarted: "Cï cak",
+    learnMore: "Nhoŋ tënë",
+    signIn: "Cï dɔŋ",
+    
+    // Sidebar & Navigation
+    dashboard: "Bäi de wëu",
+    overview: "Wëu lueel",
+    wasteLogging: "Cï gɔr yic",
+    organicWasteLogging: "Cï gɔr yic de mac",
+    fuelRequestManagement: "Wëu de këc mac alëu",
+    fuelRequests: "Këc mac alëu",
+    myRewards: "Cï piɔu",
+    messages: "Wëu",
+    notifications: "Wëu de nhoŋ",
+    projects: "Wëu de tɔ̈u",
+    ourProjects: "Wëu de tɔ̈u kek",
+    about: "Ke",
+    aboutUs: "Ke kek",
+    contact: "Cï wëu",
+    contactUs: "Cï wëu kek",
+    reports: "Wëu de gɔr",
+    settings: "Wëu de cak",
+    help: "Kɔny",
+    logout: "Cï wek",
+    profile: "Wëu de ran",
+    
+    // Dashboard Stats
+    wasteLogged: "Yic agɔr",
+    biogasProduced: "Mac alëu acak",
+    schools: "Thukul",
+    totalUsers: "Ran tënë",
+    carbonReduction: "Cï wäär carbon",
+    
+    // Common
+    save: "Cï kɔc",
+    cancel: "Cï jɔk",
+    edit: "Cï lɔi",
+    delete: "Cï wäär",
+    view: "Cï ŋic",
+    close: "Cï kɔl",
+    loading: "Cï kɔc...",
+    error: "Bäi",
+    success: "Acak",
+    submit: "Cï tïŋ",
+    search: "Cï piny",
+    filter: "Cï lɔi",
+    
+    // Settings
+    applicationSettings: "Wëu de cak",
+    language: "Thuɔŋjäŋ",
+    theme: "Wëu",
+    emailNotifications: "Wëu de email",
+    pushNotifications: "Wëu de nhoŋ",
+    
+    // Waste Logging
+    logWaste: "Cï gɔr yic",
+    viewEntries: "Cï ŋic wëu",
+    wasteType: "Yic de lueel",
+    quantity: "Tënë",
+    location: "Bäi",
+    description: "Wëu",
+    
+    // Fuel Request
+    createNewFuelRequest: "Cï cak këc mac alëu",
+    myFuelRequests: "Cï këc mac alëu",
+    fuelType: "Mac alëu de lueel",
+    priority: "Tënë",
+    deliveryAddress: "Bäi de tïŋ",
+    
+    // Chatbot
+    chatbot: "Wëu de thuɔŋjäŋ",
+    askQuestion: "Cï piny...",
+    send: "Cï tïŋ",
+    howCanIHelp: "Ɣɔn acï kɔny ke?",
+    
+    // Footer
+    home: "Pänh",
+    allRightsReserved: "Wëu tënë akɔc",
+    privacyPolicy: "Wëu de thuɔŋjäŋ",
+    termsOfService: "Wëu de tɔ̈u",
+    footerTagline: "Cï piɔu Sudan Kec ke mac alëu de cukic ke wëu de yic.",
+    
+    // Admin
+    educationalContent: "Wëu de nhoŋ",
+    contentManagement: "Wëu de wëu",
+    userManagement: "Wëu de ran",
+    
+    // About Page
+    aboutPageSubtitle: "Wëu de mac alëu ke Africa",
+    ourMission: "Wëu kek",
+    ourVision: "Wëu kek de ŋic",
+    whatWeDo: "Ɣɔn kek acï tɔ̈u",
+    wasteManagement: "Wëu de yic",
+    biogasProduction: "Cï cak mac alëu",
+    schoolFuelDelivery: "Cï tïŋ mac ke thukul",
+    impactStatistics: "Wëu de tënë",
+    partnerOrganizations: "Wëu de kɔc",
+    livesImpacted: "Ran atɔ̈u",
+    userSatisfaction: "Ran de piɔu",
+    platformUptime: "Wëu de tɔ̈u",
+    missionText: "Kek acï lɔi Sudan Kec ke mac alëu de cukic.",
+    visionText: "Kek acï ŋic Sudan Kec ke mac alëu tënë.",
+    wasteManagementText: "Wëu de yic ke cukic",
+    biogasProductionText: "Wëu de mac alëu",
+    schoolFuelDeliveryText: "Cï tïŋ mac ke thukul",
+    
+    // Contact Page
+    contactPageSubtitle: "Cï wëu kek",
+    sendUsMessage: "Cï tïŋ wëu",
+    firstName: "Ran de cak",
+    lastName: "Ran de rot",
+    emailAddress: "Email",
+    subject: "Wëu",
+    message: "Wëu",
+    sendMessage: "Cï tïŋ wëu",
+    sending: "Cï tïŋ...",
+    messageSentSuccess: "Wëu atïŋ!",
+    contactInformation: "Wëu de wëu",
+    address: "Bäi",
+    phone: "Thiɔ̈ɔ̈k",
+    email: "Email",
+    officeHours: "Tɔ̈u de wëu",
+    mondayFriday: "Cäŋ - Dhieec: 8:00 - 5:00",
+    
+    // Projects Page
+    projectsPageSubtitle: "Wëu de tɔ̈u kek",
+    active: "Tɔ̈u",
+    expanding: "Cï lɔi",
+    planning: "Cï cak",
+    combinedImpact: "Wëu tënë",
+    familiesTransformed: "Dhɔl alɔi",
+    wasteDivertedDaily: "Yic de cäŋ",
+    cleanGasPerMonth: "Mac alëu de dhil",
+    jobsCreated: "Tɔ̈u acak",
+    
+    // Dashboard
+    welcomeBack: "Cï wëu rot",
+    quickStats: "Wëu de tënë",
+    recentActivity: "Tɔ̈u de nhom",
+    viewAll: "Cï ŋic tënë",
+    kg: "kg",
+    liters: "lita",
+    tons: "ton",
+    
+    // Waste Logging Page
+    addNewEntry: "Cï kɔc wëu",
+    myWasteEntries: "Cï yic",
+    date: "Cäŋ",
+    status: "Wëu",
+    actions: "Tɔ̈u",
+    noEntriesFound: "Wëu tin",
+    logged: "Agɔr",
+    confirmed: "Acak",
+    rejected: "Ajɔk",
+    quality: "Cukic",
+    unit: "Lueel",
+    notes: "Wëu",
+    uploadImage: "Cï kɔc piɔu",
+    
+    // Fuel Requests Page
+    requestedDate: "Cäŋ de këc",
+    deliveryDate: "Cäŋ de tïŋ",
+    requestStatus: "Wëu de këc",
+    pending: "Cï kɔc",
+    approved: "Acak",
+    delivered: "Atïŋ",
+    cancelled: "Ajɔk",
+    
+    // Rewards Page
+    availableCoins: "Piɔu",
+    lifetimeEarned: "Piɔu tënë",
+    cashValue: "Piɔu de yën",
+    transactionHistory: "Wëu de piɔu",
+    earnedFrom: "Piɔu ke",
+    convertCoins: "Cï lɔi piɔu",
+    withdrawFunds: "Cï wek yën",
+    
+    // Profile Page
+    userProfile: "Wëu de ran",
+    personalInformation: "Wëu de ran",
+    name: "Ran",
+    role: "Tɔ̈u",
+    accountSettings: "Wëu de cak",
+    changePassword: "Cï lɔi wëu",
+    updateProfile: "Cï lɔi wëu",
+    
+    // Help Page
+    helpCenter: "Bäi de kɔny",
+    frequentlyAskedQuestions: "Piny tënë",
+    contactSupport: "Cï wëu kɔny",
+    documentation: "Wëu de gɔr",
+    
+    // Reports Page
+    generateReport: "Cï cak wëu",
+    reportType: "Wëu de lueel",
+    dateRange: "Cäŋ",
+    exportReport: "Cï tïŋ wëu",
+    wasteReport: "Wëu de yic",
+    productionReport: "Wëu de cak",
+    
+    // Notifications Page
+    markAllAsRead: "Cï gɔr tënë",
+    noNotifications: "Wëu tin",
+    newNotification: "Wëu de nhom",
+    thisMonth: "Dhil kën",
+    thisWeek: "Wic kën",
+    totalEntries: "Wëu tënë",
+    monthlyProgress: "Tɔ̈u de dhil",
+    quickActions: "Tɔ̈u de tënë",
+    trackEarnings: "Cï ŋic piɔu",
+    totalEarnings: "Piɔu tënë",
+    paidAmount: "Yën atïŋ",
+    pendingPayment: "Yën cï kɔc",
+    requestPayment: "Cï këc yën",
+    coinsEarned: "Piɔu apath",
+    yourContribution: "Cï tɔ̈u",
+    activeSupplier: "Ran de tïŋ",
+    coins: "piɔu",
+    monthlySupply: "Tïŋ de dhil",
+    weeklySupply: "Tïŋ de wic",
+    coinsEarnedLower: "piɔu apath",
+    wasteLogs: "Yic agɔr",
+    recentWasteEntries: "Yic de nhom",
+    pickup: "Cï kɔc",
+    today: "Tënë",
+    yesterday: "Cäŋ rot",
+    daysAgo: "cäŋ rot",
+    foodWaste: "Yic de cam",
+    organicWaste: "Yic de mac",
+    marketWaste: "Yic de luak",
+    collected: "Akɔc",
+    completed: "Acak",
+    scheduled: "Agɔr",
+    target: "Wëu",
+    remaining: "kɔc",
+    newEntry: "Wëu de nhom",
+    earnCoins: "Cï path piɔu",
+    conversionRate: "100 piɔu = $1.00",
+    updatesEvery: "Cï lɔi 5 cäŋ",
+    allTime: "Tɔ̈u tënë",
+    awaitingApproval: "Cï kɔc",
+    paymentHistory: "Wëu de yën",
+    mobileMoney: "Yën de thiɔ̈ɔ̈k",
+    cash: "Yën",
+    biogasCredit: "Mac alëu",
+    noEarningsYet: "Piɔu tin. Cï cak gɔr yic!",
+    earned: "Apath",
+    selectLanguage: "Cï lɔi thuɔŋjäŋ",
+    chooseYourLanguage: "Cï lɔi thuɔŋjäŋ kek"
   }
 };
 
@@ -1067,7 +1322,8 @@ export const LanguageProvider = ({ children }) => {
       { code: 'en', name: 'English', nativeName: 'English' },
       { code: 'fr', name: 'French', nativeName: 'Français' },
       { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
-      { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili' }
+      { code: 'sw', name: 'Swahili', nativeName: 'Kiswahili' },
+      { code: 'din', name: 'Dinka', nativeName: 'Thuɔŋjäŋ' }
     ]
   };
 
