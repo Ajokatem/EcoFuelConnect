@@ -43,6 +43,8 @@ router.get('/', auth, async (req, res) => {
     const { sequelize } = require('../config/database');
     const currentUser = await User.findByPk(req.user.id);
     
+    console.log(`📋 User request from: ${currentUser.role} (${currentUser.email})`);
+    
     let where = { 
       id: { [Op.ne]: req.user.id },
       isActive: true
@@ -51,10 +53,13 @@ router.get('/', auth, async (req, res) => {
     // Role-based filtering
     if (currentUser.role === 'school' || currentUser.role === 'supplier') {
       where.role = 'producer';
+      console.log('🔍 Filtering: Schools/Suppliers see only PRODUCERS');
     } else if (currentUser.role === 'producer') {
       where.role = { [Op.in]: ['school', 'supplier'] };
+      console.log('🔍 Filtering: Producers see SCHOOLS and SUPPLIERS');
+    } else {
+      console.log('🔍 Filtering: Admin sees ALL USERS');
     }
-    // Admin sees all roles
     
     if (search && search.trim()) {
       const searchTerm = search.trim().toLowerCase();
@@ -70,10 +75,14 @@ router.get('/', auth, async (req, res) => {
       order: [['firstName', 'ASC']]
     });
     
-    console.log(`✓ Search by ${currentUser.role}: "${search}" | Found ${users.length} users`);
+    console.log(`✅ Found ${users.length} users for ${currentUser.role}`);
+    if (users.length > 0) {
+      console.log(`   First user: ${users[0].firstName} ${users[0].lastName} (${users[0].role})`);
+    }
+    
     return res.status(200).json({ success: true, users, producers: users });
   } catch (error) {
-    console.error('✗ Error fetching users:', error);
+    console.error('❌ Error fetching users:', error);
     return res.status(500).json({ success: false, error: 'Failed to fetch users', message: error.message });
   }
 });

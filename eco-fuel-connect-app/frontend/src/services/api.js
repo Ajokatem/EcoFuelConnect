@@ -43,7 +43,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor with auto-logout on 401
+// Response interceptor
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -51,15 +51,7 @@ api.interceptors.response.use(
       const status = error.response.status;
       const url = error.config?.url || "unknown";
 
-      if (status === 401) {
-        console.warn("401 Unauthorized - Token expired or invalid");
-        // Auto-logout: Clear stale token and redirect to login
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/register')) {
-          window.location.href = '/login';
-        }
-      }
+      if (status === 401) console.warn("401 Unauthorized");
       if (status === 404) console.warn(`404 Not Found → ${url}`);
       if (status === 405) console.warn(`405 Method Not Allowed → ${url}`);
     } else if (error.code === "ECONNABORTED") {
