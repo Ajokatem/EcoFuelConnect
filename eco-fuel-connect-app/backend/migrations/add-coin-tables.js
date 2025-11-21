@@ -6,47 +6,47 @@ async function addCoinTables() {
     console.log(`Creating coin reward tables for ${isPostgres ? 'PostgreSQL' : 'MySQL'}...`);
 
     if (isPostgres) {
-      // PostgreSQL syntax
+      // PostgreSQL syntax - use lowercase for auto-conversion
       await sequelize.query(`
         CREATE TABLE IF NOT EXISTS user_coins (
           id SERIAL PRIMARY KEY,
-          "userId" INT NOT NULL,
-          "totalCoins" INT DEFAULT 0,
-          "lifetimeCoins" INT DEFAULT 0,
-          "lastEarned" TIMESTAMP,
-          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY ("userId") REFERENCES users(id) ON DELETE CASCADE,
-          UNIQUE ("userId")
+          userid INT NOT NULL,
+          totalcoins INT DEFAULT 0,
+          lifetimecoins INT DEFAULT 0,
+          lastearned TIMESTAMP,
+          createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updatedat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE,
+          UNIQUE (userid)
         )
       `);
       
       await sequelize.query(`
         CREATE TABLE IF NOT EXISTS coin_transactions (
           id SERIAL PRIMARY KEY,
-          "userId" INT NOT NULL,
-          "wasteEntryId" INT,
+          userid INT NOT NULL,
+          wasteentryid INT,
           amount INT NOT NULL,
           type VARCHAR(20) DEFAULT 'earned' CHECK (type IN ('earned', 'converted', 'bonus', 'penalty')),
           description TEXT,
-          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY ("userId") REFERENCES users(id) ON DELETE CASCADE,
-          FOREIGN KEY ("wasteEntryId") REFERENCES waste_entries(id) ON DELETE SET NULL
+          createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (wasteentryid) REFERENCES waste_entries(id) ON DELETE SET NULL
         )
       `);
       
       await sequelize.query(`
         CREATE TABLE IF NOT EXISTS coin_payouts (
           id SERIAL PRIMARY KEY,
-          "userId" INT NOT NULL,
+          userid INT NOT NULL,
           coins INT NOT NULL,
-          "cashAmount" DECIMAL(10,2) NOT NULL,
-          "paymentMethod" VARCHAR(50),
+          cashamount DECIMAL(10,2) NOT NULL,
+          paymentmethod VARCHAR(50),
           status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
-          "processedAt" TIMESTAMP,
-          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY ("userId") REFERENCES users(id) ON DELETE CASCADE
+          processedat TIMESTAMP,
+          createdat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updatedat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (userid) REFERENCES users(id) ON DELETE CASCADE
         )
       `);
     } else {

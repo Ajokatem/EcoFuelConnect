@@ -113,10 +113,13 @@ connectDB()
       
       // Auto-create coin reward tables if they don't exist
       try {
+        console.log('\n🔧 Running coin tables migration...');
         const { addCoinTables } = require('./migrations/add-coin-tables');
         await addCoinTables();
+        console.log('✅ Coin tables migration completed\n');
       } catch (migErr) {
-        console.log('Coin tables migration skipped:', migErr.message);
+        console.error('❌ Coin tables migration failed:', migErr.message);
+        console.error('Stack:', migErr.stack);
       }
     } catch (err) {
       console.error('Database sync error:', err.message);
