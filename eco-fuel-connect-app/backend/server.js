@@ -108,11 +108,6 @@ connectDB()
   .then(async () => {
     try {
       const { sequelize } = require('./config/database');
-      
-      const { defineAssociations } = require('./models/associations');
-      defineAssociations();
-      console.log('Model associations defined');
-      
       await sequelize.sync({ force: false, alter: false });
       console.log('Database tables synced successfully');
     } catch (err) {
