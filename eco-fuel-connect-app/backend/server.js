@@ -128,15 +128,7 @@ connectDB()
         console.error('Stack:', migErr.stack);
       }
       
-      // Add cover photo column
-      try {
-        console.log('\n🔧 Running cover photo migration...');
-        const { addCoverPhoto } = require('./migrations/add-cover-photo');
-        await addCoverPhoto();
-        console.log('✅ Cover photo migration completed\n');
-      } catch (migErr) {
-        console.error('❌ Cover photo migration failed:', migErr.message);
-      }
+
     } catch (err) {
       console.error('Database sync error:', err.message);
       console.log('App will continue but some features may not work');
