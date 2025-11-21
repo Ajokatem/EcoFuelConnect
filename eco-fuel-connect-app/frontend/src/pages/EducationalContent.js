@@ -305,11 +305,11 @@ function EducationalContent() {
 
         {/* Results Count */}
         <div style={{ marginBottom: "24px", color: "#666", fontSize: "0.95rem" }}>
-          {currentLanguage === 'en' ? `Showing ${displayedTopics.length} of ${filteredTopics.length} courses` :
-           currentLanguage === 'fr' ? `Affichage de ${displayedTopics.length} sur ${filteredTopics.length} cours` :
-           currentLanguage === 'ar' ? `عرض ${displayedTopics.length} من ${filteredTopics.length} دورة` :
+          {currentLanguage === 'din' ? `Cï ŋic ${displayedTopics.length} ke ${filteredTopics.length} wëu` :
            currentLanguage === 'sw' ? `Inaonyesha ${displayedTopics.length} kati ya ${filteredTopics.length} kozi` :
-           `Cï ŋic ${displayedTopics.length} ke ${filteredTopics.length} wëu`}
+           currentLanguage === 'ar' ? `عرض ${displayedTopics.length} من ${filteredTopics.length} دورة` :
+           currentLanguage === 'fr' ? `Affichage de ${displayedTopics.length} sur ${filteredTopics.length} cours` :
+           `Showing ${displayedTopics.length} of ${filteredTopics.length} courses`}
         </div>
 
         {/* Producer Videos Section */}
@@ -317,13 +317,13 @@ function EducationalContent() {
           <div style={{ marginBottom: "48px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
               <h3 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#2F4F4F", margin: 0 }}>
-                {currentLanguage === 'en' ? 'Producer Training Videos' :
-                 currentLanguage === 'fr' ? 'Vidéos de Formation pour Producteurs' :
-                 currentLanguage === 'ar' ? 'فيديوهات تدريب المنتجين' :
+                {currentLanguage === 'din' ? 'Wëu de nhoŋ ke ran de cak' :
                  currentLanguage === 'sw' ? 'Video za Mafunzo ya Wazalishaji' :
-                 'Wëu de nhoŋ ke ran de cak'}
+                 currentLanguage === 'ar' ? 'فيديوهات تدريب المنتجين' :
+                 currentLanguage === 'fr' ? 'Vidéos de Formation pour Producteurs' :
+                 'Producer Training Videos'}
               </h3>
-              <Badge bg="success">{currentLanguage === 'en' ? 'New' : currentLanguage === 'fr' ? 'Nouveau' : currentLanguage === 'ar' ? 'جديد' : currentLanguage === 'sw' ? 'Mpya' : 'Nhom'}</Badge>
+              <Badge bg="success">{currentLanguage === 'din' ? 'Nhom' : currentLanguage === 'sw' ? 'Mpya' : currentLanguage === 'ar' ? 'جديد' : currentLanguage === 'fr' ? 'Nouveau' : 'New'}</Badge>
             </div>
             <Row>
               {producerVideos.map((video) => (
@@ -352,7 +352,7 @@ function EducationalContent() {
                       {video.notes && (
                         <details style={{ fontSize: "0.85rem", color: "#555" }}>
                           <summary style={{ cursor: "pointer", fontWeight: 600, color: "#25805a" }}>
-                            {currentLanguage === 'en' ? 'Video Notes' : currentLanguage === 'fr' ? 'Notes Vidéo' : currentLanguage === 'ar' ? 'ملاحظات الفيديو' : currentLanguage === 'sw' ? 'Maelezo ya Video' : 'Wëu de piɔu'}
+                            {currentLanguage === 'din' ? 'Wëu de piɔu' : currentLanguage === 'sw' ? 'Maelezo ya Video' : currentLanguage === 'ar' ? 'ملاحظات الفيديو' : currentLanguage === 'fr' ? 'Notes Vidéo' : 'Video Notes'}
                           </summary>
                           <p style={{ marginTop: "8px", lineHeight: 1.6, paddingLeft: "12px", borderLeft: "3px solid #25805a" }}>
                             {video.notes}
@@ -411,7 +411,7 @@ function EducationalContent() {
                   {topic.notes && (
                     <details style={{ fontSize: "0.85rem", color: "#555", marginBottom: "12px" }}>
                       <summary style={{ cursor: "pointer", fontWeight: 600, color: "#25805a", marginBottom: "6px" }}>
-                        {currentLanguage === 'en' ? 'Course Notes' : currentLanguage === 'fr' ? 'Notes du Cours' : currentLanguage === 'ar' ? 'ملاحظات الدورة' : currentLanguage === 'sw' ? 'Maelezo ya Kozi' : 'Wëu de nhoŋ'}
+                        {currentLanguage === 'din' ? 'Wëu de nhoŋ' : currentLanguage === 'sw' ? 'Maelezo ya Kozi' : currentLanguage === 'ar' ? 'ملاحظات الدورة' : currentLanguage === 'fr' ? 'Notes du Cours' : 'Course Notes'}
                       </summary>
                       <p style={{ marginTop: "8px", lineHeight: 1.6, paddingLeft: "12px", borderLeft: "3px solid #25805a" }}>
                         {topic.notes}
@@ -421,7 +421,7 @@ function EducationalContent() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid #eee", marginTop: "auto" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#666", fontSize: "0.85rem" }}>
                       <span>👥</span>
-                      <span>{topic.students.toLocaleString()} {currentLanguage === 'en' ? 'students' : currentLanguage === 'fr' ? 'étudiants' : currentLanguage === 'ar' ? 'طلاب' : currentLanguage === 'sw' ? 'wanafunzi' : 'ran'}</span>
+                      <span>{topic.students.toLocaleString()} {currentLanguage === 'din' ? 'ran' : currentLanguage === 'sw' ? 'wanafunzi' : currentLanguage === 'ar' ? 'طلاب' : currentLanguage === 'fr' ? 'étudiants' : 'students'}</span>
                     </div>
                     <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#25805a" }}>{topic.price}</span>
                   </div>
@@ -457,8 +457,8 @@ function EducationalContent() {
               }}
             >
               {showAll ? 
-                (currentLanguage === 'en' ? 'Show Less' : currentLanguage === 'fr' ? 'Afficher Moins' : currentLanguage === 'ar' ? 'إظهار أقل' : currentLanguage === 'sw' ? 'Onyesha Kidogo' : 'Cï ŋic tin') :
-                (currentLanguage === 'en' ? `Load More Courses (${filteredTopics.length - 6} more)` : currentLanguage === 'fr' ? `Charger Plus de Cours (${filteredTopics.length - 6} de plus)` : currentLanguage === 'ar' ? `تحميل المزيد (${filteredTopics.length - 6} أخرى)` : currentLanguage === 'sw' ? `Pakia Kozi Zaidi (${filteredTopics.length - 6} zaidi)` : `Cï kɔc wëu (${filteredTopics.length - 6} tënë)`)}
+                (currentLanguage === 'din' ? 'Cï ŋic tin' : currentLanguage === 'sw' ? 'Onyesha Kidogo' : currentLanguage === 'ar' ? 'إظهار أقل' : currentLanguage === 'fr' ? 'Afficher Moins' : 'Show Less') :
+                (currentLanguage === 'din' ? `Cï kɔc wëu (${filteredTopics.length - 6} tënë)` : currentLanguage === 'sw' ? `Pakia Kozi Zaidi (${filteredTopics.length - 6} zaidi)` : currentLanguage === 'ar' ? `تحميل المزيد (${filteredTopics.length - 6} أخرى)` : currentLanguage === 'fr' ? `Charger Plus de Cours (${filteredTopics.length - 6} de plus)` : `Load More Courses (${filteredTopics.length - 6} more)`)}
             </Button>
           </div>
         )}
