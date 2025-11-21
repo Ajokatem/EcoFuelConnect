@@ -324,7 +324,19 @@ router.post('/:id/approve', auth, async (req, res) => {
         title: 'Fuel Request Approved',
         message: `Your fuel request for ${fuelRequest.fuelType} (${fuelRequest.quantityRequested} ${fuelRequest.unit}) has been approved!`,
         read: false,
-        isRead: false
+        isRead: false,
+        relatedId: fuelRequest.id
+      });
+      
+      // Update producer's notification
+      await Notification.create({
+        userId: req.user.id,
+        type: 'fuel_request',
+        title: 'Fuel Request Approved',
+        message: `You have approved the fuel request for ${fuelRequest.fuelType} (${fuelRequest.quantityRequested} ${fuelRequest.unit}).`,
+        read: false,
+        isRead: false,
+        relatedId: fuelRequest.id
       });
     } else {
       fuelRequest.status = 'rejected';
@@ -338,7 +350,19 @@ router.post('/:id/approve', auth, async (req, res) => {
         title: 'Fuel Request Rejected',
         message: `Your fuel request was rejected. Reason: ${rejectionReason || 'No reason provided'}`,
         read: false,
-        isRead: false
+        isRead: false,
+        relatedId: fuelRequest.id
+      });
+      
+      // Update producer's notification
+      await Notification.create({
+        userId: req.user.id,
+        type: 'fuel_request',
+        title: 'Fuel Request Rejected',
+        message: `You have rejected the fuel request for ${fuelRequest.fuelType} (${fuelRequest.quantityRequested} ${fuelRequest.unit}).`,
+        read: false,
+        isRead: false,
+        relatedId: fuelRequest.id
       });
     }
 

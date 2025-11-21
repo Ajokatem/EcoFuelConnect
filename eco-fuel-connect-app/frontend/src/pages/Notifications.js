@@ -183,29 +183,45 @@ function Notifications() {
                                   {formatDateTime(notification.datetime || notification.createdAt)}
                                 </small>
                                 {/* Producer: Confirm/Reject for waste entry */}
-                                {user?.role === 'producer' && notification.type === 'waste_entry' && notification.wasteEntryId && notification.message.includes('received') && (
-                                  <div className="mt-2" style={{ display: 'flex', gap: '8px' }}>
-                                    <Button size="sm" variant="success" onClick={async () => {
-                                      await api.post(`/waste-logging/${notification.wasteEntryId}/verify`, { verified: true });
-                                      fetchNotifications();
-                                    }}>Confirm</Button>
-                                    <Button size="sm" variant="danger" onClick={async () => {
-                                      await api.post(`/waste-logging/${notification.wasteEntryId}/verify`, { verified: false, rejectionReason: 'Declined by producer' });
-                                      fetchNotifications();
-                                    }}>Reject</Button>
+                                {user?.role === 'producer' && notification.type === 'waste_entry' && notification.wasteEntryId && (
+                                  <div className="mt-2">
+                                    {notification.message.includes('received') ? (
+                                      <div style={{ display: 'flex', gap: '8px' }}>
+                                        <Button size="sm" variant="success" onClick={async () => {
+                                          await api.post(`/waste-logging/${notification.wasteEntryId}/verify`, { verified: true });
+                                          fetchNotifications();
+                                        }}>Confirm</Button>
+                                        <Button size="sm" variant="danger" onClick={async () => {
+                                          await api.post(`/waste-logging/${notification.wasteEntryId}/verify`, { verified: false, rejectionReason: 'Declined by producer' });
+                                          fetchNotifications();
+                                        }}>Reject</Button>
+                                      </div>
+                                    ) : (
+                                      <Badge bg={notification.message.includes('confirmed') ? 'success' : notification.message.includes('rejected') ? 'danger' : 'secondary'}>
+                                        {notification.message.includes('confirmed') ? 'Confirmed' : notification.message.includes('rejected') ? 'Rejected' : 'Processed'}
+                                      </Badge>
+                                    )}
                                   </div>
                                 )}
                                 {/* Producer: Approve/Reject for fuel request */}
-                                {user?.role === 'producer' && notification.type === 'fuel_request' && notification.relatedId && notification.message.includes('received') && (
-                                  <div className="mt-2" style={{ display: 'flex', gap: '8px' }}>
-                                    <Button size="sm" variant="success" onClick={async () => {
-                                      await api.post(`/fuel-requests/${notification.relatedId}/approve`, { approved: true });
-                                      fetchNotifications();
-                                    }}>Approve</Button>
-                                    <Button size="sm" variant="danger" onClick={async () => {
-                                      await api.post(`/fuel-requests/${notification.relatedId}/approve`, { approved: false, rejectionReason: 'Declined by producer' });
-                                      fetchNotifications();
-                                    }}>Reject</Button>
+                                {user?.role === 'producer' && notification.type === 'fuel_request' && notification.relatedId && (
+                                  <div className="mt-2">
+                                    {notification.message.includes('received') ? (
+                                      <div style={{ display: 'flex', gap: '8px' }}>
+                                        <Button size="sm" variant="success" onClick={async () => {
+                                          await api.post(`/fuel-requests/${notification.relatedId}/approve`, { approved: true });
+                                          fetchNotifications();
+                                        }}>Approve</Button>
+                                        <Button size="sm" variant="danger" onClick={async () => {
+                                          await api.post(`/fuel-requests/${notification.relatedId}/approve`, { approved: false, rejectionReason: 'Declined by producer' });
+                                          fetchNotifications();
+                                        }}>Reject</Button>
+                                      </div>
+                                    ) : (
+                                      <Badge bg={notification.message.includes('approved') ? 'success' : notification.message.includes('rejected') ? 'danger' : 'secondary'}>
+                                        {notification.message.includes('approved') ? 'Approved' : notification.message.includes('rejected') ? 'Rejected' : 'Processed'}
+                                      </Badge>
+                                    )}
                                   </div>
                                 )}
                                 {/* School: Show status badge */}
@@ -227,12 +243,14 @@ function Notifications() {
                                 {notification.type === 'message' && notification.relatedId && (
                                   <div className="mt-2">
                                     <Button size="sm" variant="info" onClick={() => {
-                                      let userId = null;
-                                      try {
-                                        const meta = notification.metadata ? JSON.parse(notification.metadata) : {};
-                                        userId = meta.senderId && meta.senderId !== user.id ? meta.senderId : meta.receiverId;
-                                      } catch {}
-                                      window.location.href = userId ? `/messages?userId=${userId}` : `/messages`;
+                                      const messageMatch = notification.message.match(/^(.+?):/); 
+                                      const senderName = messageMatch ? messageMatch[1].trim() : null;
+                                      
+                                      if (senderName) {
+                                        window.location.href = `/messages?search=${encodeURIComponent(senderName)}`;
+                                      } else {
+                                        window.location.href = `/messages`;
+                                      }
                                     }}>View Message</Button>
                                   </div>
                                 )}

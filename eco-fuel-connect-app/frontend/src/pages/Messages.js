@@ -34,6 +34,28 @@ function Messages() {
 
   useEffect(() => {
     fetchChatUsers();
+    
+    const params = new URLSearchParams(window.location.search);
+    const searchParam = params.get('search');
+    if (searchParam) {
+      setShowSearch(true);
+      setSearchTerm(searchParam);
+      setTimeout(() => {
+        api.get(`/users?search=${encodeURIComponent(searchParam)}`)
+          .then(res => {
+            const users = res.data.users || [];
+            if (users.length > 0) {
+              startChat(users[0]);
+            } else {
+              setSearchResults(users);
+              setSearchAttempted(true);
+            }
+          })
+          .catch(err => {
+            console.error('Auto-search error:', err);
+          });
+      }, 500);
+    }
   }, []);
 
   const fetchChatUsers = () => {
@@ -75,6 +97,7 @@ function Messages() {
     if (!chatUsers.find(cu => cu.id === u.id)) {
       setChatUsers(prev => [u, ...prev]);
     }
+    window.history.replaceState({}, '', '/messages');
   };
 
   const cancelSearch = () => {

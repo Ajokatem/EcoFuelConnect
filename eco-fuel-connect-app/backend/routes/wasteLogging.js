@@ -602,7 +602,20 @@ router.post('/:id/verify', auth, async (req, res) => {
         type: 'waste_entry',
         title: 'Waste Entry Confirmed',
         message: `Your waste entry (${wasteEntry.wasteType}, ${wasteEntry.quantity} ${wasteEntry.unit}) has been confirmed by the producer.`,
-        isRead: false
+        read: false,
+        isRead: false,
+        wasteEntryId: wasteEntry.id
+      });
+      
+      // Update producer's notification
+      await Notification.create({
+        userId: req.user.id,
+        type: 'waste_entry',
+        title: 'Waste Entry Confirmed',
+        message: `You have confirmed the waste entry (${wasteEntry.wasteType}, ${wasteEntry.quantity} ${wasteEntry.unit}).`,
+        read: false,
+        isRead: false,
+        wasteEntryId: wasteEntry.id
       });
     } else {
       wasteEntry.status = 'rejected';
@@ -615,7 +628,20 @@ router.post('/:id/verify', auth, async (req, res) => {
         type: 'waste_entry',
         title: 'Waste Entry Rejected',
         message: `Your waste entry was rejected. Reason: ${rejectionReason || 'No reason provided'}`,
-        isRead: false
+        read: false,
+        isRead: false,
+        wasteEntryId: wasteEntry.id
+      });
+      
+      // Update producer's notification
+      await Notification.create({
+        userId: req.user.id,
+        type: 'waste_entry',
+        title: 'Waste Entry Rejected',
+        message: `You have rejected the waste entry (${wasteEntry.wasteType}, ${wasteEntry.quantity} ${wasteEntry.unit}).`,
+        read: false,
+        isRead: false,
+        wasteEntryId: wasteEntry.id
       });
     }
 
