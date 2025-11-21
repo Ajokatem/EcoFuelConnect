@@ -328,16 +328,16 @@ router.get('/recent-activity', auth, async (req, res) => {
       const recentWaste = await WasteEntry.findAll({
         order: [['createdAt', 'DESC']],
         limit: Math.floor(limit / 2),
-        include: [{ model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName'] }],
+        include: [{ model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName'], required: false }],
         attributes: ['id', 'wasteType', 'quantity', 'status', 'createdAt']
-      });
+      }).catch(() => []);
 
       const recentFuel = await FuelRequest.findAll({
         order: [['createdAt', 'DESC']],
         limit: Math.floor(limit / 2),
-        include: [{ model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'] }],
+        include: [{ model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'], required: false }],
         attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt']
-      });
+      }).catch(() => []);
 
       activities = [
         ...recentWaste.map(entry => ({
