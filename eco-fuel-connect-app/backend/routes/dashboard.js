@@ -194,14 +194,14 @@ async function getDashboardStats(req, res, userRole) {
       let cashValue = 0;
       try {
         const db = require('../config/database').sequelize;
-        const [coins] = await db.query(
-          'SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?',
+        const coins = await db.query(
+          'SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?',
           { replacements: [userId], type: db.QueryTypes.SELECT }
         );
-        if (coins) {
-          totalCoins = coins.totalCoins || 0;
-          lifetimeCoins = coins.lifetimeCoins || 0;
-          cashValue = (lifetimeCoins * 0.01).toFixed(2); // 100 coins = $1
+        if (coins && coins[0]) {
+          totalCoins = coins[0].totalCoins || 0;
+          lifetimeCoins = coins[0].lifetimeCoins || 0;
+          cashValue = (lifetimeCoins * 0.01).toFixed(2);
         }
       } catch (e) {
         console.log('Coin data error:', e.message);

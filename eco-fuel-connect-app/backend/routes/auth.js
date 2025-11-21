@@ -618,6 +618,7 @@ router.put('/profile', auth, async (req, res) => {
     if (organization) user.organization = organization;
     if (bio !== undefined) user.bio = bio;
     if (profilePhoto !== undefined) user.profilePhoto = profilePhoto;
+    if (req.body.coverPhoto !== undefined) user.coverPhoto = req.body.coverPhoto;
 
     await user.save();
 

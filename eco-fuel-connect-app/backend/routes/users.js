@@ -6,7 +6,7 @@ const { auth } = require('../middleware/auth');
 // PUT /api/users/profile - Update user profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { firstName, lastName, email, organization, phone, bio, profilePhoto } = req.body;
+    const { firstName, lastName, email, organization, phone, bio, profilePhoto, coverPhoto } = req.body;
     const user = await User.findByPk(req.user.id);
     
     if (!user) {
@@ -21,7 +21,8 @@ router.put('/profile', auth, async (req, res) => {
       organization: organization !== undefined ? organization : user.organization,
       phone: phone !== undefined ? phone : user.phone,
       bio: bio !== undefined ? bio : user.bio,
-      profilePhoto: profilePhoto !== undefined ? profilePhoto : user.profilePhoto
+      profilePhoto: profilePhoto !== undefined ? profilePhoto : user.profilePhoto,
+      coverPhoto: coverPhoto !== undefined ? coverPhoto : user.coverPhoto
     });
     
     // Return updated user without password
