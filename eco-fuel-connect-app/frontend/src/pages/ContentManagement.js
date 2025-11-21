@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, Container, Row, Col, Form, Button, Alert, Table, Badge, Modal } from "react-bootstrap";
+import api from "../services/api";
 
 function ContentManagement() {
   const [activeTab, setActiveTab] = useState("create");
@@ -25,11 +26,8 @@ function ContentManagement() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch('/api/content');
-      if (response.ok) {
-        const data = await response.json();
-        setPosts(data.posts || []);
-      }
+      const response = await api.get('/content');
+      setPosts(response.data.posts || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
@@ -62,22 +60,12 @@ function ContentManagement() {
         summary: formData.content.substring(0, 150) + "..."
       };
 
-      const response = await fetch('/api/content', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(postData)
-      });
-
-      if (response.ok) {
-        const newPost = await response.json();
-        setPosts(prev => [newPost, ...prev]);
-        setFormData({ title: "", content: "", category: "", tags: "", featured: false });
-        setAlertMessage("Post created successfully!");
-        setAlertType("success");
-        setShowAlert(true);
-      } else {
-        throw new Error('Failed to create post');
-      }
+      const response = await api.post('/content', postData);
+      setPosts(prev => [response.data, ...prev]);
+      setFormData({ title: "", content: "", category: "", tags: "", featured: false });
+      setAlertMessage("Post created successfully!");
+      setAlertType("success");
+      setShowAlert(true);
     } catch (error) {
       setAlertMessage("Failed to create post. Please try again.");
       setAlertType("danger");
