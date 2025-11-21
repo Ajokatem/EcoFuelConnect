@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Table, Button, Badge, Form } from 'react-bootstrap';
-import axios from 'axios';
+import api from '../services/api';
 import { toast } from 'react-toastify';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -20,22 +20,14 @@ const SupplierRewards = () => {
 
   const fetchRewards = async () => {
     try {
-      const baseURL = window.location.port === '3000' ? 'http://localhost:5000' : '';
-      console.log('Fetching rewards from:', `${baseURL}/api/rewards/my-rewards`);
-      const response = await axios.get(`${baseURL}/api/rewards/my-rewards`, { withCredentials: true });
-      console.log('Rewards response:', response.data);
-      if (response.data.coins) {
-        setCoins(response.data.coins);
-      }
-      if (response.data.earnings) {
-        setEarnings(response.data.earnings);
-      }
-      if (response.data.payments) {
-        setPayments(response.data.payments);
+      const { data } = await api.get('/rewards/my-rewards');
+      if (data.success) {
+        setCoins(data.coins || { total: 0, lifetime: 0, cashValue: '0.00' });
+        setEarnings(data.earnings || { totalEarnings: 0, paidAmount: 0, pendingAmount: 0 });
+        setPayments(data.payments || []);
       }
     } catch (error) {
       console.error('Failed to load rewards:', error);
-      console.error('Error response:', error.response?.data);
     }
   };
 
@@ -46,11 +38,10 @@ const SupplierRewards = () => {
     }
 
     try {
-      const baseURL = window.location.port === '3000' ? 'http://localhost:5000' : '';
-      await axios.post(`${baseURL}/api/rewards/request-payment`, {
+      await api.post('/rewards/request-payment', {
         paymentIds: selectedPayments,
         paymentMethod
-      }, { withCredentials: true });
+      });
       toast.success('Payment request submitted!');
       fetchRewards();
       setSelectedPayments([]);
