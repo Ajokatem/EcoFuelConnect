@@ -27,9 +27,10 @@ function ContentManagement() {
   const fetchPosts = async () => {
     try {
       const response = await api.get('/content');
-      setPosts(response.data.posts || []);
+      setPosts(Array.isArray(response.data.posts) ? response.data.posts : []);
     } catch (error) {
       console.error('Error fetching posts:', error);
+      setPosts([]);
     }
   };
 
