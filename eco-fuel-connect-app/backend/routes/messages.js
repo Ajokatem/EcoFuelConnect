@@ -58,13 +58,17 @@ router.post('/', auth, async (req, res) => {
     const sender = await User.findByPk(req.user.id, { attributes: ['firstName', 'lastName', 'profilePhoto'] });
     
     if (Notification) {
+      console.log('Creating message notification for user:', receiverId);
       await Notification.create({
         userId: receiverId,
         type: 'message',
         title: 'New Message',
         message: `${sender.firstName} ${sender.lastName}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
-        isRead: false
-      }).catch(err => console.error('Notification error:', err.message));
+        read: false,
+        isRead: false,
+        relatedId: message.id,
+        relatedType: 'message'
+      }).then(() => console.log('Message notification created')).catch(err => console.error('Notification error:', err.message));
     }
 
     const io = req.app.get('io');
