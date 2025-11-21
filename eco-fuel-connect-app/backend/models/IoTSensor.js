@@ -13,7 +13,7 @@ module.exports = (sequelize) => {
 
   IoTSensorReading.init({
     deviceId: { type: DataTypes.STRING, allowNull: false, index: true },
-    sensorId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'IoTSensors', key: 'id' }},
+    sensorId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'iot_sensors', key: 'id' }},
     readings: { type: DataTypes.JSON, allowNull: false, defaultValue: [] }, // array of readings with timestamp, value, unit, quality, flags
     metadata: DataTypes.JSON, // batteryLevel, signalStrength, location, etc.
     processingInfo: DataTypes.JSON, // validationStatus, anomalies, etc.
