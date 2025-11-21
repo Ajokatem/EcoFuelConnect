@@ -46,9 +46,10 @@ router.post('/', [
       notes,
       contactPerson,
       contactPhone,
-      schoolId,
       producerId
     } = req.body;
+    
+    const schoolId = req.user.id;
 
       // Generate requestId if not present
       const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
@@ -79,6 +80,7 @@ router.post('/', [
         type: 'fuel_request',
         title: 'Fuel Request Submitted',
         message: `Your fuel request for ${fuelType} (${quantityRequested} ${unit}) has been submitted and is pending approval.`,
+        read: false,
         isRead: false,
         relatedId: fuelRequest.id
       });
@@ -93,6 +95,7 @@ router.post('/', [
           type: 'fuel_request',
           title: 'New Fuel Request Received',
           message: `You have received a new fuel request from ${schoolName} for ${fuelType} (${quantityRequested} ${unit}). Please review and approve or decline.`,
+          read: false,
           isRead: false,
           relatedId: fuelRequest.id
         });
@@ -320,6 +323,7 @@ router.post('/:id/approve', auth, async (req, res) => {
         type: 'fuel_request',
         title: 'Fuel Request Approved',
         message: `Your fuel request for ${fuelRequest.fuelType} (${fuelRequest.quantityRequested} ${fuelRequest.unit}) has been approved!`,
+        read: false,
         isRead: false
       });
     } else {
@@ -333,6 +337,7 @@ router.post('/:id/approve', auth, async (req, res) => {
         type: 'fuel_request',
         title: 'Fuel Request Rejected',
         message: `Your fuel request was rejected. Reason: ${rejectionReason || 'No reason provided'}`,
+        read: false,
         isRead: false
       });
     }
