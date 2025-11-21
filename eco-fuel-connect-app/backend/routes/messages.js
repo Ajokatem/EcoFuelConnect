@@ -17,9 +17,14 @@ router.get('/chat-users', auth, async (req, res) => {
         (SELECT "sentAt" FROM messages WHERE ("senderId" = u.id AND "receiverId" = ?) OR ("senderId" = ? AND "receiverId" = u.id) ORDER BY "sentAt" DESC LIMIT 1) as "lastMessageTime"
       FROM users u
       WHERE u."isActive" = true AND u.id != ?
+        AND EXISTS (
+          SELECT 1 FROM messages m 
+          WHERE (m."senderId" = u.id AND m."receiverId" = ?) 
+             OR (m."senderId" = ? AND m."receiverId" = u.id)
+        )
       ORDER BY COALESCE("lastMessageTime", '1970-01-01') DESC
     `, {
-      replacements: [req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id],
+      replacements: [req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id],
       type: sequelize.QueryTypes.SELECT
     });
     
