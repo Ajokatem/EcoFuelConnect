@@ -64,28 +64,28 @@ function FuelRequestManagement() {
       value: 'biogas', 
       label: 'Biogas', 
       price: 0.8, 
-      unit: 'cubic meter',
+      unit: 'cubic_meters',
       description: 'Clean burning gas for cooking and heating'
     },
     { 
       value: 'biomethane', 
       label: 'Biomethane', 
       price: 1.2, 
-      unit: 'liter',
+      unit: 'liters',
       description: 'Refined biogas suitable for vehicles'
     },
     { 
       value: 'bioethanol', 
       label: 'Bioethanol', 
       price: 1.5, 
-      unit: 'liter',
+      unit: 'liters',
       description: 'Alcohol-based fuel for vehicles'
     },
     { 
       value: 'bio_diesel', 
       label: 'Bio-Diesel', 
       price: 1.8, 
-      unit: 'liter',
+      unit: 'liters',
       description: 'Diesel alternative from organic sources'
     }
   ];
