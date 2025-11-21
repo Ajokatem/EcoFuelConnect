@@ -108,7 +108,14 @@ function Login() {
 
       // Redirect based on role after success message
       setTimeout(() => {
-        history.push("/admin/dashboard");
+        const roleRoutes = {
+          admin: '/admin/dashboard',
+          producer: '/admin/producer-dashboard',
+          supplier: '/admin/supplier-dashboard',
+          school: '/admin/school-dashboard',
+          consumer: '/admin/dashboard'
+        };
+        history.push(roleRoutes[response.user.role] || '/admin/dashboard');
       }, 1000);
 
     } catch (error) {
@@ -123,9 +130,17 @@ function Login() {
     try {
       // Send credential to backend for verification and login
       const response = await authService.googleLogin({ credential: credentialResponse.credential });
+      updateUser(response.user, response.token);
       showSuccessAlert("Google login successful! Redirecting to dashboard...");
       setTimeout(() => {
-        history.push("/admin/dashboard");
+        const roleRoutes = {
+          admin: '/admin/dashboard',
+          producer: '/admin/producer-dashboard',
+          supplier: '/admin/supplier-dashboard',
+          school: '/admin/school-dashboard',
+          consumer: '/admin/dashboard'
+        };
+        history.push(roleRoutes[response.user.role] || '/admin/dashboard');
       }, 1500);
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || "Google login failed. Please try again.";
