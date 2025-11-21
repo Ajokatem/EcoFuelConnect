@@ -2,54 +2,11 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
-const upload = require('../middleware/upload');
-const path = require('path');
-const fs = require('fs');
-
-// POST /api/users/upload-photo - Upload profile or cover photo
-router.post('/upload-photo', auth, upload.single('photo'), async (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, error: 'No file uploaded' });
-    }
-
-    const photoType = req.body.uploadType || 'profile';
-    const photoPath = `/uploads/${photoType === 'cover' ? 'cover-photos' : 'profile-photos'}/${req.file.filename}`;
-    
-    const user = await User.findByPk(req.user.id);
-    if (!user) {
-      return res.status(404).json({ success: false, error: 'User not found' });
-    }
-
-    // Delete old photo if exists
-    const oldPhotoPath = photoType === 'cover' ? user.coverPhoto : user.profilePhoto;
-    if (oldPhotoPath) {
-      const oldFilePath = path.join(__dirname, '..', oldPhotoPath);
-      if (fs.existsSync(oldFilePath)) {
-        fs.unlinkSync(oldFilePath);
-      }
-    }
-
-    // Update user with new photo path
-    await user.update({
-      [photoType === 'cover' ? 'coverPhoto' : 'profilePhoto']: photoPath
-    });
-
-    res.json({ 
-      success: true, 
-      photoUrl: photoPath,
-      message: `${photoType === 'cover' ? 'Cover' : 'Profile'} photo uploaded successfully` 
-    });
-  } catch (error) {
-    console.error('Error uploading photo:', error);
-    res.status(500).json({ success: false, error: 'Failed to upload photo', message: error.message });
-  }
-});
 
 // PUT /api/users/profile - Update user profile
 router.put('/profile', auth, async (req, res) => {
   try {
-    const { firstName, lastName, email, organization, phone, bio, profilePhoto, coverPhoto } = req.body;
+    const { firstName, lastName, email, organization, phone, bio, profilePhoto } = req.body;
     const user = await User.findByPk(req.user.id);
     
     if (!user) {
@@ -64,8 +21,7 @@ router.put('/profile', auth, async (req, res) => {
       organization: organization !== undefined ? organization : user.organization,
       phone: phone !== undefined ? phone : user.phone,
       bio: bio !== undefined ? bio : user.bio,
-      profilePhoto: profilePhoto !== undefined ? profilePhoto : user.profilePhoto,
-      coverPhoto: coverPhoto !== undefined ? coverPhoto : user.coverPhoto
+      profilePhoto: profilePhoto !== undefined ? profilePhoto : user.profilePhoto
     });
     
     // Return updated user without password
@@ -115,7 +71,7 @@ router.get('/', auth, async (req, res) => {
     
     const users = await User.findAll({
       where,
-      attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone', 'role', 'isActive', 'profilePhoto', 'profileImage', 'coverPhoto', 'bio', 'createdAt'],
+      attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone', 'role', 'isActive', 'profilePhoto', 'profileImage', 'bio', 'createdAt'],
       order: [['firstName', 'ASC']]
     });
     

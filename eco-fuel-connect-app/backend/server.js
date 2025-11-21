@@ -171,8 +171,6 @@ app.use('/api/image-analysis', imageAnalysisRoutes);
 app.use('/admin', adminRoutes);
 
 // ----- Static Files -----
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 app.get('/manifest.json', (req, res) => {
   res.json({
     name: 'EcoFuelConnect',
