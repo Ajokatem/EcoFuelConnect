@@ -292,7 +292,7 @@ function Welcome() {
                 ))}
               </h1>
               <p style={{ fontSize: "1rem", color: "#2F4F4F", marginBottom: "28px", lineHeight: 1.6 }}>
-                Join South Sudan's digital revolution in clean energy. Our platform connects waste suppliers, biogas producers, and schools through real-time tracking, automated delivery, and transparent operations. Track waste collection with GPS verification, monitor biogas production with live dashboards, earn rewards for contributions, and access educational resources—all in one seamless ecosystem.
+                Join South Sudan's digital platform connecting the biogas ecosystem. We link waste suppliers, biogas producers, and schools through real-time tracking, transparent operations, and automated coordination. Suppliers log waste and earn rewards, producers manage operations efficiently, schools request fuel seamlessly—all connected through one digital platform.
               </p>
               <div style={{ display: "flex", gap: "12px", flexWrap: "wrap" }}>
                 <Link to="/auth/register">
@@ -331,7 +331,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#e74c3c", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Energy Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  90% of families rely on charcoal and firewood for cooking, destroying 237,400 hectares of forest annually. Indoor air pollution from cooking smoke causes severe respiratory diseases. Our platform enables schools and communities to transition to clean biogas fuel through transparent supply chains and reliable delivery systems.
+                  90% of families rely on charcoal and firewood for cooking, destroying 237,400 hectares of forest annually. Indoor air pollution from cooking smoke causes severe respiratory diseases. Our platform connects schools with biogas producers, enabling clean fuel access through transparent supply chains and reliable delivery coordination.
                 </p>
               </Card>
             </Col>
@@ -340,7 +340,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#f39c12", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Waste Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  Juba generates 1,337 tons of waste daily with only 2.6% properly managed. Our platform digitizes waste collection with GPS tracking, photo verification, and supplier rewards. Real-time dashboards show waste-to-biogas conversion rates, helping producers optimize operations while suppliers earn coins for every kilogram contributed.
+                  Juba generates 1,337 tons of waste daily with only 2.6% properly managed. Our platform digitizes the waste supply chain with GPS tracking, photo verification, and supplier rewards. Producers access real-time dashboards showing waste inputs and biogas outputs, while suppliers earn coins for every kilogram they contribute to the system.
                 </p>
               </Card>
             </Col>
@@ -349,7 +349,7 @@ function Welcome() {
                 <div style={{ fontSize: "2.5rem", color: "#e67e22", marginBottom: "12px" }}></div>
                 <h5 style={{ color: "#2F4F4F", fontWeight: 700, marginBottom: "12px", fontSize: "1.1rem" }}>Health Crisis</h5>
                 <p style={{ color: "#666", lineHeight: 1.6, fontSize: "0.95rem" }}>
-                  Respiratory infections from cooking smoke and diseases from contaminated water affect thousands. Our platform tracks environmental impact metrics—CO₂ reduction, forest preservation, and health improvements—giving communities data-driven insights into how biogas adoption creates measurable health benefits for families and schools.
+                  Respiratory infections from cooking smoke and diseases from contaminated water affect thousands. Our platform tracks environmental impact metrics—CO₂ reduction, forest preservation, and health improvements—giving all stakeholders data-driven insights into how the biogas ecosystem creates measurable health benefits for communities.
                 </p>
               </Card>
             </Col>
@@ -367,28 +367,28 @@ function Welcome() {
             <Col lg={6} id="solution-text" data-animate style={{ opacity: isVisible['solution-text'] ? 1 : 0, transform: isVisible['solution-text'] ? 'translateX(0)' : 'translateX(30px)', transition: 'all 0.8s ease' }}>
               <h2 style={{ fontSize: "1.8rem", fontWeight: 700, marginBottom: "20px" }}>Our Biogas Solution</h2>
               <p style={{ fontSize: "1rem", marginBottom: "28px", lineHeight: 1.6 }}>
-                EcoFuelConnect is a comprehensive digital platform featuring: GPS-verified waste tracking with photo proof and instant supplier rewards • Live production dashboards with predictive analytics and quality monitoring • Automated school fuel requests with transparent pricing and delivery scheduling • Educational courses on biogas technology, waste management, and environmental impact • Real-time messaging between suppliers, producers, and schools • Coin rewards system converting contributions into tangible value.
+                EcoFuelConnect is a digital platform connecting the biogas supply chain: GPS-verified waste tracking with photo proof and instant supplier rewards • Producer dashboards showing waste inputs, biogas outputs, and delivery schedules • School fuel request system with transparent pricing and delivery coordination • Educational courses on biogas technology and waste management • Real-time messaging connecting all stakeholders • Coin rewards system incentivizing waste suppliers.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Waste Tracking</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Mobile-friendly waste logging with GPS coordinates, photo uploads, and instant coin rewards. Suppliers track their contributions and earnings in real-time through personalized dashboards.</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Mobile-friendly waste logging with GPS coordinates, photo uploads, and instant coin rewards. Suppliers track their contributions and earnings through personalized dashboards showing total waste supplied and cash value.</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Production Monitoring</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Producers access real-time biogas production metrics, weekly activity charts, supplier performance data, and school delivery schedules—all optimized for mobile and desktop viewing.</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Producers access dashboards showing waste inputs from suppliers, biogas production metrics, weekly activity charts, top suppliers, and school delivery schedules—helping them manage operations efficiently.</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
                   <div style={{ fontSize: "1.8rem" }}></div>
                   <div>
                     <h6 style={{ fontWeight: 700, marginBottom: "6px" }}>Fuel Delivery</h6>
-                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Schools submit fuel requests through intuitive forms, track delivery status, view consumption history, and communicate directly with producers—ensuring reliable energy for cooking and operations.</p>
+                    <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem" }}>Schools submit fuel requests through simple forms, track delivery status, view consumption history, and communicate directly with producers—ensuring reliable clean energy access for cooking and operations.</p>
                   </div>
                 </div>
               </div>

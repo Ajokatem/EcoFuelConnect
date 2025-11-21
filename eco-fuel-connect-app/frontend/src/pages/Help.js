@@ -14,12 +14,12 @@ function Help() {
   const helpTopics = [
     {
       title: "Waste Tracking & Rewards",
-      content: "Suppliers log waste with GPS verification and photo proof. Each entry earns coins (100 coins = $1 USD). View your dashboard to track total contributions, monthly waste supplied, earnings, and recent activity. Access the coin rewards panel to see lifetime earnings and cash value.",
+      content: "Suppliers log waste with GPS verification and photo proof. Each entry earns coins (100 coins = $1 USD). View your dashboard to track total waste supplied, monthly contributions, earnings, and recent activity. The platform connects your waste to biogas producers who convert it into clean energy.",
       icon: "nc-icon nc-world-2"
     },
     {
       title: "Producer Dashboard & Analytics",
-      content: "Producers access comprehensive dashboards showing biogas production (rounded to 1 decimal), weekly activity charts with real data from the last 7 days, top waste suppliers with active status indicators, and school performance metrics including deliveries and revenue. All data updates in real-time.",
+      content: "Producers access dashboards showing waste inputs from suppliers, biogas production outputs (rounded to 1 decimal), weekly activity charts, top waste suppliers, and school delivery schedules. The platform helps producers manage the entire operation from waste collection to fuel delivery.",
       icon: "nc-icon nc-chart-bar-32"
     },
     {
@@ -109,13 +109,13 @@ function Help() {
                     marginBottom: "0",
                     fontWeight: "500"
                   }}>
-                    Welcome to <strong>EcoFuelConnect</strong>! Our platform digitizes the entire biogas supply chain with features including: 
-                    <strong>GPS-verified waste tracking</strong> with photo proof and instant coin rewards • 
-                    <strong>Live producer dashboards</strong> showing real-time biogas production, weekly activity, and supplier/school performance • 
-                    <strong>Automated school fuel requests</strong> with delivery tracking and consumption analytics • 
-                    <strong>Educational courses</strong> on biogas technology, waste management, and community impact • 
-                    <strong>Real-time messaging</strong> between all platform users • 
-                    <strong>Comprehensive reports</strong> with environmental impact metrics and trend analysis.
+                    Welcome to <strong>EcoFuelConnect</strong>! Our platform connects waste suppliers, biogas producers, and schools through: 
+                    <strong>GPS-verified waste tracking</strong> with photo proof and instant coin rewards for suppliers • 
+                    <strong>Producer dashboards</strong> showing waste inputs, biogas outputs, weekly activity, and delivery schedules • 
+                    <strong>School fuel request system</strong> with delivery tracking and consumption analytics • 
+                    <strong>Educational courses</strong> on biogas technology and waste management • 
+                    <strong>Real-time messaging</strong> connecting all stakeholders • 
+                    <strong>Impact reports</strong> with environmental metrics and trend analysis.
                   </p>
                 </Card>
               </Col>

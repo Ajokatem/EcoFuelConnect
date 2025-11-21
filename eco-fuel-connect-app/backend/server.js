@@ -225,7 +225,7 @@ app.get('/api/welcome-config', async (req, res) => {
       success: true,
       welcome: {
         title: 'Welcome to EcoFuelConnect',
-        subtitle: 'Transforming Organic Waste into Clean Energy for South Sudan Schools',
+        subtitle: 'Connecting Waste Suppliers, Biogas Producers, and Schools for Clean Energy Access',
         autoRedirect: { enabled: true, delaySeconds: 5, redirectTo: '/auth' },
         statistics,
         features: [
