@@ -110,6 +110,14 @@ connectDB()
       const { sequelize } = require('./config/database');
       await sequelize.sync({ force: false, alter: false });
       console.log('Database tables synced successfully');
+      
+      // Auto-create coin reward tables if they don't exist
+      try {
+        const { addCoinTables } = require('./migrations/add-coin-tables');
+        await addCoinTables();
+      } catch (migErr) {
+        console.log('Coin tables migration skipped:', migErr.message);
+      }
     } catch (err) {
       console.error('Database sync error:', err.message);
       console.log('App will continue but some features may not work');
