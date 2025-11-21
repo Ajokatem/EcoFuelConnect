@@ -21,13 +21,17 @@ function ContentManagement() {
   const categories = ["Biogas Basics", "Waste Management", "Environment & Health", "Community Impact", "Innovation", "Getting Started"];
 
   useEffect(() => {
-    fetchPosts();
+    fetchPosts().catch(err => {
+      console.error('Failed to load posts:', err);
+      setPosts([]);
+    });
   }, []);
 
   const fetchPosts = async () => {
     try {
       const response = await api.get('/content');
-      setPosts(Array.isArray(response.data.posts) ? response.data.posts : []);
+      const postsData = response?.data?.posts;
+      setPosts(Array.isArray(postsData) ? postsData : []);
     } catch (error) {
       console.error('Error fetching posts:', error);
       setPosts([]);

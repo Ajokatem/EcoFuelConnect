@@ -8,6 +8,7 @@ import FuelRequestManagement from "./pages/FuelRequestManagement.js";
 import Reports from "./pages/Reports.js";
 import EducationalContent from "./pages/EducationalContent.js";
 import AdminContentManagement from "./pages/AdminContentManagement.js";
+import ContentManagement from "./pages/ContentManagement.js";
 import SupplierRewards from "./pages/SupplierRewards.js";
 import Help from "./pages/Help.js";
 import Notifications from "./pages/Notifications.js";
@@ -62,7 +63,7 @@ export const dashboardRoutes = [
     name: "Content Management",
     translationKey: "contentManagement",
     icon: "nc-icon nc-paper-2",
-    component: AdminContentManagement,
+    component: ContentManagement,
     layout: "/admin",
     adminOnly: true
   },
