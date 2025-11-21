@@ -310,10 +310,19 @@ function EducationalContent() {
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
                         <Badge style={{ background: "#25805a", fontSize: "0.7rem" }}>{video.category}</Badge>
                         <span style={{ fontSize: "0.85rem", color: "#666" }}>⏱ {video.duration}</span>
-                        {video.arabicSubtitles && <Badge bg="info" style={{ fontSize: "0.7rem" }}>Arabic Subtitles</Badge>}
+                        {video.arabicSubtitles && <Badge bg="info" style={{ fontSize: "0.7rem" }}>Arabic Subtitles Available</Badge>}
                       </div>
                       <h5 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "8px" }}>{video.title}</h5>
-                      <p style={{ fontSize: "0.9rem", color: "#666", marginBottom: 0 }}>{video.description}</p>
+                      <p style={{ fontSize: "0.9rem", color: "#666", marginBottom: "8px" }}>{video.description}</p>
+                      <div style={{ backgroundColor: "#e3f2fd", padding: "12px", borderRadius: "8px", fontSize: "0.85rem", color: "#1976d2" }}>
+                        <strong>📝 How to enable Arabic subtitles:</strong>
+                        <ol style={{ margin: "8px 0 0 0", paddingLeft: "20px" }}>
+                          <li>Click the CC (Closed Captions) button at the bottom of the video</li>
+                          <li>Click the Settings (gear) icon</li>
+                          <li>Select "Subtitles/CC" → "Auto-translate"</li>
+                          <li>Choose "Arabic" from the language list</li>
+                        </ol>
+                      </div>
                     </Card.Body>
                   </Card>
                 </Col>
