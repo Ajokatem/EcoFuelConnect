@@ -9,6 +9,53 @@ function EducationalContent() {
   const [selectedCategory, setSelectedCategory] = useState('All Category');
   const [sortBy, setSortBy] = useState('Sort by Popular');
   const [showAll, setShowAll] = useState(false);
+  const [user] = useState(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const producerVideos = [
+    {
+      id: 'v1',
+      title: 'Biogas Production from Organic Waste',
+      videoId: 'IJUr-2708yA',
+      description: 'Complete guide to biogas production from organic waste through anaerobic digestion',
+      category: 'BIOGAS BASICS',
+      duration: '4:22',
+      arabicSubtitles: true
+    },
+    {
+      id: 'v2',
+      title: 'How Biogas Plants Work',
+      videoId: 'Fn9fOvWLYDU',
+      description: 'Understanding the complete biogas plant operation and technology',
+      category: 'BIOGAS BASICS',
+      duration: '3:14',
+      arabicSubtitles: true
+    },
+    {
+      id: 'v3',
+      title: 'Anaerobic Digestion Process Explained',
+      videoId: 'beWbsWGxP-U',
+      description: 'Deep dive into anaerobic digestion process and methane production',
+      category: 'INNOVATION',
+      duration: '5:47',
+      arabicSubtitles: true
+    },
+    {
+      id: 'v4',
+      title: 'Biogas Technology & Applications',
+      videoId: 'zm0jslIE1kk',
+      description: 'Comprehensive overview of biogas technology and real-world applications',
+      category: 'WASTE MANAGEMENT',
+      duration: '6:31',
+      arabicSubtitles: true
+    }
+  ];
 
   const educationalTopics = [
     {
@@ -186,6 +233,8 @@ function EducationalContent() {
 
   const categories = ['All Category', 'BIOGAS BASICS', 'WASTE MANAGEMENT', 'ENVIRONMENT & HEALTH', 'COMMUNITY IMPACT', 'INNOVATION', 'GETTING STARTED'];
 
+  const isProducer = user?.role === 'producer';
+
   const filteredTopics = educationalTopics
     .filter(topic => selectedCategory === 'All Category' || topic.category === selectedCategory)
     .filter(topic =>
@@ -235,6 +284,43 @@ function EducationalContent() {
         <div style={{ marginBottom: "24px", color: "#666", fontSize: "0.95rem" }}>
           Showing {displayedTopics.length} of {filteredTopics.length} courses
         </div>
+
+        {/* Producer Videos Section */}
+        {isProducer && (
+          <div style={{ marginBottom: "48px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+              <h3 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#2F4F4F", margin: 0 }}>Producer Training Videos</h3>
+              <Badge bg="success">New</Badge>
+            </div>
+            <Row>
+              {producerVideos.map((video) => (
+                <Col lg={6} md={12} className="mb-4" key={video.id}>
+                  <Card style={{ border: "none", borderRadius: "12px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+                    <div style={{ position: "relative", paddingBottom: "56.25%", height: 0 }}>
+                      <iframe
+                        style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                        src={`https://www.youtube.com/embed/${video.videoId}?cc_load_policy=1&cc_lang_pref=ar`}
+                        title={video.title}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    </div>
+                    <Card.Body style={{ padding: "20px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+                        <Badge style={{ background: "#25805a", fontSize: "0.7rem" }}>{video.category}</Badge>
+                        <span style={{ fontSize: "0.85rem", color: "#666" }}>⏱ {video.duration}</span>
+                        {video.arabicSubtitles && <Badge bg="info" style={{ fontSize: "0.7rem" }}>Arabic Subtitles</Badge>}
+                      </div>
+                      <h5 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "8px" }}>{video.title}</h5>
+                      <p style={{ fontSize: "0.9rem", color: "#666", marginBottom: 0 }}>{video.description}</p>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </div>
+        )}
 
         {/* Courses Grid */}
         <Row>
