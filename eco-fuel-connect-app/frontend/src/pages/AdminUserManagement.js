@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Card, Table, Button, Modal, Form, Badge, InputGroup } from 'react-bootstrap';
+import api from '../services/api';
 
 function AdminUserManagement() {
   const [users, setUsers] = useState([]);
@@ -27,10 +28,8 @@ function AdminUserManagement() {
       if (filterRole !== 'all') params.append('role', filterRole);
       if (searchTerm) params.append('search', searchTerm);
       
-      const res = await fetch(`/api/users?${params.toString()}`, { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch users');
-      const data = await res.json();
-      setUsers(data.users || []);
+      const res = await api.get(`/users?${params.toString()}`);
+      setUsers(res.data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
       setUsers([]);
@@ -46,12 +45,7 @@ function AdminUserManagement() {
 
   const handleSave = async () => {
     try {
-      await fetch(`/api/users/${selectedUser.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(selectedUser)
-      });
+      await api.put(`/users/${selectedUser.id}`, selectedUser);
       setShowEdit(false);
       fetchUsers();
     } catch (error) {
@@ -63,10 +57,7 @@ function AdminUserManagement() {
     if (!window.confirm('Are you sure you want to delete this user?')) return;
     
     try {
-      await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      await api.delete(`/users/${userId}`);
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -75,12 +66,7 @@ function AdminUserManagement() {
 
   const toggleActive = async (user) => {
     try {
-      await fetch(`/api/users/${user.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ isActive: !user.isActive })
-      });
+      await api.put(`/users/${user.id}`, { isActive: !user.isActive });
       fetchUsers();
     } catch (error) {
       console.error('Error toggling user status:', error);

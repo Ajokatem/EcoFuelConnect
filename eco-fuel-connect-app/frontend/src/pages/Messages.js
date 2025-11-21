@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import '../assets/css/messages-responsive.css';
 import { Container, Button, Form } from "react-bootstrap";
+import api from '../services/api';
 
 function Messages() {
   const [user, setUser] = useState(() => {
@@ -36,16 +37,8 @@ function Messages() {
   }, []);
 
   const fetchChatUsers = () => {
-    fetch("/api/messages/chat-users", { credentials: "include" })
-      .then(async res => {
-        if (!res.ok) {
-          const text = await res.text();
-          console.log('Chat users error response:', text.substring(0, 200));
-          throw new Error('Failed to fetch chat users');
-        }
-        return res.json();
-      })
-      .then(data => setChatUsers(data.users || []))
+    api.get("/messages/chat-users")
+      .then(res => setChatUsers(res.data.users || []))
       .catch(err => {
         console.error('Chat users error:', err);
         setChatUsers([]);
@@ -60,35 +53,10 @@ function Messages() {
     }
     setSearching(true);
     setSearchAttempted(true);
-    const searchUrl = `/api/users?search=${encodeURIComponent(searchTerm)}`;
-    console.log('Searching users with URL:', searchUrl);
-    fetch(searchUrl, { credentials: "include" })
-      .then(async res => {
-        console.log('Search response status:', res.status);
-        const contentType = res.headers.get('content-type');
-        console.log('Content-Type:', contentType);
-        
-        if (!res.ok) {
-          const text = await res.text();
-          console.log('Error response:', text.substring(0, 200));
-          throw new Error(`Failed to search users: ${res.status}`);
-        }
-        
-        if (!contentType || !contentType.includes('application/json')) {
-          const text = await res.text();
-          console.log('Non-JSON response:', text.substring(0, 200));
-          throw new Error('Server returned non-JSON response');
-        }
-        
-        return res.json();
-      })
-      .then(data => {
-        console.log('Search results:', data);
-        console.log('Number of users found:', data.users?.length || 0);
-        if (data.users && data.users.length > 0) {
-          console.log('First user:', data.users[0]);
-        }
-        setSearchResults(data.users || []);
+    api.get(`/users?search=${encodeURIComponent(searchTerm)}`)
+      .then(res => {
+        console.log('Search results:', res.data);
+        setSearchResults(res.data.users || []);
         setSearching(false);
       })
       .catch(err => {
@@ -119,13 +87,9 @@ function Messages() {
   useEffect(() => {
     if (selectedUser) {
       setLoading(true);
-      fetch(`/api/messages/with/${selectedUser.id}`, { credentials: "include" })
+      api.get(`/messages/with/${selectedUser.id}`)
         .then(res => {
-          if (!res.ok) throw new Error('Failed to fetch messages');
-          return res.json();
-        })
-        .then(data => {
-          setMessages(data.messages || []);
+          setMessages(res.data.messages || []);
           setLoading(false);
         })
         .catch(() => {
@@ -141,19 +105,10 @@ function Messages() {
 
   const sendMessage = () => {
     if (!newMessage.trim()) return;
-    fetch("/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ receiverId: selectedUser.id, content: newMessage })
-    })
+    api.post("/messages", { receiverId: selectedUser.id, content: newMessage })
       .then(res => {
-        if (!res.ok) throw new Error('Failed to send message');
-        return res.json();
-      })
-      .then(data => {
-        if (data.success) {
-          setMessages(prev => [...prev, data.message]);
+        if (res.data.success) {
+          setMessages(prev => [...prev, res.data.message]);
           setNewMessage("");
         }
       })

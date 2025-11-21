@@ -10,6 +10,7 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
+import api from "../services/api";
 
 function UserProfile() {
   const [profilePhoto, setProfilePhoto] = useState(null);
@@ -389,19 +390,12 @@ function UserProfile() {
                     onClick={async (e) => {
                       e.preventDefault();
                       try {
-                        const response = await fetch('/api/users/profile', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          credentials: 'include',
-                          body: JSON.stringify(profileData)
-                        });
+                        const response = await api.put('/users/profile', profileData);
                         
-                        const result = await response.json();
-                        
-                        if (response.ok && result.success) {
+                        if (response.data.success) {
                           // Update localStorage with new user data
                           const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-                          const updatedUser = { ...currentUser, ...result.user };
+                          const updatedUser = { ...currentUser, ...response.data.user };
                           localStorage.setItem('user', JSON.stringify(updatedUser));
                           
                           alert('✓ Profile updated successfully!');
@@ -409,7 +403,7 @@ function UserProfile() {
                           // Reload page to reflect changes
                           setTimeout(() => window.location.reload(), 1000);
                         } else {
-                          alert('Failed to update profile: ' + (result.message || result.error || 'Unknown error'));
+                          alert('Failed to update profile: ' + (response.data.message || response.data.error || 'Unknown error'));
                         }
                       } catch (error) {
                         console.error('Profile update error:', error);
