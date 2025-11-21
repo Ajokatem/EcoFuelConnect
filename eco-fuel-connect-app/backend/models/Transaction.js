@@ -21,7 +21,7 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'FuelRequests',
+      model: 'fuel_requests',
       key: 'id'
     }
   },
@@ -29,7 +29,7 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },
@@ -37,7 +37,7 @@ const Transaction = sequelize.define('Transaction', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },

@@ -26,8 +26,8 @@ module.exports = (sequelize) => {
     configuration: DataTypes.JSON, // readingInterval, alertsEnabled, etc.
     connectivity: DataTypes.JSON, // lastSeen, batteryLevel, firmwareVersion
     maintenance: DataTypes.JSON, // installationDate, maintenanceHistory, etc.
-    ownerId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'Users', key: 'id' }},
-    assignedProjectId: { type: DataTypes.INTEGER, references: { model: 'Projects', key: 'id' }}
+    ownerId: { type: DataTypes.INTEGER, allowNull: false, references: { model: 'users', key: 'id' }},
+    assignedProjectId: { type: DataTypes.INTEGER, references: { model: 'projects', key: 'id' }}
   }, {
     sequelize,
     modelName: 'IoTSensor',
