@@ -208,6 +208,23 @@ function Login() {
                 )}
 
                 {/* Backend Status Indicator */}
+                {backendStatus === 'checking' && (
+                  <Alert 
+                    variant="info" 
+                    className="mb-4"
+                    style={{
+                      borderRadius: '10px',
+                      border: 'none',
+                      background: 'rgba(23, 162, 184, 0.1)',
+                      color: '#0c5460'
+                    }}
+                  >
+                    <div className="d-flex align-items-center">
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      Connecting to server... This may take up to 60 seconds if the server is waking up.
+                    </div>
+                  </Alert>
+                )}
                 {backendStatus === 'disconnected' && (
                   <Alert 
                     variant="warning" 
@@ -219,7 +236,7 @@ function Login() {
                       color: '#856404'
                     }}
                   >
-                    Backend server connection failed. Please check if the server is running.
+                    <strong>Server Offline:</strong> The backend server is currently sleeping or offline. Please wait a moment and try again. If the issue persists, the server may be restarting.
                   </Alert>
                 )}
 
