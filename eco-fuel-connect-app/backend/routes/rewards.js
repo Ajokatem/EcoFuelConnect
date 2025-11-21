@@ -4,16 +4,23 @@ const { auth } = require('../middleware/auth');
 const db = require('../config/database').sequelize;
 
 router.get('/my-rewards', auth, async (req, res) => {
+  console.log('🪙 /my-rewards called for user:', req.user.id);
   try {
     let coins = [], transactions = [], payouts = [];
     
     try {
       coins = await db.query(`SELECT totalcoins, lifetimecoins FROM user_coins WHERE userid = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-    } catch (e) {}
+      console.log('🪙 Coins query result:', coins);
+    } catch (e) {
+      console.error('🪙 Coins query error:', e.message);
+    }
     
     try {
       transactions = await db.query(`SELECT ct.*, we.wastetype, we.quantity, we.unit, we.createdat as wasteDate FROM coin_transactions ct LEFT JOIN waste_entries we ON ct.wasteentryid = we.id WHERE ct.userid = ? AND ct.type = 'earned' ORDER BY ct.createdat DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-    } catch (e) {}
+      console.log('🪙 Transactions count:', transactions.length);
+    } catch (e) {
+      console.error('🪙 Transactions query error:', e.message);
+    }
     
     try {
       payouts = await db.query(`SELECT * FROM coin_payouts WHERE userid = ? ORDER BY createdat DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
@@ -23,6 +30,8 @@ router.get('/my-rewards', auth, async (req, res) => {
     const totalCoins = coins[0]?.totalcoins || 0;
     const lifetimeCoins = coins[0]?.lifetimecoins || 0;
     
+    console.log('🪙 Sending response - Total:', totalCoins, 'Lifetime:', lifetimeCoins);
+    
     res.json({
       success: true,
       coins: { total: totalCoins, lifetime: lifetimeCoins, cashValue: (totalCoins * coinValue).toFixed(2) },
@@ -30,6 +39,7 @@ router.get('/my-rewards', auth, async (req, res) => {
       payments: transactions.map(t => ({ id: t.id, wasteDate: t.wasteDate, wasteType: t.wastetype, quantitySupplied: t.quantity, paymentRate: coinValue, totalAmount: Math.abs(t.amount) * coinValue, paymentStatus: 'completed', coinsEarned: Math.abs(t.amount) }))
     });
   } catch (error) {
+    console.error('🪙 /my-rewards error:', error.message);
     res.json({ success: true, coins: { total: 0, lifetime: 0, cashValue: '0.00' }, earnings: { totalEarnings: 0, paidAmount: 0, pendingAmount: 0 }, payments: [] });
   }
 });
@@ -124,6 +134,17 @@ router.get('/leaderboard', auth, async (req, res) => {
 
 router.get('/achievements', auth, async (req, res) => {
   res.json({ success: true, achievements: [], stats: { totalEntries: 0, totalWaste: 0, lifetimeCoins: 0, daysSinceJoined: 0 } });
+});
+
+router.get('/debug', auth, async (req, res) => {
+  try {
+    const tables = await db.query(`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE '%coin%'`, { type: db.QueryTypes.SELECT });
+    const userCoins = await db.query(`SELECT * FROM user_coins WHERE userid = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    const transactions = await db.query(`SELECT * FROM coin_transactions WHERE userid = ? LIMIT 5`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    res.json({ success: true, tables, userCoins, transactions, userId: req.user.id });
+  } catch (error) {
+    res.json({ success: false, error: error.message });
+  }
 });
 
 router.post('/process-payment', auth, async (req, res) => {
