@@ -51,24 +51,29 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // ----- Middleware -----
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://eco-fuel-connect-app.vercel.app',
-  'https://ecofuelconnect.vercel.app',
-  process.env.FRONTEND_URL
-].filter(Boolean);
-
 app.use(
   cors({
     origin: function(origin, callback) {
       // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.some(allowed => origin.includes(allowed))) {
-        callback(null, true);
-      } else {
-        console.warn('CORS blocked origin:', origin);
-        callback(null, true); // Allow all in production for now
-      }
+      
+      // Allow localhost
+      if (origin.includes('localhost')) return callback(null, true);
+      
+      // Allow ALL Vercel deployments (production + preview)
+      if (origin.endsWith('.vercel.app')) return callback(null, true);
+      
+      // Allow specific domains
+      const allowedDomains = [
+        'https://eco-fuel-connect-app.vercel.app',
+        'https://ecofuelconnect.vercel.app',
+        process.env.FRONTEND_URL
+      ].filter(Boolean);
+      
+      if (allowedDomains.includes(origin)) return callback(null, true);
+      
+      console.warn('CORS blocked origin:', origin);
+      callback(null, true); // Allow all for now
     },
     credentials: true,
   })
