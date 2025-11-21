@@ -12,7 +12,7 @@ router.get('/my-rewards', auth, async (req, res) => {
     let payouts = [];
     
     try {
-      coins = await db.query(`SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      coins = await db.query(`SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
       console.log('💰 Coins found:', coins);
     } catch (e) {
       console.log('❌ user_coins table error:', e.message);
@@ -20,11 +20,11 @@ router.get('/my-rewards', auth, async (req, res) => {
     
     try {
       transactions = await db.query(`
-        SELECT ct.*, we.wasteType, we.quantity, we.unit, we.createdAt as wasteDate
+        SELECT ct.*, we."wasteType", we.quantity, we.unit, we."createdAt" as wasteDate
         FROM coin_transactions ct
-        LEFT JOIN waste_entries we ON ct.wasteEntryId = we.id
-        WHERE ct.userId = ? AND ct.type = 'earned'
-        ORDER BY ct.createdAt DESC
+        LEFT JOIN waste_entries we ON ct."wasteEntryId" = we.id
+        WHERE ct."userId" = ? AND ct.type = 'earned'
+        ORDER BY ct."createdAt" DESC
       `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
       console.log('💰 Transactions found:', transactions.length);
     } catch (e) {
@@ -32,7 +32,7 @@ router.get('/my-rewards', auth, async (req, res) => {
     }
     
     try {
-      payouts = await db.query(`SELECT * FROM coin_payouts WHERE userId = ? ORDER BY createdAt DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      payouts = await db.query(`SELECT * FROM coin_payouts WHERE "userId" = ? ORDER BY "createdAt" DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
       console.log('💰 Payouts found:', payouts.length);
     } catch (e) {
       console.log('❌ coin_payouts table error:', e.message);
@@ -86,15 +86,26 @@ router.get('/my-rewards', auth, async (req, res) => {
 // Get user coins balance
 router.get('/coins', auth, async (req, res) => {
   try {
-    const coins = await db.query(`
-      SELECT totalCoins, lifetimeCoins, lastEarned FROM user_coins WHERE userId = ?
-    `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    let coins = [];
+    let transactions = [];
     
-    const transactions = await db.query(`
-      SELECT * FROM coin_transactions WHERE userId = ? ORDER BY createdAt DESC LIMIT 20
-    `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    try {
+      coins = await db.query(`
+        SELECT "totalCoins", "lifetimeCoins", "lastEarned" FROM user_coins WHERE "userId" = ?
+      `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    } catch (e) {
+      console.log('Coin data error:', e.message);
+    }
     
-    const coinValue = 0.01; // 1 coin = $0.01 (100 coins = $1)
+    try {
+      transactions = await db.query(`
+        SELECT * FROM coin_transactions WHERE "userId" = ? ORDER BY "createdAt" DESC LIMIT 20
+      `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    } catch (e) {
+      console.log('Coin transaction error:', e.message);
+    }
+    
+    const coinValue = 0.01;
     const totalCoins = coins[0]?.totalCoins || 0;
     
     res.json({
@@ -109,7 +120,7 @@ router.get('/coins', auth, async (req, res) => {
       transactions: transactions || []
     });
   } catch (error) {
-    console.error('Coins endpoint error:', error.message);
+    console.error('Coin reward error (tables may not exist):', error.message);
     res.json({ success: true, coins: { total: 0, lifetime: 0, cashValue: '0.00' }, transactions: [] });
   }
 });
@@ -124,7 +135,7 @@ router.post('/coins/convert', auth, async (req, res) => {
     }
     
     const [coins] = await db.query(`
-      SELECT totalCoins FROM user_coins WHERE userId = ?
+      SELECT "totalCoins" FROM user_coins WHERE "userId" = ?
     `, [req.user.id]);
     
     if (!coins[0] || coins[0].totalCoins < amount) {
@@ -133,19 +144,19 @@ router.post('/coins/convert', auth, async (req, res) => {
     
     // Deduct coins from totalCoins (available balance) but keep lifetimeCoins
     await db.query(`
-      UPDATE user_coins SET totalCoins = totalCoins - ?, updatedAt = NOW() WHERE userId = ?
+      UPDATE user_coins SET "totalCoins" = "totalCoins" - ?, "updatedAt" = NOW() WHERE "userId" = ?
     `, { replacements: [amount, req.user.id], type: db.QueryTypes.UPDATE });
     
     // Log transaction as negative amount (withdrawal)
     const cashValue = (amount * 0.01).toFixed(2);
     await db.query(`
-      INSERT INTO coin_transactions (userId, amount, type, description, createdAt)
+      INSERT INTO coin_transactions ("userId", amount, type, description, "createdAt")
       VALUES (?, ?, 'converted', ?, NOW())
     `, { replacements: [req.user.id, -amount, `Converted ${amount} coins to $${cashValue}`], type: db.QueryTypes.INSERT });
     
     // Create cash payout request
     await db.query(`
-      INSERT INTO coin_payouts (userId, coins, cashAmount, paymentMethod, status, createdAt)
+      INSERT INTO coin_payouts ("userId", coins, "cashAmount", "paymentMethod", status, "createdAt")
       VALUES (?, ?, ?, ?, 'pending', NOW())
     `, { replacements: [req.user.id, amount, cashValue, paymentMethod || 'bank_transfer'], type: db.QueryTypes.INSERT });
     
@@ -179,19 +190,19 @@ router.get('/supplier/:supplierId', auth, async (req, res) => {
     const { supplierId } = req.params;
     
     const [coins] = await db.query(`
-      SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?
+      SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?
     `, [supplierId]);
     
     const [transactions] = await db.query(`
-      SELECT ct.*, we.wasteType, we.quantity, we.unit, we.createdAt as wasteDate
+      SELECT ct.*, we."wasteType", we.quantity, we.unit, we."createdAt" as wasteDate
       FROM coin_transactions ct
-      LEFT JOIN waste_entries we ON ct.wasteEntryId = we.id
-      WHERE ct.userId = ? AND ct.type = 'earned'
-      ORDER BY ct.createdAt DESC
+      LEFT JOIN waste_entries we ON ct."wasteEntryId" = we.id
+      WHERE ct."userId" = ? AND ct.type = 'earned'
+      ORDER BY ct."createdAt" DESC
     `, [supplierId]);
     
     const [payouts] = await db.query(`
-      SELECT * FROM coin_payouts WHERE userId = ? ORDER BY createdAt DESC
+      SELECT * FROM coin_payouts WHERE "userId" = ? ORDER BY "createdAt" DESC
     `, [supplierId]);
     
     const coinValue = 0.01;
@@ -229,7 +240,7 @@ router.post('/request-payment', auth, async (req, res) => {
   try {
     const { paymentMethod, amount } = req.body;
     
-    const [coins] = await db.query(`SELECT totalCoins FROM user_coins WHERE userId = ?`, [req.user.id]);
+    const [coins] = await db.query(`SELECT "totalCoins" FROM user_coins WHERE "userId" = ?`, [req.user.id]);
     const totalCoins = coins[0]?.totalCoins || 0;
     const requestAmount = amount || totalCoins;
     
@@ -244,7 +255,7 @@ router.post('/request-payment', auth, async (req, res) => {
     const cashAmount = (requestAmount * 0.01).toFixed(2);
     
     await db.query(`
-      INSERT INTO coin_payouts (userId, coins, cashAmount, paymentMethod, status, createdAt)
+      INSERT INTO coin_payouts ("userId", coins, "cashAmount", "paymentMethod", status, "createdAt")
       VALUES (?, ?, ?, ?, 'pending', NOW())
     `, [req.user.id, requestAmount, cashAmount, paymentMethod || 'mobile_money']);
 
