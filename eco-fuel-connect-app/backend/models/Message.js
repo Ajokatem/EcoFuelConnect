@@ -10,7 +10,9 @@ const Message = sequelize.define('Message', {
   sentAt: { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
 }, {
   tableName: 'messages',
-  timestamps: false
+  timestamps: true,
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 });
 
 module.exports = Message;

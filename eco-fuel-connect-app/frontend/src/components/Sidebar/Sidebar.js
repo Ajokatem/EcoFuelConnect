@@ -2,12 +2,14 @@ import React, { useEffect } from "react";
 import { useLocation, NavLink } from "react-router-dom";
 import { Nav } from "react-bootstrap";
 import { useUser } from "../../contexts/UserContext";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 
 
 function Sidebar({ routes }) {
   const location = useLocation();
   const { user } = useUser();
+  const { translate } = useLanguage();
 
   // Filter routes for sidebar: hide admin-only routes for non-admins
   const filteredRoutes = routes.filter(route => {
@@ -160,7 +162,7 @@ function Sidebar({ routes }) {
                       opacity: '0.9'
                     }}
                   ></i>
-                  <span style={{opacity: '0.95'}}>{route.name}</span>
+                  <span style={{opacity: '0.95'}}>{translate(route.translationKey || route.name)}</span>
                 </NavLink>
               </li>
             );

@@ -281,6 +281,9 @@ router.post('/', [
   body('qualityGrade').optional().isIn(['poor', 'fair', 'good', 'excellent']).withMessage('Invalid quality grade'),
   body('notes').optional().isLength({ max: 500 }).withMessage('Notes must be less than 500 characters')
 ], async (req, res) => {
+  console.log('\n✅ POST /api/waste-logging - Request received');
+  console.log('✅ User:', req.user?.id, req.user?.role);
+  console.log('✅ Body:', JSON.stringify(req.body, null, 2));
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -384,6 +387,7 @@ router.post('/', [
     // Notify admin(s) about new waste entry
     const Notification = require('../models/Notification');
     const adminUsers = await User.findAll({ where: { role: 'admin', isActive: true } });
+    console.log('✅ Creating notifications for', adminUsers.length, 'admins');
     const notificationPromises = adminUsers.map(admin => Notification.create({
       userId: admin.id,
       type: 'waste_entry',
@@ -421,52 +425,78 @@ router.post('/', [
       wasteEntryId: createdEntry.id
     }));
     await Promise.all(notificationPromises);
+    console.log('✅ All notifications created successfully');
 
     // GAMIFIED COIN REWARD SYSTEM
-    const db = require('../config/database').sequelize;
+    let coinsEarned = 0;
+    let coinBalance = { totalCoins: 0, lifetimeCoins: 0 };
     
-    // Calculate coins based on waste quantity and quality
-    let coinsEarned = Math.floor(estimatedWeight * 0.5); // Base: 0.5 coins per kg
-    
-    // Quality multiplier
-    const qualityMultipliers = {
-      'excellent': 1.5,
-      'good': 1.2,
-      'fair': 1.0,
-      'poor': 0.8
-    };
-    coinsEarned = Math.floor(coinsEarned * (qualityMultipliers[qualityGrade] || 1.0));
-    
-    // Update or create user coins record
-    await db.query(
-      `INSERT INTO user_coins (userId, totalCoins, lifetimeCoins, lastEarned, createdAt, updatedAt)
-       VALUES (${req.user.id}, ${coinsEarned}, ${coinsEarned}, NOW(), NOW(), NOW())
-       ON DUPLICATE KEY UPDATE 
-         totalCoins = totalCoins + ${coinsEarned},
-         lifetimeCoins = lifetimeCoins + ${coinsEarned},
-         lastEarned = NOW(),
-         updatedAt = NOW()`
-    );
-    
-    // Log coin transaction
-    await db.query(
-      `INSERT INTO coin_transactions (userId, amount, type, description, wasteEntryId, createdAt)
-       VALUES (${req.user.id}, ${coinsEarned}, 'earned', '${`Earned ${coinsEarned} coins for logging ${estimatedWeight}kg of ${wasteType}`.replace(/'/g, "''")}', ${createdEntry.id}, NOW())`
-    );
-    
-    // Get updated coin balance
-    const [coinBalance] = await db.query(
-      `SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ${req.user.id}`
-    );
-    
-    // Notify user about coins earned
-    await Notification.create({
-      userId: req.user.id,
-      type: 'reward',
-      title: '🪙 Coins Earned!',
-      message: `You earned ${coinsEarned} coins for logging waste! Total balance: ${coinBalance[0]?.totalCoins || coinsEarned} coins`,
-      isRead: false
-    });
+    try {
+      const db = require('../config/database').sequelize;
+      const { QueryTypes } = require('sequelize');
+      
+      // Calculate coins based on waste quantity and quality
+      coinsEarned = Math.floor(estimatedWeight * 0.5); // Base: 0.5 coins per kg
+      
+      // Quality multiplier
+      const qualityMultipliers = {
+        'excellent': 1.5,
+        'good': 1.2,
+        'fair': 1.0,
+        'poor': 0.8
+      };
+      coinsEarned = Math.floor(coinsEarned * (qualityMultipliers[qualityGrade] || 1.0));
+      
+      if (coinsEarned > 0) {
+        // Check if user_coins record exists
+        const existingCoins = await db.query(
+          'SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?',
+          { replacements: [req.user.id], type: QueryTypes.SELECT }
+        );
+        
+        if (existingCoins.length > 0) {
+          // Update existing record
+          await db.query(
+            'UPDATE user_coins SET totalCoins = totalCoins + ?, lifetimeCoins = lifetimeCoins + ?, lastEarned = NOW(), updatedAt = NOW() WHERE userId = ?',
+            { replacements: [coinsEarned, coinsEarned, req.user.id], type: QueryTypes.UPDATE }
+          );
+        } else {
+          // Create new record
+          await db.query(
+            'INSERT INTO user_coins (userId, totalCoins, lifetimeCoins, lastEarned, createdAt, updatedAt) VALUES (?, ?, ?, NOW(), NOW(), NOW())',
+            { replacements: [req.user.id, coinsEarned, coinsEarned], type: QueryTypes.INSERT }
+          );
+        }
+        
+        // Log coin transaction
+        const description = `Earned ${coinsEarned} coins for logging ${Math.round(estimatedWeight)}kg of ${wasteType}`;
+        await db.query(
+          'INSERT INTO coin_transactions (userId, amount, type, description, wasteEntryId, createdAt) VALUES (?, ?, ?, ?, ?, NOW())',
+          { replacements: [req.user.id, coinsEarned, 'earned', description, createdEntry.id], type: QueryTypes.INSERT }
+        );
+        
+        // Get updated coin balance
+        const updatedBalance = await db.query(
+          'SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?',
+          { replacements: [req.user.id], type: QueryTypes.SELECT }
+        );
+        
+        if (updatedBalance.length > 0) {
+          coinBalance = updatedBalance[0];
+        }
+        
+        // Notify user about coins earned
+        await Notification.create({
+          userId: req.user.id,
+          type: 'reward',
+          title: 'Coins Earned!',
+          message: `You earned ${coinsEarned} coins for logging waste! Total balance: ${coinBalance.totalCoins} coins`,
+          isRead: false
+        });
+      }
+    } catch (coinError) {
+      console.log('Coin reward error (tables may not exist):', coinError.message);
+    }
 
       // Calculate updated stats after creating entry
       const { fn: seqFn, col: seqCol } = require('sequelize');
@@ -482,9 +512,9 @@ router.post('/', [
         wasteEntry: createdEntry,
         reward: {
           coinsEarned,
-          totalCoins: coinBalance[0]?.totalCoins || coinsEarned,
-          lifetimeCoins: coinBalance[0]?.lifetimeCoins || coinsEarned,
-          message: ` You earned ${coinsEarned} coins!`
+          totalCoins: coinBalance.totalCoins || coinsEarned,
+          lifetimeCoins: coinBalance.lifetimeCoins || coinsEarned,
+          message: coinsEarned > 0 ? `You earned ${coinsEarned} coins!` : ''
         },
         stats: {
           totalWaste: totalWaste,
@@ -495,8 +525,10 @@ router.post('/', [
         }
       });
   } catch (error) {
-    console.error('Error creating waste entry:', error.message);
-    res.status(500).json({ success: false, message: 'Error creating waste entry' });
+    console.error('❌ ERROR creating waste entry:', error.message);
+    console.error('❌ ERROR stack:', error.stack);
+    console.error('❌ ERROR details:', error);
+    res.status(500).json({ success: false, message: 'Error creating waste entry', error: error.message });
   }
 });
 

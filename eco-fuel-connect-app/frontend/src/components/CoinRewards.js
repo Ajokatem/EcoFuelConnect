@@ -17,7 +17,8 @@ function CoinRewards() {
 
   const fetchCoins = async () => {
     try {
-      const res = await fetch('/api/rewards/coins', { credentials: 'include' });
+      const baseURL = window.location.port === '3000' ? 'http://localhost:5000' : '';
+      const res = await fetch(`${baseURL}/api/rewards/coins`, { credentials: 'include' });
       const data = await res.json();
       if (data.success) {
         setCoins(data.coins);
@@ -35,7 +36,8 @@ function CoinRewards() {
     }
 
     try {
-      const res = await fetch('/api/rewards/coins/convert', {
+      const baseURL = window.location.port === '3000' ? 'http://localhost:5000' : '';
+      const res = await fetch(`${baseURL}/api/rewards/coins/convert`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

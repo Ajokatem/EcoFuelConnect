@@ -7,18 +7,35 @@ function AdminUserManagement() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchTerm) fetchUsers();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/users', { credentials: 'include' });
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (filterRole !== 'all') params.append('role', filterRole);
+      if (searchTerm) params.append('search', searchTerm);
+      
+      const res = await fetch(`/api/users?${params.toString()}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch users');
       const data = await res.json();
       setUsers(data.users || []);
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,13 +87,7 @@ function AdminUserManagement() {
     }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = filterRole === 'all' || user.role === filterRole;
-    return matchesSearch && matchesRole;
-  });
+  const filteredUsers = users;
 
   return (
     <div className="content">
@@ -105,21 +116,32 @@ function AdminUserManagement() {
                 <option value="supplier">Supplier</option>
                 <option value="school">School</option>
               </Form.Select>
+              <Button 
+                variant="primary" 
+                onClick={fetchUsers} 
+                disabled={loading}
+                style={{ minWidth: '100px' }}
+              >
+                {loading ? 'Searching...' : 'Search'}
+              </Button>
             </div>
 
-            <Table responsive hover>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                  <th>Role</th>
-                  <th>Organization</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredUsers.map(user => (
+            {loading && <div style={{ textAlign: 'center', padding: '20px' }}>Loading users...</div>}
+            {!loading && filteredUsers.length === 0 && <div style={{ textAlign: 'center', padding: '20px' }}>No users found</div>}
+            {!loading && filteredUsers.length > 0 && (
+              <Table responsive hover>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Organization</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredUsers.map(user => (
                   <tr key={user.id}>
                     <td>{user.firstName} {user.lastName}</td>
                     <td>{user.email}</td>
@@ -156,9 +178,10 @@ function AdminUserManagement() {
                       </Button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </Table>
+                  ))}
+                </tbody>
+              </Table>
+            )}
           </Card.Body>
         </Card>
 

@@ -28,6 +28,7 @@ export const dashboardRoutes = [
   {
     path: "/dashboard",
     name: "Dashboard",
+    translationKey: "dashboard",
     icon: "nc-icon nc-chart-bar-32",
     component: Dashboard,
     layout: "/admin"
@@ -35,6 +36,7 @@ export const dashboardRoutes = [
   {
     path: "/user",
     name: "User Profile",
+    translationKey: "profile",
     icon: "nc-icon nc-circle-09",
     component: UserProfile,
     layout: "/admin"
@@ -42,6 +44,7 @@ export const dashboardRoutes = [
   {
     path: "/messages",
     name: "Messages",
+    translationKey: "messages",
     icon: "nc-icon nc-email-85",
     component: require("./pages/Messages.js").default,
     layout: "/admin"
@@ -49,6 +52,7 @@ export const dashboardRoutes = [
   {
     path: "/educational-content",
     name: "Educational Content",
+    translationKey: "educationalContent",
     icon: "nc-icon nc-tv-2",
     component: EducationalContent,
     layout: "/admin"
@@ -56,6 +60,7 @@ export const dashboardRoutes = [
   {
     path: "/admin-content",
     name: "Content Management",
+    translationKey: "contentManagement",
     icon: "nc-icon nc-paper-2",
     component: AdminContentManagement,
     layout: "/admin",
@@ -64,6 +69,7 @@ export const dashboardRoutes = [
   {
     path: "/users",
     name: "User Management",
+    translationKey: "userManagement",
     icon: "nc-icon nc-single-02",
     component: AdminUserManagement,
     layout: "/admin",
@@ -72,6 +78,7 @@ export const dashboardRoutes = [
   {
     path: "/organic-waste-logging",
     name: "Organic Waste Logging",
+    translationKey: "wasteLogging",
     icon: "nc-icon nc-planet",
     component: OrganicWasteLogging,
     layout: "/admin"
@@ -79,6 +86,7 @@ export const dashboardRoutes = [
   {
     path: "/rewards",
     name: "My Rewards",
+    translationKey: "myRewards",
     icon: "nc-icon nc-money-coins",
     component: SupplierRewards,
     layout: "/admin",
@@ -87,6 +95,7 @@ export const dashboardRoutes = [
   {
     path: "/fuel-request-management",
     name: "Fuel Request Management",
+    translationKey: "fuelRequests",
     icon: "nc-icon nc-delivery-fast",
     component: FuelRequestManagement,
     layout: "/admin"
@@ -94,6 +103,7 @@ export const dashboardRoutes = [
   {
     path: "/reports",
     name: "Reports",
+    translationKey: "reports",
     icon: "nc-icon nc-chart-pie-36",
     component: Reports,
     layout: "/admin"
@@ -101,6 +111,7 @@ export const dashboardRoutes = [
   {
     path: "/notifications",
     name: "Notifications",
+    translationKey: "notifications",
     icon: "nc-icon nc-bell-55",
     component: Notifications,
     layout: "/admin"
@@ -108,6 +119,7 @@ export const dashboardRoutes = [
   {
     path: "/help",
     name: "Help",
+    translationKey: "help",
     icon: "nc-icon nc-bulb-63",
     component: Help,
     layout: "/admin"
@@ -115,6 +127,7 @@ export const dashboardRoutes = [
   {
     path: "/settings",
     name: "Settings",
+    translationKey: "settings",
     icon: "nc-icon nc-settings-gear-64",
     component: Settings,
     layout: "/admin"

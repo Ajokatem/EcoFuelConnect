@@ -1,9 +1,13 @@
 import React, { Component } from "react";
 import { Container } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import { LanguageContext } from "../../contexts/LanguageContext";
 
 class Footer extends Component {
+  static contextType = LanguageContext;
+
   render() {
+    const { translate } = this.context;
     return (
       <footer 
         className="footer px-0 px-lg-3" 
@@ -31,7 +35,7 @@ class Footer extends Component {
                   onMouseEnter={e => e.target.style.color = 'white'}
                   onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 >
-                  Home
+                  {translate('home')}
                 </Link>
               </li>
               <li className="mx-3">
@@ -47,7 +51,7 @@ class Footer extends Component {
                   onMouseEnter={e => e.target.style.color = 'white'}
                   onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 >
-                  About
+                  {translate('about')}
                 </Link>
               </li>
               <li className="mx-3">
@@ -63,7 +67,7 @@ class Footer extends Component {
                   onMouseEnter={e => e.target.style.color = 'white'}
                   onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 >
-                  Projects
+                  {translate('projects')}
                 </Link>
               </li>
               <li className="mx-3">
@@ -79,7 +83,7 @@ class Footer extends Component {
                   onMouseEnter={e => e.target.style.color = 'white'}
                   onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 >
-                  Contact
+                  {translate('contact')}
                 </Link>
               </li>
             </ul>
@@ -93,7 +97,7 @@ class Footer extends Component {
               }}
             >
               © {new Date().getFullYear()} EcoFuelConnect <br />
-              Empowering South Sudan through sustainable biogas technology and organic waste management.
+              {translate('footerTagline')}
             </p>
           </nav>
         </Container>

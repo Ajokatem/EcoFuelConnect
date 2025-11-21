@@ -18,10 +18,15 @@ if (process.env.NODE_ENV === 'production') {
     dialectOptions: {
       ssl: {
         require: true,
-        rejectUnauthorized: false, // Render PostgreSQL requires this
+        rejectUnauthorized: false,
       },
     },
     logging: false,
+    define: {
+      freezeTableName: true,
+      underscored: false,
+      timestamps: true
+    }
   });
 } else {
   // --- Local (Development) uses MySQL ---
@@ -33,6 +38,11 @@ if (process.env.NODE_ENV === 'production') {
       host: process.env.DB_HOST || 'localhost',
       dialect: 'mysql',
       logging: false,
+      define: {
+        freezeTableName: true,
+        underscored: false,
+        timestamps: true
+      }
     }
   );
 }

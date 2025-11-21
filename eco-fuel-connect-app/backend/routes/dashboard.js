@@ -188,6 +188,25 @@ async function getDashboardStats(req, res, userRole) {
         monthlyTarget: 1500,
       };
     } else if (userRole === 'supplier') {
+      // Get real coin data from database
+      let totalCoins = 0;
+      let lifetimeCoins = 0;
+      let cashValue = 0;
+      try {
+        const db = require('../config/database').sequelize;
+        const [coins] = await db.query(
+          'SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?',
+          { replacements: [userId], type: db.QueryTypes.SELECT }
+        );
+        if (coins) {
+          totalCoins = coins.totalCoins || 0;
+          lifetimeCoins = coins.lifetimeCoins || 0;
+          cashValue = (lifetimeCoins * 0.01).toFixed(2); // 100 coins = $1
+        }
+      } catch (e) {
+        console.log('Coin data error:', e.message);
+      }
+      
       // Supplier gets their own contribution stats
       stats = {
         totalWasteSupplied: userWasteTotal,
@@ -197,7 +216,10 @@ async function getDashboardStats(req, res, userRole) {
         weeklyWaste: userWasteTotal / 4,
         wasteEntriesCount: userWasteEntriesCount,
         carbonImpact: userWasteTotal * 2.3,
-        earnings: userWasteTotal * 0.5,
+        earnings: parseFloat(cashValue),
+        totalCoins,
+        lifetimeCoins,
+        cashValue,
         biogasProduced: userWasteTotal * 0.3,
         totalWaste: totalWaste, // System-wide for context
       };

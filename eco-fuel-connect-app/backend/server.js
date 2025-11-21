@@ -77,6 +77,9 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+const { i18n } = require('./middleware/i18n');
+app.use(i18n);
+
 // ----- Import Routes -----
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
@@ -94,10 +97,11 @@ const notificationsRoutes = require('./routes/notifications');
 const messagesRoutes = require('./routes/messages');
 const rewardsRoutes = require('./routes/rewards');
 const knowledgeRoutes = require('./routes/knowledge');
-// const chatbotRoutes = require('./routes/chatbot'); // Temporarily disabled
+const chatbotRoutes = require('./routes/chatbot');
 const usersRoutes = require('./routes/users');
+const i18nRoutes = require('./routes/i18n');
+const imageAnalysisRoutes = require('./routes/imageAnalysis');
 // const environmentalRoutes = require('./routes/environmental');
-// const imageAnalysisRoutes = require('./routes/imageAnalysis');
 
 // ----- Database Connection -----
 connectDB()
@@ -105,17 +109,24 @@ connectDB()
     try {
       const { sequelize } = require('./config/database');
       
-      // Sync database tables (creates all tables)
-      // Use alter: true for production to create missing tables without dropping existing ones
-      await sequelize.sync({ force: false, alter: true });
-      console.log(' Database tables synced successfully');
+      console.log('Running database migration...');
+      const { fixDatabaseTables } = require('./migrations/fix-database-tables');
+      await fixDatabaseTables();
+      
+      await sequelize.sync({ force: false, alter: false });
+      console.log('Database tables synced successfully');
+      
+      const { defineAssociations } = require('./models/associations');
+      defineAssociations();
+      console.log('Model associations defined');
     } catch (err) {
-      console.error(' Database sync error:', err.message);
+      console.error('Database sync error:', err.message);
+      console.log('App will continue but some features may not work');
     }
   })
   .catch((err) => {
-    console.error(' Database connection failed:', err.message);
-    process.exit(1);
+    console.error('Database connection failed:', err.message);
+    console.log('App will start without database connection');
   });
 
 // ----- Route Mounting -----
@@ -134,9 +145,10 @@ app.use('/api/notifications', notificationsRoutes);
 app.use('/api/messages', messagesRoutes);
 app.use('/api/rewards', rewardsRoutes);
 app.use('/api/knowledge', knowledgeRoutes);
-// app.use('/api/chatbot', chatbotRoutes); // Temporarily disabled
-// app.use('/api/image-analysis', imageAnalysisRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/i18n', i18nRoutes);
+app.use('/api/image-analysis', imageAnalysisRoutes);
 // app.use('/api/environmental', environmentalRoutes);
 app.use('/admin', adminRoutes);
 
@@ -298,13 +310,61 @@ app.all('*', (req, res) => {
   }
 });
 
-// ----- Start Server -----
+// ----- Start Server with WebSocket -----
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(` EcoFuelConnect API server running on port ${PORT}`);
-  console.log(` Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(` API Base URL: ${process.env.API_BASE_URL || `http://localhost:${PORT}/api`}`);
-  console.log(` Security middleware enabled`);
+const http = require('http');
+const server = http.createServer(app);
+
+const io = require('socket.io')(server, {
+  cors: {
+    origin: allowedOrigins,
+    credentials: true
+  },
+  maxHttpBufferSize: 1e6,
+  pingTimeout: 60000
+});
+
+const onlineUsers = new Map();
+
+io.on('connection', (socket) => {
+  socket.on('user_online', (userId) => {
+    onlineUsers.set(userId, socket.id);
+    socket.join(`user_${userId}`);
+    io.emit('user_status', { userId, status: 'online' });
+  });
+
+  socket.on('send_message', async (data) => {
+    const { receiverId, content, senderId } = data;
+    const receiverSocketId = onlineUsers.get(receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('receive_message', data);
+    }
+  });
+
+  socket.on('typing', (data) => {
+    const receiverSocketId = onlineUsers.get(data.receiverId);
+    if (receiverSocketId) {
+      io.to(receiverSocketId).emit('user_typing', { senderId: data.senderId });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    for (const [userId, socketId] of onlineUsers.entries()) {
+      if (socketId === socket.id) {
+        onlineUsers.delete(userId);
+        io.emit('user_status', { userId, status: 'offline' });
+        break;
+      }
+    }
+  });
+});
+
+app.set('io', io);
+
+server.listen(PORT, () => {
+  console.log(`EcoFuelConnect API server running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`WebSocket enabled for real-time messaging`);
 });
 
 module.exports = app;

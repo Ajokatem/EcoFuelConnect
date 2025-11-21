@@ -4,28 +4,23 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
-const { OAuth2Client } = require('google-auth-library');
 const rateLimit = require('express-rate-limit');
 const helmet = require('helmet');
 const router = express.Router();
 
-// @route   GET /api/users
+// @route   GET /api/auth/producers
 // @desc    Get active producers (for waste logging dropdown)
 // @access  Private
-router.get('/users', auth, async (req, res) => {
+router.get('/producers', auth, async (req, res) => {
   try {
-    const { role, isActive } = req.query;
-    const where = {};
-    // Only show active producers
-    where.role = 'producer';
-    where.isActive = true;
     const producers = await User.findAll({
-      where,
-      attributes: ['id', 'firstName', 'lastName', 'organization', 'role', 'isActive']
+      where: { role: 'producer', isActive: true },
+      attributes: ['id', 'firstName', 'lastName', 'organization', 'role']
     });
-    res.json({ producers });
+    res.json({ success: true, producers });
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching users' });
+    console.error('Error fetching producers:', error);
+    res.status(500).json({ success: false, message: 'Error fetching producers' });
   }
 });
 
@@ -265,19 +260,29 @@ router.post('/login', authLimiter, async (req, res) => {
     });
 
     // Optionally, add user stats and dashboard info here
+    const dashboardRoutes = {
+      admin: '/admin/dashboard',
+      supplier: '/supplier/dashboard',
+      producer: '/producer/dashboard',
+      school: '/school/dashboard',
+      consumer: '/consumer/dashboard'
+    };
+
     res.json({
       success: true,
       message: `Welcome back, ${user.firstName}!`,
+      redirectTo: dashboardRoutes[user.role] || '/dashboard',
       user: {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
         role: user.role,
-        organizationName: user.organizationName,
+        organization: user.organization,
         phone: user.phone,
-        address: user.address,
         isActive: user.isActive,
+        profilePhoto: user.profilePhoto || '',
+        bio: user.bio || '',
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -417,7 +422,7 @@ router.get('/welcome', async (req, res) => {
 });
 
 // @route   GET /api/auth/me
-// @desc    Get current user
+// @desc    Get current user with coins balance
 // @access  Private
 router.get('/me', auth, async (req, res) => {
   try {
@@ -432,19 +437,36 @@ router.get('/me', auth, async (req, res) => {
       });
     }
 
+    let coins = { totalCoins: 0, lifetimeCoins: 0 };
+    try {
+      const db = require('../config/database').sequelize;
+      const [coinData] = await db.query(
+        'SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?',
+        { replacements: [req.user.id] }
+      );
+      if (coinData && coinData[0]) {
+        coins = coinData[0];
+      }
+    } catch (coinError) {
+      console.log('Could not fetch coins:', coinError.message);
+    }
+
     res.json({
+      success: true,
       user: {
         id: user.id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
         phone: user.phone,
-        organization: user.organization || user.organizationName || '',
+        organization: user.organization || '',
         role: user.role,
-        address: user.address,
         isActive: user.isActive,
         profilePhoto: user.profilePhoto || '',
-        coverPhoto: user.coverPhoto || '',
+        profileImage: user.profileImage || '',
+        bio: user.bio || '',
+        coins: coins.totalCoins || 0,
+        lifetimeCoins: coins.lifetimeCoins || 0,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt
       }
@@ -452,79 +474,13 @@ router.get('/me', auth, async (req, res) => {
   } catch (error) {
     console.error('Get user error:', error);
     res.status(500).json({
+      success: false,
       message: 'Server error fetching user data'
     });
   }
 });
 
-// @route   PUT /api/auth/profile
-// @desc    Update user profile
-// @access  Private
-router.put('/profile', auth, async (req, res) => {
-  try {
-    const {
-      firstName,
-      lastName,
-      phone,
-      organization,
-      address,
-      profile,
-      preferences
-    } = req.body;
 
-    const updateData = {
-      ...(firstName && { firstName }),
-      ...(lastName && { lastName }),
-      ...(phone && { phone }),
-      ...(organization && { organization }),
-      ...(address && { address })
-    };
-
-      const totalFuelResult = await FuelRequest.findAll({
-        where: { userId: req.user.id },
-        order: [['createdAt', 'DESC']],
-        limit: 10,
-        include: [
-          { model: User, as: 'school' },
-          { model: User, as: 'producer' }
-        ]
-      });
-
-    if (updatedRowsCount === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'User not found'
-      });
-    }
-
-    const user = await User.findByPk(req.user.id, {
-      attributes: { exclude: ['password'] }
-    });
-
-    res.json({
-      success: true,
-      message: 'Profile updated successfully',
-      user
-    });
-
-  } catch (error) {
-    console.error('Profile update error:', error);
-    
-    if (error.name === 'SequelizeValidationError') {
-      const messages = error.errors.map(err => err.message);
-      return res.status(400).json({
-        success: false,
-        message: 'Validation error',
-        errors: messages
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Server error updating profile'
-    });
-  }
-});
 
 // @route   POST /api/auth/forgot-password
 // @desc    Send password reset email
@@ -607,8 +563,6 @@ router.post('/change-password', auth, async (req, res) => {
       });
     }
 
-    // Verify current password
-  // ...existing code...
     const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
     if (!isCurrentPasswordValid) {
       return res.status(401).json({
@@ -617,11 +571,8 @@ router.post('/change-password', auth, async (req, res) => {
       });
     }
 
-    // Hash new password and update
-    const saltRounds = 10;
-    const hashedNewPassword = await bcrypt.hash(newPassword, saltRounds);
-    
-    await user.update({ password: hashedNewPassword });
+    user.password = newPassword;
+    await user.save();
 
     res.json({
       success: true,
@@ -631,6 +582,7 @@ router.post('/change-password', auth, async (req, res) => {
   } catch (error) {
     console.error('Password change error:', error);
     res.status(500).json({
+      success: false,
       message: 'Server error changing password'
     });
   }
@@ -645,12 +597,9 @@ router.put('/profile', auth, async (req, res) => {
       firstName,
       lastName,
       phone,
-      organizationName,
-      address,
-      vehicleDetails,
-      capacity,
-      studentCount,
-      preferences
+      organization,
+      bio,
+      profilePhoto
     } = req.body;
 
     const user = await User.findByPk(req.user.id);
@@ -661,43 +610,22 @@ router.put('/profile', auth, async (req, res) => {
       });
     }
 
-    // Update allowed fields
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (phone) user.phone = phone;
-    if (organizationName) user.organizationName = organizationName;
-    if (address) user.address = address;
-    if (preferences) user.preferences = { ...user.preferences, ...preferences };
-
-    // Role-specific updates
-    if (user.role === 'supplier' && vehicleDetails) {
-      user.vehicleDetails = vehicleDetails;
-    }
-    if (user.role === 'producer' && capacity) {
-      user.capacity = capacity;
-    }
-    if (user.role === 'school' && studentCount) {
-      user.studentCount = studentCount;
-    }
+    if (organization) user.organization = organization;
+    if (bio !== undefined) user.bio = bio;
+    if (profilePhoto !== undefined) user.profilePhoto = profilePhoto;
 
     await user.save();
+
+    const updatedUser = user.toJSON();
+    delete updatedUser.password;
 
     res.json({
       success: true,
       message: 'Profile updated successfully',
-      user: {
-        id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        organizationName: user.organizationName,
-        phone: user.phone,
-        address: user.address,
-        profileCompletion: user.profileCompletion,
-        emailVerified: user.emailVerified
-      }
+      user: updatedUser
     });
 
   } catch (error) {

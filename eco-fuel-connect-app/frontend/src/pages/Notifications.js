@@ -101,22 +101,11 @@ function Notifications() {
     return date.toLocaleDateString();
   };
 
-  // Role-based notification filtering
-  let filteredNotifications = [];
-  if (user) {
-    if (user.role === "producer") {
-      // Producers see all notifications
-      filteredNotifications = notifications;
-    } else {
-      // School/Supplier see only their own notifications
-      filteredNotifications = notifications.filter(n => n.userId === user.id);
-    }
-    // Apply read/unread filter
-    if (filter === "unread") {
-      filteredNotifications = filteredNotifications.filter(n => !(n.isRead || n.read));
-    }
+  // Apply read/unread filter only (backend already filters by userId)
+  let filteredNotifications = notifications;
+  if (filter === "unread") {
+    filteredNotifications = notifications.filter(n => !(n.isRead || n.read));
   }
-  console.log("Filtered notifications for user", user?.id, user?.role, filteredNotifications);
 
   return (
     <div className="content" style={{ padding: "20px", backgroundColor: "#f8f9fa", minHeight: "100vh" }}>

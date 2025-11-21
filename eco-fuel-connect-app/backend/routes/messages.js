@@ -2,105 +2,101 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 const Message = require('../models/Message');
-const { Op } = require('sequelize');
+const { Op, fn, col, literal } = require('sequelize');
 const Notification = require('../models/Notification');
 
-// Get all users for chat - show ALL active users so anyone can chat with anyone
 router.get('/chat-users', auth, async (req, res) => {
   try {
-    const currentUserId = req.user.id;
     const User = require('../models/User');
+    const { sequelize } = require('../config/database');
     
-    // Show ALL active users except current user
-    const users = await User.findAll({
-      where: { 
-        isActive: true,
-        id: { [Op.ne]: currentUserId } // Exclude self
-      },
-      attributes: ['id', 'firstName', 'lastName', 'role', 'organization', 'email', 'phone', 'profilePhoto', 'profileImage', 'bio'],
-      order: [['createdAt', 'DESC']]
+    const users = await sequelize.query(`
+      SELECT DISTINCT u.id, u.firstName, u.lastName, u.role, u.organization, u.profilePhoto, u.profileImage,
+        (SELECT COUNT(*) FROM messages WHERE senderId = u.id AND receiverId = ? AND isRead = false) as unreadCount,
+        (SELECT content FROM messages WHERE (senderId = u.id AND receiverId = ?) OR (senderId = ? AND receiverId = u.id) ORDER BY sentAt DESC LIMIT 1) as lastMessage,
+        (SELECT sentAt FROM messages WHERE (senderId = u.id AND receiverId = ?) OR (senderId = ? AND receiverId = u.id) ORDER BY sentAt DESC LIMIT 1) as lastMessageTime
+      FROM users u
+      WHERE u.isActive = true AND u.id != ? AND EXISTS (
+        SELECT 1 FROM messages WHERE (senderId = u.id AND receiverId = ?) OR (senderId = ? AND receiverId = u.id)
+      )
+      ORDER BY COALESCE(lastMessageTime, '1970-01-01') DESC
+    `, {
+      replacements: [req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id],
+      type: sequelize.QueryTypes.SELECT
     });
     
-    res.json({ users });
+    res.json({ success: true, users });
   } catch (error) {
     console.error('Error fetching chat users:', error);
-    res.status(500).json({ success: false, message: 'Error fetching chat users' });
+    res.json({ success: true, users: [] });
   }
 });
 
-// Send a message
 router.post('/', auth, async (req, res) => {
   try {
     const { receiverId, content } = req.body;
-    if (!receiverId || !content) {
+    if (!receiverId || !content?.trim()) {
       return res.status(400).json({ success: false, message: 'Receiver and content required' });
     }
+    
+    if (!Message) {
+      console.error('Message model not found');
+      return res.status(500).json({ success: false, message: 'Messaging not available' });
+    }
+    
     const message = await Message.create({
       senderId: req.user.id,
-      receiverId,
-      content,
+      receiverId: parseInt(receiverId),
+      content: content.trim(),
       sentAt: new Date()
-    });
-    // Create notification for receiver
-    await Notification.create({
-      userId: receiverId,
-      type: 'message',
-      title: 'New Message Received',
-      message: `You received a message from ${req.user.firstName} ${req.user.lastName}`,
-      isRead: false,
-      relatedId: message.id,
-      metadata: JSON.stringify({ senderId: req.user.id, receiverId, messageId: message.id })
+    }).catch(err => {
+      console.error('Message create error:', err.message);
+      throw err;
     });
 
-    // If sender is producer, notify the original sender (supplier/school) that their message was replied to
-    // Or, if receiver is producer, notify producer that a new message was sent
-    // This logic ensures both sides get notified
-    const senderUser = await require('../models/User').findByPk(req.user.id);
-    const receiverUser = await require('../models/User').findByPk(receiverId);
-    if (senderUser.role === 'producer' && receiverUser.role !== 'producer') {
+    const User = require('../models/User');
+    const sender = await User.findByPk(req.user.id, { attributes: ['firstName', 'lastName', 'profilePhoto'] });
+    
+    if (Notification) {
       await Notification.create({
         userId: receiverId,
         type: 'message',
-        title: 'Reply from Producer',
-        message: `Producer ${senderUser.firstName} ${senderUser.lastName} replied to your message`,
-        isRead: false,
-        relatedId: message.id,
-        metadata: JSON.stringify({ senderId: req.user.id, receiverId, messageId: message.id })
-      });
-    } else if (receiverUser.role === 'producer' && senderUser.role !== 'producer') {
-      await Notification.create({
-        userId: receiverId,
-        type: 'message',
-        title: 'New Message from Supplier/School',
-        message: `${senderUser.firstName} ${senderUser.lastName} sent you a message`,
-        isRead: false,
-        relatedId: message.id,
-        metadata: JSON.stringify({ senderId: req.user.id, receiverId, messageId: message.id })
-      });
+        title: 'New Message',
+        message: `${sender.firstName} ${sender.lastName}: ${content.substring(0, 50)}${content.length > 50 ? '...' : ''}`,
+        isRead: false
+      }).catch(err => console.error('Notification error:', err.message));
     }
-    // Emit real-time message to receiver if they're online
+
     const io = req.app.get('io');
     if (io) {
-      io.to(`user_${receiverId}`).emit('new_message', {
+      io.to(`user_${receiverId}`).emit('receive_message', {
         id: message.id,
         senderId: req.user.id,
-        senderName: `${req.user.firstName} ${req.user.lastName}`,
+        senderName: `${sender.firstName} ${sender.lastName}`,
+        senderPhoto: sender.profilePhoto,
         content: message.content,
-        sentAt: message.sentAt
+        sentAt: message.sentAt,
+        isRead: false
       });
     }
     
     res.json({ success: true, message });
   } catch (error) {
     console.error('Error sending message:', error);
-    res.status(500).json({ success: false, message: 'Error sending message' });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// Get messages between two users
 router.get('/with/:userId', auth, async (req, res) => {
   try {
     const otherUserId = parseInt(req.params.userId);
+    const { limit = 50, offset = 0 } = req.query;
+    
+    if (!Message) {
+      console.error('Message model not found');
+      return res.json({ success: true, messages: [] });
+    }
+    
     const messages = await Message.findAll({
       where: {
         [Op.or]: [
@@ -108,28 +104,85 @@ router.get('/with/:userId', auth, async (req, res) => {
           { senderId: otherUserId, receiverId: req.user.id }
         ]
       },
-      order: [['sentAt', 'ASC']]
+      order: [['sentAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    }).catch(err => {
+      console.error('Message query error:', err.message);
+      return [];
     });
-    res.json(messages);
+    
+    if (messages && messages.length > 0) {
+      await Message.update(
+        { isRead: true },
+        { where: { senderId: otherUserId, receiverId: req.user.id, isRead: false } }
+      ).catch(err => console.error('Mark read error:', err.message));
+    }
+    
+    res.json({ success: true, messages: messages ? messages.reverse() : [] });
   } catch (error) {
     console.error('Error fetching messages:', error);
-    res.status(500).json({ success: false, message: 'Error fetching messages' });
+    res.json({ success: true, messages: [] });
   }
 });
 
-// Mark message as read
-router.post('/:id/read', auth, async (req, res) => {
+router.post('/mark-read/:userId', auth, async (req, res) => {
   try {
-    const message = await Message.findByPk(req.params.id);
-    if (!message || message.receiverId !== req.user.id) {
-      return res.status(404).json({ success: false, message: 'Message not found or access denied' });
-    }
-    message.isRead = true;
-    await message.save();
+    await Message.update(
+      { isRead: true },
+      { where: { senderId: parseInt(req.params.userId), receiverId: req.user.id, isRead: false } }
+    );
     res.json({ success: true });
   } catch (error) {
-    console.error('Error marking message as read:', error);
-    res.status(500).json({ success: false, message: 'Error marking as read' });
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/unread-count', auth, async (req, res) => {
+  try {
+    const count = await Message.count({
+      where: { receiverId: req.user.id, isRead: false }
+    });
+    res.json({ success: true, count });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const message = await Message.findByPk(req.params.id);
+    if (!message || (message.senderId !== req.user.id && message.receiverId !== req.user.id)) {
+      return res.status(404).json({ success: false, message: 'Not found' });
+    }
+    await message.destroy();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.get('/search', auth, async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) return res.json({ success: true, messages: [] });
+    
+    const messages = await Message.findAll({
+      where: {
+        [Op.and]: [
+          { [Op.or]: [
+            { senderId: req.user.id },
+            { receiverId: req.user.id }
+          ]},
+          { content: { [Op.like]: `%${q}%` } }
+        ]
+      },
+      order: [['sentAt', 'DESC']],
+      limit: 20
+    });
+    res.json({ success: true, messages });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 

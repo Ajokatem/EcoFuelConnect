@@ -7,8 +7,11 @@ import {
   Col,
   Badge,
 } from "react-bootstrap";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function Projects() {
+  const { translate } = useLanguage();
+  
   return (
     <>
       {/* Navbar */}
@@ -19,10 +22,10 @@ function Projects() {
               <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "#25805a", letterSpacing: "-0.5px" }}>EcoFuelConnect</span>
             </Link>
             <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-              <Link to="/" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Home</Link>
-              <Link to="/projects" style={{ color: "#25805a", fontWeight: 600, textDecoration: "none", fontSize: "0.95rem" }}>Projects</Link>
-              <Link to="/about" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>About</Link>
-              <Link to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Contact</Link>
+              <Link to="/" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('home')}</Link>
+              <Link to="/projects" style={{ color: "#25805a", fontWeight: 600, textDecoration: "none", fontSize: "0.95rem" }}>{translate('projects')}</Link>
+              <Link to="/about" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('about')}</Link>
+              <Link to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('contact')}</Link>
             </div>
           </div>
         </Container>
@@ -57,7 +60,7 @@ function Projects() {
                     marginBottom: '10px'
                   }}
                 >
-                  Our Projects
+                  {translate('ourProjects')}
                 </Card.Title>
                 <p 
                   className="text-center"
@@ -68,7 +71,7 @@ function Projects() {
                     fontWeight: '500'
                   }}
                 >
-                  Real impact, real communities, real change—witness our biogas revolution in action
+                  {translate('projectsPageSubtitle')}
                 </p>
               </Card.Header>
             </Card>
@@ -115,7 +118,7 @@ function Projects() {
                           padding: '5px 12px'
                         }}
                       >
-                        Active
+                        {translate('active')}
                       </Badge>
                     </div>
                     <p style={{color: '#2F4F4F', lineHeight: '1.6', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '15px'}}>
@@ -178,7 +181,7 @@ function Projects() {
                           padding: '5px 12px'
                         }}
                       >
-                        Expanding
+                        {translate('expanding')}
                       </Badge>
                     </div>
                     <p style={{color: '#2F4F4F', lineHeight: '1.6', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '15px'}}>
@@ -241,7 +244,7 @@ function Projects() {
                           padding: '5px 12px'
                         }}
                       >
-                        Planning
+                        {translate('planning')}
                       </Badge>
                     </div>
                     <p style={{color: '#2F4F4F', lineHeight: '1.6', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '15px'}}>
@@ -272,24 +275,24 @@ function Projects() {
             >
               <Card.Body style={{padding: '40px', textAlign: 'center'}}>
                 <h3 style={{fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '30px'}}>
-                  Combined Impact Across All Projects
+                  {translate('combinedImpact')}
                 </h3>
                 <Row>
                   <Col md="3" className="mb-3">
                     <h2 style={{fontWeight: '700', fontSize: '2rem', marginBottom: '10px'}}>745</h2>
-                    <p style={{fontSize: '1.1rem', margin: '0'}}>Families Transformed</p>
+                    <p style={{fontSize: '1.1rem', margin: '0'}}>{translate('familiesTransformed')}</p>
                   </Col>
                   <Col md="3" className="mb-3">
                     <h2 style={{fontWeight: '700', fontSize: '2rem', marginBottom: '10px'}}>2.4 tons</h2>
-                    <p style={{fontSize: '1.1rem', margin: '0'}}>Waste Diverted Daily</p>
+                    <p style={{fontSize: '1.1rem', margin: '0'}}>{translate('wasteDivertedDaily')}</p>
                   </Col>
                   <Col md="3" className="mb-3">
                     <h2 style={{fontWeight: '700', fontSize: '2rem', marginBottom: '10px'}}>1,850</h2>
-                    <p style={{fontSize: '1.1rem', margin: '0'}}>m³ Clean Gas/Month</p>
+                    <p style={{fontSize: '1.1rem', margin: '0'}}>{translate('cleanGasPerMonth')}</p>
                   </Col>
                   <Col md="3" className="mb-3">
                     <h2 style={{fontWeight: '700', fontSize: '2rem', marginBottom: '10px'}}>320</h2>
-                    <p style={{fontSize: '1.1rem', margin: '0'}}>Jobs Created</p>
+                    <p style={{fontSize: '1.1rem', margin: '0'}}>{translate('jobsCreated')}</p>
                   </Col>
                 </Row>
               </Card.Body>
@@ -309,10 +312,10 @@ function Projects() {
             <Col md={4} className="mb-3">
               <h6 style={{ fontWeight: 600, marginBottom: "16px" }}>Quick Links</h6>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Home</Link>
-                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Projects</Link>
-                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>About</Link>
-                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Contact</Link>
+                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('home')}</Link>
+                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('projects')}</Link>
+                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('about')}</Link>
+                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('contact')}</Link>
               </div>
             </Col>
             <Col md={4} className="mb-3">

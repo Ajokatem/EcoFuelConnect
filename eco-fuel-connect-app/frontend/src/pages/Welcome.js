@@ -5,6 +5,7 @@ import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import authService from "../services/authService";
 import api from "../services/api";
 import ChatbotButton from "../components/ChatbotButton";
+import { useLanguage } from "../contexts/LanguageContext";
 import heroImage from "../assets/img/first image ecofuelconnect.jpg";
 import lastecoimage1 from "../assets/img/lastecoimage1.jpg";
 import lastecoimage2 from "../assets/img/lastecoimage2.jpg";
@@ -14,10 +15,12 @@ import howitworksimage from "../assets/img/howitworksimage.jpg";
 
 function Welcome() {
   const history = useHistory();
+  const { translate, changeLanguage, currentLanguage, availableLanguages } = useLanguage();
   const [isVisible, setIsVisible] = useState({});
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [visibleWords, setVisibleWords] = useState(0);
   const [showGoogleModal, setShowGoogleModal] = useState(false);
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [featuredArticles, setFeaturedArticles] = useState([]);
   const words = ["Transforming", "Waste", "into", "Clean", "Energy"];
   
@@ -105,6 +108,64 @@ function Welcome() {
   return (
     <GoogleOAuthProvider clientId={process.env.REACT_APP_GOOGLE_CLIENT_ID || ''}>
     <div style={{ background: "#fff" }}>
+      {/* Language Selector Popup */}
+      {showLanguageModal && (
+        <div style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          zIndex: 10000,
+          background: '#fff',
+          borderRadius: '12px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.2)',
+          padding: '20px',
+          width: '280px'
+        }}>
+          <button
+            onClick={() => setShowLanguageModal(false)}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              background: 'transparent',
+              border: 'none',
+              fontSize: '20px',
+              color: '#999',
+              cursor: 'pointer'
+            }}
+          >
+            ×
+          </button>
+          <h6 style={{ marginBottom: '15px', color: '#25805a', fontWeight: '600' }}>
+            {translate('selectLanguage')}
+          </h6>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {availableLanguages.map(lang => (
+              <button
+                key={lang.code}
+                onClick={() => {
+                  changeLanguage(lang.code);
+                  setShowLanguageModal(false);
+                }}
+                style={{
+                  padding: '12px',
+                  borderRadius: '8px',
+                  border: currentLanguage === lang.code ? '2px solid #25805a' : '1px solid #e5e7eb',
+                  background: currentLanguage === lang.code ? 'rgba(37, 128, 90, 0.1)' : 'white',
+                  color: '#2F4F4F',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: currentLanguage === lang.code ? '600' : '400',
+                  textAlign: 'left'
+                }}
+              >
+                {lang.nativeName}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Google Sign-In Popup - Top Right */}
       {showGoogleModal && (
         <div style={{
@@ -176,13 +237,28 @@ function Welcome() {
           </Navbar.Toggle>
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto" style={{ gap: "24px", alignItems: "center" }}>
-              <Nav.Link as={Link} to="/" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>Home</Nav.Link>
-              <Nav.Link as={Link} to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>Projects</Nav.Link>
-              <Nav.Link as={Link} to="/about" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>About</Nav.Link>
-              <Nav.Link as={Link} to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>Contact</Nav.Link>
-              <Nav.Link as={Link} to="/auth/login" style={{ color: "#25805a", fontWeight: 600, fontSize: "0.95rem" }}>Sign In</Nav.Link>
+              <Nav.Link as={Link} to="/" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>{translate('home')}</Nav.Link>
+              <Nav.Link as={Link} to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>{translate('projects')}</Nav.Link>
+              <Nav.Link as={Link} to="/about" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>{translate('about')}</Nav.Link>
+              <Nav.Link as={Link} to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, fontSize: "0.95rem" }}>{translate('contact')}</Nav.Link>
+              <button
+                onClick={() => setShowLanguageModal(true)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid #25805a',
+                  borderRadius: '20px',
+                  padding: '6px 16px',
+                  color: '#25805a',
+                  fontWeight: 500,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer'
+                }}
+              >
+                🌍 {availableLanguages.find(l => l.code === currentLanguage)?.nativeName}
+              </button>
+              <Nav.Link as={Link} to="/auth/login" style={{ color: "#25805a", fontWeight: 600, fontSize: "0.95rem" }}>{translate('signIn')}</Nav.Link>
               <Link to="/auth/register">
-                <Button style={{ background: "#25805a", border: "none", borderRadius: "20px", padding: "8px 20px", fontWeight: 600, fontSize: "0.9rem" }}>Get Started</Button>
+                <Button style={{ background: "#25805a", border: "none", borderRadius: "20px", padding: "8px 20px", fontWeight: 600, fontSize: "0.9rem" }}>{translate('getStarted')}</Button>
               </Link>
             </Nav>
           </Navbar.Collapse>
@@ -552,10 +628,10 @@ function Welcome() {
             <Col md={4} className="mb-3">
               <h6 style={{ fontWeight: 600, marginBottom: "16px" }}>Quick Links</h6>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Home</Link>
-                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Projects</Link>
-                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>About</Link>
-                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Contact</Link>
+                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('home')}</Link>
+                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('projects')}</Link>
+                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('about')}</Link>
+                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('contact')}</Link>
               </div>
             </Col>
             <Col md={4} className="mb-3">

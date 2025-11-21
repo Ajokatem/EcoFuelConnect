@@ -8,8 +8,11 @@ import {
   Form,
   Button,
 } from "react-bootstrap";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function Contact() {
+  const { translate } = useLanguage();
+  
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -74,10 +77,10 @@ function Contact() {
               <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "#25805a", letterSpacing: "-0.5px" }}>EcoFuelConnect</span>
             </Link>
             <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-              <Link to="/" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Home</Link>
-              <Link to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Projects</Link>
-              <Link to="/about" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>About</Link>
-              <Link to="/contact" style={{ color: "#25805a", fontWeight: 600, textDecoration: "none", fontSize: "0.95rem" }}>Contact</Link>
+              <Link to="/" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('home')}</Link>
+              <Link to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('projects')}</Link>
+              <Link to="/about" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('about')}</Link>
+              <Link to="/contact" style={{ color: "#25805a", fontWeight: 600, textDecoration: "none", fontSize: "0.95rem" }}>{translate('contact')}</Link>
             </div>
           </div>
         </Container>
@@ -112,7 +115,7 @@ function Contact() {
                     marginBottom: '10px'
                   }}
                 >
-                  Contact Us
+                  {translate('contactUs')}
                 </Card.Title>
                 <p 
                   className="text-center"
@@ -123,21 +126,21 @@ function Contact() {
                     fontWeight: '500'
                   }}
                 >
-                  Get in touch with the EcoFuelConnect team
+                  {translate('contactPageSubtitle')}
                 </p>
               </Card.Header>
               <Card.Body style={{padding: '40px'}}>
                 <Row>
                   <Col md="6" className="mb-4">
                     <h4 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '20px'}}>
-                      Send us a Message
+                      {translate('sendUsMessage')}
                     </h4>
                     <Form onSubmit={handleSubmit}>
                       <Row>
                         <Col md="6">
                           <Form.Group className="mb-3">
                             <Form.Label style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', fontWeight: '500'}}>
-                              First Name
+                              {translate('firstName')}
                             </Form.Label>
                             <Form.Control 
                               type="text" 
@@ -156,7 +159,7 @@ function Contact() {
                         <Col md="6">
                           <Form.Group className="mb-3">
                             <Form.Label style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', fontWeight: '500'}}>
-                              Last Name
+                              {translate('lastName')}
                             </Form.Label>
                             <Form.Control 
                               type="text" 
@@ -175,7 +178,7 @@ function Contact() {
                       </Row>
                       <Form.Group className="mb-3">
                         <Form.Label style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', fontWeight: '500'}}>
-                          Email Address
+                          {translate('emailAddress')}
                         </Form.Label>
                         <Form.Control 
                           type="email" 
@@ -192,7 +195,7 @@ function Contact() {
                       </Form.Group>
                       <Form.Group className="mb-3">
                         <Form.Label style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', fontWeight: '500'}}>
-                          Subject
+                          {translate('subject')}
                         </Form.Label>
                         <Form.Control 
                           type="text" 
@@ -209,7 +212,7 @@ function Contact() {
                       </Form.Group>
                       <Form.Group className="mb-3">
                         <Form.Label style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', fontWeight: '500'}}>
-                          Message
+                          {translate('message')}
                         </Form.Label>
                         <Form.Control 
                           as="textarea" 
@@ -237,10 +240,10 @@ function Contact() {
                         type="submit"
                         disabled={loading}
                       >
-                        {loading ? 'Sending...' : 'Send Message'}
+                        {loading ? translate('sending') : translate('sendMessage')}
                       </Button>
                       {status === 'success' && (
-                        <div className="mt-3 text-success">Message sent successfully!</div>
+                        <div className="mt-3 text-success">{translate('messageSentSuccess')}</div>
                       )}
                       {status && status !== 'success' && (
                         <div className="mt-3 text-danger">{typeof status === 'string' ? status : 'Failed to send message.'}</div>
@@ -249,7 +252,7 @@ function Contact() {
                   </Col>
                   <Col md="6">
                     <h4 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '20px'}}>
-                      Contact Information
+                      {translate('contactInformation')}
                     </h4>
                     <div className="mb-4">
                       <div 
@@ -262,7 +265,7 @@ function Contact() {
                         <i className="fas fa-map-marker-alt" style={{color: '#25805a', fontSize: '1.5rem', marginRight: '15px'}}></i>
                         <div>
                           <h6 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '5px'}}>
-                            Address
+                            {translate('address')}
                           </h6>
                           <p style={{color: '#2F4F4F', margin: '0', fontSize: '0.9rem'}}>
                             Kigali, Rwanda
@@ -279,7 +282,7 @@ function Contact() {
                         <i className="fas fa-phone" style={{color: '#25805a', fontSize: '1.5rem', marginRight: '15px'}}></i>
                         <div>
                           <h6 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '5px'}}>
-                            Phone
+                            {translate('phone')}
                           </h6>
                           <p style={{color: '#2F4F4F', margin: '0', fontSize: '0.9rem'}}>
                             +250792104895, +211928410720
@@ -296,7 +299,7 @@ function Contact() {
                         <i className="fas fa-envelope" style={{color: '#25805a', fontSize: '1.5rem', marginRight: '15px'}}></i>
                         <div>
                           <h6 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '5px'}}>
-                            Email
+                            {translate('email')}
                           </h6>
                           <p style={{color: '#2F4F4F', margin: '0', fontSize: '0.9rem'}}>
                             a.biar@alustudent.com
@@ -313,10 +316,10 @@ function Contact() {
                         <i className="fas fa-clock" style={{color: '#25805a', fontSize: '1.5rem', marginRight: '15px'}}></i>
                         <div>
                           <h6 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '5px'}}>
-                            Office Hours
+                            {translate('officeHours')}
                           </h6>
                           <p style={{color: '#2F4F4F', margin: '0', fontSize: '0.9rem'}}>
-                            Monday - Friday: 8:00 AM - 5:00 PM
+                            {translate('mondayFriday')}
                           </p>
                         </div>
                       </div>
@@ -340,10 +343,10 @@ function Contact() {
             <Col md={4} className="mb-3">
               <h6 style={{ fontWeight: 600, marginBottom: "16px" }}>Quick Links</h6>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Home</Link>
-                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Projects</Link>
-                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>About</Link>
-                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Contact</Link>
+                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('home')}</Link>
+                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('projects')}</Link>
+                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('about')}</Link>
+                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('contact')}</Link>
               </div>
             </Col>
             <Col md={4} className="mb-3">

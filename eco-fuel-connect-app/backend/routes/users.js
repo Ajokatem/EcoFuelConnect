@@ -38,21 +38,43 @@ router.put('/profile', auth, async (req, res) => {
 // GET /api/users - Get all users or filtered
 router.get('/', auth, async (req, res) => {
   try {
-    const { role, isActive } = req.query;
-    let where = {};
-    if (role) where.role = role;
-    if (isActive !== undefined) where.isActive = isActive === 'true';
+    const { search } = req.query;
+    const { Op } = require('sequelize');
+    const { sequelize } = require('../config/database');
+    const currentUser = await User.findByPk(req.user.id);
+    
+    let where = { 
+      id: { [Op.ne]: req.user.id },
+      isActive: true
+    };
+    
+    // Role-based filtering
+    if (currentUser.role === 'school' || currentUser.role === 'supplier') {
+      where.role = 'producer';
+    } else if (currentUser.role === 'producer') {
+      where.role = { [Op.in]: ['school', 'supplier'] };
+    }
+    // Admin sees all roles
+    
+    if (search && search.trim()) {
+      const searchTerm = search.trim().toLowerCase();
+      where[Op.or] = [
+        sequelize.where(sequelize.fn('LOWER', sequelize.col('firstName')), { [Op.like]: `%${searchTerm}%` }),
+        sequelize.where(sequelize.fn('LOWER', sequelize.col('lastName')), { [Op.like]: `%${searchTerm}%` })
+      ];
+    }
     
     const users = await User.findAll({
       where,
       attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone', 'role', 'isActive', 'profilePhoto', 'profileImage', 'bio', 'createdAt'],
-      order: [['createdAt', 'DESC']]
+      order: [['firstName', 'ASC']]
     });
     
-    res.json({ success: true, users, producers: users });
+    console.log(`✓ Search by ${currentUser.role}: "${search}" | Found ${users.length} users`);
+    return res.status(200).json({ success: true, users, producers: users });
   } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ success: false, error: 'Failed to fetch users' });
+    console.error('✗ Error fetching users:', error);
+    return res.status(500).json({ success: false, error: 'Failed to fetch users', message: error.message });
   }
 });
 

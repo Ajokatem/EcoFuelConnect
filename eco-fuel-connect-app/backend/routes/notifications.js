@@ -7,62 +7,23 @@ const User = require('../models/User');
 // GET /api/notifications - Get all notifications for the authenticated user
 router.get('/', auth, async (req, res) => {
   try {
-    const currentUser = await User.findByPk(req.user.id);
+    console.log('\n📬 GET /api/notifications - User ID:', req.user.id);
     const notifications = await Notification.findAll({
       where: { userId: req.user.id },
       order: [['createdAt', 'DESC']]
     });
+    console.log('📬 Found', notifications.length, 'notifications for user', req.user.id);
     
-    // Process notifications to include user names and role-specific actions
-    const processedNotifications = await Promise.all(notifications.map(async (n) => {
+    const processedNotifications = notifications.map(n => {
       const obj = n.toJSON();
       obj.datetime = obj.createdAt;
-      
-      // Replace user IDs with names in message
-      let processedMessage = obj.message;
-      const patterns = [
-        /school ID (\d+)/gi,
-        /producer ID (\d+)/gi,
-        /supplier ID (\d+)/gi,
-        /user ID (\d+)/gi,
-        /ID (\d+)/gi
-      ];
-      
-      for (const pattern of patterns) {
-        const matches = processedMessage.match(pattern);
-        if (matches) {
-          for (const match of matches) {
-            const userId = match.match(/\d+/)[0];
-            try {
-              const user = await User.findByPk(userId);
-              if (user) {
-                const userName = `${user.firstName} ${user.lastName} (${user.organization || user.role})`;
-                processedMessage = processedMessage.replace(match, userName);
-              }
-            } catch (err) {
-              console.log('Error fetching user for notification:', err);
-            }
-          }
-        }
-      }
-      obj.message = processedMessage;
-      
-      // Add role-specific actions
-      if (currentUser.role === 'producer') {
-        obj.actions = ['confirm', 'delete'];
-      } else if (currentUser.role === 'school' || currentUser.role === 'supplier') {
-        obj.actions = ['pending', 'confirmed'];
-      } else {
-        obj.actions = ['read'];
-      }
-      
       return obj;
-    }));
+    });
     
     res.json(processedNotifications);
   } catch (error) {
-    console.error('Error fetching notifications:', error);
-    res.status(500).json({ success: false, message: 'Error fetching notifications' });
+    console.error('❌ Error fetching notifications:', error.message);
+    res.json([]);
   }
 });
 

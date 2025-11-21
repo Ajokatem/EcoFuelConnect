@@ -2,6 +2,7 @@ import React from "react";
 import { useLocation, useHistory } from "react-router-dom";
 import { Navbar, Container, Nav, Button } from "react-bootstrap";
 import { useAuth } from "../../hooks/useAuth";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 import { dashboardRoutes } from "../../routes.js";
 
@@ -9,6 +10,7 @@ function Header() {
   const location = useLocation();
   const history = useHistory();
   const { logout } = useAuth();
+  const { translate } = useLanguage();
 
   const handleLogout = async () => {
     try {
@@ -37,10 +39,10 @@ function Header() {
   const getBrandText = () => {
     for(let i=0; i<dashboardRoutes.length; i++) {
       if(location.pathname.indexOf(dashboardRoutes[i].layout + dashboardRoutes[i].path) !== -1) {
-        return dashboardRoutes[i].name;
+        return translate(dashboardRoutes[i].translationKey || dashboardRoutes[i].name);
       }
     }
-    return "Brand";
+    return translate('dashboard');
   }
 
   return (
@@ -101,7 +103,7 @@ function Header() {
                 onMouseLeave={e => e.target.style.color = 'rgba(255, 255, 255, 0.9)'}
                 onClick={handleLogout}
               >
-                <i className="nc-icon nc-button-power"></i> Logout
+                <i className="nc-icon nc-button-power"></i> {translate('logout')}
               </Button>
             </Nav.Item>
           </Nav>

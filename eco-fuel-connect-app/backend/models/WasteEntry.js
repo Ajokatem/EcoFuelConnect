@@ -11,7 +11,7 @@ const WasteEntry = sequelize.define('WasteEntry', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },
@@ -19,24 +19,30 @@ const WasteEntry = sequelize.define('WasteEntry', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },
   wasteType: {
     type: DataTypes.ENUM(
-      'kitchen_scraps', 
-      'fruit_vegetable', 
-      'meat_bones', 
-      'agricultural_residue', 
-      'animal_manure', 
-      'food_waste', 
-      'mixed_organic'
+      'food_scraps',
+      'vegetable_peels',
+      'fruit_waste',
+      'garden_waste',
+      'paper_organic',
+      'agricultural_residue',
+      'animal_manure',
+      'mixed_organic',
+      'other',
+      'kitchen_scraps',
+      'fruit_vegetable',
+      'meat_bones',
+      'food_waste'
     ),
     allowNull: false
   },
   wasteSource: {
-    type: DataTypes.ENUM('market', 'slaughterhouse', 'restaurant', 'household', 'farm', 'school'),
+    type: DataTypes.ENUM('household', 'restaurant', 'market', 'farm', 'school', 'hospital', 'other', 'slaughterhouse'),
     allowNull: false
   },
   sourceLocation: {
@@ -52,7 +58,7 @@ const WasteEntry = sequelize.define('WasteEntry', {
     }
   },
   unit: {
-    type: DataTypes.ENUM('kg', 'tons', 'bags', 'cubic_meters'),
+    type: DataTypes.STRING(50),
     allowNull: false,
     defaultValue: 'kg'
   },
@@ -115,7 +121,7 @@ const WasteEntry = sequelize.define('WasteEntry', {
   },
   // Processing status
   status: {
-    type: DataTypes.ENUM('pending', 'collected', 'in_transit', 'delivered', 'processing', 'processed'),
+    type: DataTypes.ENUM('pending', 'logged', 'confirmed', 'rejected', 'collected', 'in_transit', 'delivered', 'processing', 'processed'),
     defaultValue: 'pending'
   },
   processedDate: {
@@ -148,7 +154,7 @@ const WasteEntry = sequelize.define('WasteEntry', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Users',
+      model: 'users',
       key: 'id'
     }
   },

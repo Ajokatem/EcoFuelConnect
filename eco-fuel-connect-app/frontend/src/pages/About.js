@@ -6,8 +6,11 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
+import { useLanguage } from "../contexts/LanguageContext";
 
 function About() {
+  const { translate } = useLanguage();
+  
   return (
     <>
       {/* Navbar */}
@@ -18,10 +21,10 @@ function About() {
               <span style={{ fontSize: "1.3rem", fontWeight: 700, color: "#25805a", letterSpacing: "-0.5px" }}>EcoFuelConnect</span>
             </Link>
             <div style={{ display: "flex", gap: "24px", alignItems: "center" }}>
-              <Link to="/" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Home</Link>
-              <Link to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Projects</Link>
-              <Link to="/about" style={{ color: "#25805a", fontWeight: 600, textDecoration: "none", fontSize: "0.95rem" }}>About</Link>
-              <Link to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>Contact</Link>
+              <Link to="/" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('home')}</Link>
+              <Link to="/projects" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('projects')}</Link>
+              <Link to="/about" style={{ color: "#25805a", fontWeight: 600, textDecoration: "none", fontSize: "0.95rem" }}>{translate('about')}</Link>
+              <Link to="/contact" style={{ color: "#2F4F4F", fontWeight: 500, textDecoration: "none", fontSize: "0.95rem" }}>{translate('contact')}</Link>
             </div>
           </div>
         </Container>
@@ -56,7 +59,7 @@ function About() {
                     marginBottom: '10px'
                   }}
                 >
-                  About Us
+                  {translate('aboutUs')}
                 </Card.Title>
                 <p 
                   className="text-center"
@@ -67,25 +70,25 @@ function About() {
                     fontWeight: '500'
                   }}
                 >
-                  Pioneering Africa's first integrated biogas ecosystem - where technology meets sustainability
+                  {translate('aboutPageSubtitle')}
                 </p>
               </Card.Header>
               <Card.Body style={{padding: '40px'}}>
                 <Row>
                   <Col md="6" className="mb-4">
                     <h4 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '20px'}}>
-                      Our Mission
+                      {translate('ourMission')}
                     </h4>
                     <p style={{color: '#2F4F4F', lineHeight: '1.6', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                      We're revolutionizing South Sudan's energy landscape by creating the first comprehensive digital platform that transforms organic waste into opportunity. Our mission goes beyond technology—we're building a movement that empowers communities, protects forests, and saves lives by making clean biogas accessible to every household and school.
+                      {translate('missionText')}
                     </p>
                   </Col>
                   <Col md="6" className="mb-4">
                     <h4 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '20px'}}>
-                      Our Vision
+                      {translate('ourVision')}
                     </h4>
                     <p style={{color: '#2F4F4F', lineHeight: '1.6', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                      Imagine a South Sudan where every child breathes clean air, every forest thrives, and every community has reliable energy. We're making this vision reality by 2030—connecting 10,000 households, eliminating 500,000 tons of CO₂ annually, and creating 5,000 green jobs. Our platform will become the blueprint for sustainable waste-to-energy transformation across Africa.
+                      {translate('visionText')}
                     </p>
                   </Col>
                 </Row>
@@ -93,7 +96,7 @@ function About() {
                 <Row className="mt-4">
                   <Col lg="12">
                     <h4 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '20px'}}>
-                      What We Do
+                      {translate('whatWeDo')}
                     </h4>
                     <Row>
                       <Col md="4" className="mb-3">
@@ -107,10 +110,10 @@ function About() {
                         >
                           <i className="nc-icon nc-refresh-02" style={{fontSize: '2.5rem', color: '#25805a', marginBottom: '15px'}}></i>
                           <h5 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            Waste Management
+                            {translate('wasteManagement')}
                           </h5>
                           <p style={{color: '#2F4F4F', fontSize: '0.9rem', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            Smart digital tracking system capturing every kilogram of waste with GPS verification, photo documentation, and blockchain-secured supplier records—ensuring complete transparency from source to biogas
+                            {translate('wasteManagementText')}
                           </p>
                         </div>
                       </Col>
@@ -125,10 +128,10 @@ function About() {
                         >
                           <i className="nc-icon nc-atom" style={{fontSize: '2.5rem', color: '#25805a', marginBottom: '15px'}}></i>
                           <h5 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            Biogas Production
+                            {translate('biogasProduction')}
                           </h5>
                           <p style={{color: '#2F4F4F', fontSize: '0.9rem', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            AI-powered analytics dashboard providing live production metrics, predictive maintenance alerts, and efficiency recommendations—maximizing output while minimizing operational costs
+                            {translate('biogasProductionText')}
                           </p>
                         </div>
                       </Col>
@@ -143,10 +146,10 @@ function About() {
                         >
                           <i className="nc-icon nc-tv-2" style={{fontSize: '2.5rem', color: '#25805a', marginBottom: '15px'}}></i>
                           <h5 style={{color: '#2F4F4F', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            School Fuel Delivery
+                            {translate('schoolFuelDelivery')}
                           </h5>
                           <p style={{color: '#2F4F4F', fontSize: '0.9rem', fontFamily: '"Inter", "Segoe UI", sans-serif'}}>
-                            Automated scheduling and route optimization connecting producers directly with schools—guaranteeing on-time delivery, quality assurance, and fair pricing through our verified marketplace
+                            {translate('schoolFuelDeliveryText')}
                           </p>
                         </div>
                       </Col>
@@ -165,24 +168,24 @@ function About() {
                       }}
                     >
                       <h4 style={{fontFamily: '"Inter", "Segoe UI", sans-serif', marginBottom: '15px'}}>
-                        Impact Statistics
+                        {translate('impactStatistics')}
                       </h4>
                       <Row>
                         <Col md="3" className="mb-2">
                           <h3 style={{fontWeight: '700', marginBottom: '5px'}}>18</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>Partner Organizations</p>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>{translate('partnerOrganizations')}</p>
                         </Col>
                         <Col md="3" className="mb-2">
                           <h3 style={{fontWeight: '700', marginBottom: '5px'}}>3,200+</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>Lives Impacted</p>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>{translate('livesImpacted')}</p>
                         </Col>
                         <Col md="3" className="mb-2">
                           <h3 style={{fontWeight: '700', marginBottom: '5px'}}>92%</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>User Satisfaction</p>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>{translate('userSatisfaction')}</p>
                         </Col>
                         <Col md="3" className="mb-2">
                           <h3 style={{fontWeight: '700', marginBottom: '5px'}}>24/7</h3>
-                          <p style={{fontSize: '0.9rem', margin: '0'}}>Platform Uptime</p>
+                          <p style={{fontSize: '0.9rem', margin: '0'}}>{translate('platformUptime')}</p>
                         </Col>
                       </Row>
                     </div>
@@ -205,10 +208,10 @@ function About() {
             <Col md={4} className="mb-3">
               <h6 style={{ fontWeight: 600, marginBottom: "16px" }}>Quick Links</h6>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Home</Link>
-                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Projects</Link>
-                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>About</Link>
-                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>Contact</Link>
+                <Link to="/" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('home')}</Link>
+                <Link to="/projects" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('projects')}</Link>
+                <Link to="/about" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('about')}</Link>
+                <Link to="/contact" style={{ color: "#fff", textDecoration: "none", fontSize: "0.9rem" }}>{translate('contact')}</Link>
               </div>
             </Col>
             <Col md={4} className="mb-3">

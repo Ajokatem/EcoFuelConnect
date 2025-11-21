@@ -3,16 +3,96 @@ const router = express.Router();
 const { auth } = require('../middleware/auth');
 const db = require('../config/database').sequelize;
 
+// Get current user's rewards (simplified endpoint)
+router.get('/my-rewards', auth, async (req, res) => {
+  console.log('\n💰 GET /api/rewards/my-rewards - User ID:', req.user.id);
+  try {
+    let coins = [];
+    let transactions = [];
+    let payouts = [];
+    
+    try {
+      coins = await db.query(`SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      console.log('💰 Coins found:', coins);
+    } catch (e) {
+      console.log('❌ user_coins table error:', e.message);
+    }
+    
+    try {
+      transactions = await db.query(`
+        SELECT ct.*, we.wasteType, we.quantity, we.unit, we.createdAt as wasteDate
+        FROM coin_transactions ct
+        LEFT JOIN waste_entries we ON ct.wasteEntryId = we.id
+        WHERE ct.userId = ? AND ct.type = 'earned'
+        ORDER BY ct.createdAt DESC
+      `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      console.log('💰 Transactions found:', transactions.length);
+    } catch (e) {
+      console.log('❌ coin_transactions table error:', e.message);
+    }
+    
+    try {
+      payouts = await db.query(`SELECT * FROM coin_payouts WHERE userId = ? ORDER BY createdAt DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      console.log('💰 Payouts found:', payouts.length);
+    } catch (e) {
+      console.log('❌ coin_payouts table error:', e.message);
+    }
+    
+    const coinValue = 0.01;
+    const totalCoins = coins[0]?.totalCoins || 0;
+    const lifetimeCoins = coins[0]?.lifetimeCoins || 0;
+    const paidPayouts = payouts.filter(p => p.status === 'completed').reduce((sum, p) => sum + parseFloat(p.cashAmount || 0), 0);
+    const pendingPayouts = payouts.filter(p => p.status === 'pending').reduce((sum, p) => sum + parseFloat(p.cashAmount || 0), 0);
+    
+    const payments = transactions.map(t => ({
+      id: t.id,
+      wasteDate: t.wasteDate || t.createdAt,
+      wasteType: t.wasteType || 'mixed_organic',
+      quantitySupplied: t.quantity || 0,
+      paymentRate: coinValue,
+      totalAmount: Math.abs(t.amount) * coinValue,
+      paymentStatus: 'completed',
+      coinsEarned: Math.abs(t.amount)
+    }));
+
+    const response = {
+      success: true,
+      coins: {
+        total: totalCoins,
+        lifetime: lifetimeCoins,
+        cashValue: (totalCoins * coinValue).toFixed(2)
+      },
+      earnings: {
+        totalEarnings: lifetimeCoins * coinValue,
+        paidAmount: paidPayouts,
+        pendingAmount: pendingPayouts
+      },
+      payments
+    };
+    console.log('💰 Response:', { userId: req.user.id, coins: response.coins, paymentsCount: payments.length });
+    res.json(response);
+  } catch (error) {
+    console.error('❌ my-rewards error:', error.message);
+    console.error('❌ Stack:', error.stack);
+    res.json({
+      success: true,
+      coins: { total: 0, lifetime: 0, cashValue: '0.00' },
+      earnings: { totalEarnings: 0, paidAmount: 0, pendingAmount: 0 },
+      payments: []
+    });
+  }
+});
+
 // Get user coins balance
 router.get('/coins', auth, async (req, res) => {
   try {
-    const [coins] = await db.query(`
+    const coins = await db.query(`
       SELECT totalCoins, lifetimeCoins, lastEarned FROM user_coins WHERE userId = ?
-    `, [req.user.id]);
+    `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
     
-    const [transactions] = await db.query(`
+    const transactions = await db.query(`
       SELECT * FROM coin_transactions WHERE userId = ? ORDER BY createdAt DESC LIMIT 20
-    `, [req.user.id]);
+    `, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
     
     const coinValue = 0.01; // 1 coin = $0.01 (100 coins = $1)
     const totalCoins = coins[0]?.totalCoins || 0;
@@ -26,10 +106,11 @@ router.get('/coins', auth, async (req, res) => {
         coinValue,
         lastEarned: coins[0]?.lastEarned
       },
-      transactions
+      transactions: transactions || []
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('Coins endpoint error:', error.message);
+    res.json({ success: true, coins: { total: 0, lifetime: 0, cashValue: '0.00' }, transactions: [] });
   }
 });
 
@@ -50,23 +131,23 @@ router.post('/coins/convert', auth, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Insufficient coins' });
     }
     
-    // Deduct coins
+    // Deduct coins from totalCoins (available balance) but keep lifetimeCoins
     await db.query(`
       UPDATE user_coins SET totalCoins = totalCoins - ?, updatedAt = NOW() WHERE userId = ?
-    `, [amount, req.user.id]);
+    `, { replacements: [amount, req.user.id], type: db.QueryTypes.UPDATE });
     
-    // Log transaction
+    // Log transaction as negative amount (withdrawal)
     const cashValue = (amount * 0.01).toFixed(2);
     await db.query(`
       INSERT INTO coin_transactions (userId, amount, type, description, createdAt)
       VALUES (?, ?, 'converted', ?, NOW())
-    `, [req.user.id, -amount, `Converted ${amount} coins to $${cashValue}`]);
+    `, { replacements: [req.user.id, -amount, `Converted ${amount} coins to $${cashValue}`], type: db.QueryTypes.INSERT });
     
     // Create cash payout request
     await db.query(`
       INSERT INTO coin_payouts (userId, coins, cashAmount, paymentMethod, status, createdAt)
       VALUES (?, ?, ?, ?, 'pending', NOW())
-    `, [req.user.id, amount, cashValue, paymentMethod || 'bank_transfer']);
+    `, { replacements: [req.user.id, amount, cashValue, paymentMethod || 'bank_transfer'], type: db.QueryTypes.INSERT });
     
     const Notification = require('../models/Notification');
     await Notification.create({
@@ -97,21 +178,45 @@ router.get('/supplier/:supplierId', auth, async (req, res) => {
   try {
     const { supplierId } = req.params;
     
-    const [earnings] = await db.query(`
-      SELECT * FROM supplier_earnings WHERE supplierId = ?
+    const [coins] = await db.query(`
+      SELECT totalCoins, lifetimeCoins FROM user_coins WHERE userId = ?
     `, [supplierId]);
-
-    const [payments] = await db.query(`
-      SELECT sp.*, we.wasteType, we.createdAt as wasteDate
-      FROM supplier_payments sp
-      JOIN wasteentries we ON sp.wasteEntryId = we.id
-      WHERE sp.supplierId = ?
-      ORDER BY sp.createdAt DESC
+    
+    const [transactions] = await db.query(`
+      SELECT ct.*, we.wasteType, we.quantity, we.unit, we.createdAt as wasteDate
+      FROM coin_transactions ct
+      LEFT JOIN waste_entries we ON ct.wasteEntryId = we.id
+      WHERE ct.userId = ? AND ct.type = 'earned'
+      ORDER BY ct.createdAt DESC
     `, [supplierId]);
+    
+    const [payouts] = await db.query(`
+      SELECT * FROM coin_payouts WHERE userId = ? ORDER BY createdAt DESC
+    `, [supplierId]);
+    
+    const coinValue = 0.01;
+    const totalCoins = coins[0]?.totalCoins || 0;
+    const lifetimeCoins = coins[0]?.lifetimeCoins || 0;
+    const paidPayouts = payouts.filter(p => p.status === 'completed').reduce((sum, p) => sum + parseFloat(p.cashAmount), 0);
+    const pendingPayouts = payouts.filter(p => p.status === 'pending').reduce((sum, p) => sum + parseFloat(p.cashAmount), 0);
+    
+    const payments = transactions.map(t => ({
+      id: t.id,
+      wasteDate: t.wasteDate || t.createdAt,
+      wasteType: t.wasteType || 'mixed_organic',
+      quantitySupplied: t.quantity || 0,
+      paymentRate: coinValue,
+      totalAmount: Math.abs(t.amount) * coinValue,
+      paymentStatus: 'completed'
+    }));
 
     res.json({
       success: true,
-      earnings: earnings[0] || { totalEarnings: 0, paidAmount: 0, pendingAmount: 0 },
+      earnings: {
+        totalEarnings: lifetimeCoins * coinValue,
+        paidAmount: paidPayouts,
+        pendingAmount: pendingPayouts
+      },
       payments
     });
   } catch (error) {
@@ -122,15 +227,28 @@ router.get('/supplier/:supplierId', auth, async (req, res) => {
 // Request payment
 router.post('/request-payment', auth, async (req, res) => {
   try {
-    const { paymentIds, paymentMethod } = req.body;
+    const { paymentMethod, amount } = req.body;
+    
+    const [coins] = await db.query(`SELECT totalCoins FROM user_coins WHERE userId = ?`, [req.user.id]);
+    const totalCoins = coins[0]?.totalCoins || 0;
+    const requestAmount = amount || totalCoins;
+    
+    if (requestAmount < 100) {
+      return res.status(400).json({ success: false, message: 'Minimum 100 coins required' });
+    }
+    
+    if (totalCoins < requestAmount) {
+      return res.status(400).json({ success: false, message: 'Insufficient coins' });
+    }
+    
+    const cashAmount = (requestAmount * 0.01).toFixed(2);
     
     await db.query(`
-      UPDATE supplier_payments 
-      SET paymentStatus = 'approved', paymentMethod = ?
-      WHERE id IN (?) AND paymentStatus = 'pending'
-    `, [paymentMethod, paymentIds]);
+      INSERT INTO coin_payouts (userId, coins, cashAmount, paymentMethod, status, createdAt)
+      VALUES (?, ?, ?, ?, 'pending', NOW())
+    `, [req.user.id, requestAmount, cashAmount, paymentMethod || 'mobile_money']);
 
-    res.json({ success: true, message: 'Payment request submitted' });
+    res.json({ success: true, message: 'Payment request submitted', cashAmount });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

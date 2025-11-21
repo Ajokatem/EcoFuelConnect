@@ -66,14 +66,14 @@ function SupplierDashboard() {
             border: "none"
           }}>
             <Card.Body className="p-4">
-              <h6 className="text-white-50 mb-2">Total Waste Supplied</h6>
+              <h6 className="text-white-50 mb-2">{translate('wasteLogged')}</h6>
               <h2 className="mb-1" style={{ fontSize: "2.5rem", fontWeight: "600" }}>
                 {stats.totalWasteSupplied.toFixed(2)} kg
               </h2>
               <div className="d-flex align-items-center">
-                <span className="text-white-50 me-2">Your contribution</span>
+                <span className="text-white-50 me-2">{translate('yourContribution')}</span>
                 <span className="badge bg-success bg-opacity-25 text-white">
-                  ↗ Active Supplier
+                  ↗ {translate('activeSupplier')}
                 </span>
               </div>
             </Card.Body>
@@ -83,11 +83,11 @@ function SupplierDashboard() {
         <Col md={4}>
           <Card style={{ borderRadius: "16px", border: "1px solid #e5e7eb", height: "100%" }}>
             <Card.Body className="d-flex flex-column justify-content-center">
-              <h6 className="text-muted mb-2">Environmental Impact</h6>
+              <h6 className="text-muted mb-2">{translate('availableCoins')}</h6>
               <h3 className="mb-1" style={{ color: "#059669" }}>
-                {stats.carbonImpact.toFixed(2)} kg CO₂
+                {stats.totalCoins || 0} {translate('coins')}
               </h3>
-              <small className="text-success">Carbon reduction achieved</small>
+              <small className="text-success">${stats.cashValue || '0.00'} USD</small>
             </Card.Body>
           </Card>
         </Col>
@@ -105,11 +105,11 @@ function SupplierDashboard() {
                   </svg>
                 </div>
                 <div>
-                  <h6 className="mb-0 text-muted">This Month</h6>
+                  <h6 className="mb-0 text-muted">{translate('thisMonth')}</h6>
                   <h3 className="mb-0" style={{ color: "#059669" }}>{stats.monthlyWaste.toFixed(0)} kg</h3>
                 </div>
               </div>
-              <small className="text-success">↗ Monthly supply</small>
+              <small className="text-success">↗ {translate('monthlySupply')}</small>
             </Card.Body>
           </Card>
         </Col>
@@ -124,11 +124,11 @@ function SupplierDashboard() {
                   </svg>
                 </div>
                 <div>
-                  <h6 className="mb-0 text-muted">This Week</h6>
+                  <h6 className="mb-0 text-muted">{translate('thisWeek')}</h6>
                   <h3 className="mb-0" style={{ color: "#059669" }}>{stats.weeklyWaste.toFixed(0)} kg</h3>
                 </div>
               </div>
-              <small className="text-primary">↗ Weekly supply</small>
+              <small className="text-primary">↗ {translate('weeklySupply')}</small>
             </Card.Body>
           </Card>
         </Col>
@@ -143,11 +143,11 @@ function SupplierDashboard() {
                   </svg>
                 </div>
                 <div>
-                  <h6 className="mb-0 text-muted">Earnings</h6>
-                  <h3 className="mb-0" style={{ color: "#059669" }}>SSP {stats.earnings.toFixed(0)}</h3>
+                  <h6 className="mb-0 text-muted">{translate('lifetimeEarned')}</h6>
+                  <h3 className="mb-0" style={{ color: "#059669" }}>${(stats.earnings || 0).toFixed(2)}</h3>
                 </div>
               </div>
-              <small className="text-warning">↗ Total earned</small>
+              <small className="text-warning">↗ {stats.lifetimeCoins || 0} {translate('coinsEarnedLower')}</small>
             </Card.Body>
           </Card>
         </Col>
@@ -162,11 +162,11 @@ function SupplierDashboard() {
                   </svg>
                 </div>
                 <div>
-                  <h6 className="mb-0 text-muted">Total Entries</h6>
+                  <h6 className="mb-0 text-muted">{translate('totalEntries')}</h6>
                   <h3 className="mb-0" style={{ color: "#059669" }}>{stats.totalEntries}</h3>
                 </div>
               </div>
-              <small className="text-info">↗ Waste logs</small>
+              <small className="text-info">↗ {translate('wasteLogs')}</small>
             </Card.Body>
           </Card>
         </Col>
@@ -177,38 +177,38 @@ function SupplierDashboard() {
         <Col lg={8}>
           <Card style={{ borderRadius: "12px", border: "1px solid #e5e7eb" }}>
             <Card.Body>
-              <h5 className="mb-4">Recent Waste Entries</h5>
+              <h5 className="mb-4">{translate('recentActivity')}</h5>
               <Table hover responsive>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Waste Type</th>
-                    <th>Quantity</th>
-                    <th>Status</th>
-                    <th>Pickup</th>
+                    <th>{translate('date')}</th>
+                    <th>{translate('wasteType')}</th>
+                    <th>{translate('quantity')}</th>
+                    <th>{translate('status')}</th>
+                    <th>{translate('pickup')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Today</td>
-                    <td>Food Waste</td>
-                    <td>45 kg</td>
-                    <td><Badge bg="success">Collected</Badge></td>
-                    <td>Completed</td>
+                    <td>{translate('today')}</td>
+                    <td>{translate('foodWaste')}</td>
+                    <td>45 {translate('kg')}</td>
+                    <td><Badge bg="success">{translate('collected')}</Badge></td>
+                    <td>{translate('completed')}</td>
                   </tr>
                   <tr>
-                    <td>Yesterday</td>
-                    <td>Organic Waste</td>
-                    <td>38 kg</td>
-                    <td><Badge bg="success">Collected</Badge></td>
-                    <td>Completed</td>
+                    <td>{translate('yesterday')}</td>
+                    <td>{translate('organicWaste')}</td>
+                    <td>38 {translate('kg')}</td>
+                    <td><Badge bg="success">{translate('collected')}</Badge></td>
+                    <td>{translate('completed')}</td>
                   </tr>
                   <tr>
-                    <td>2 days ago</td>
-                    <td>Market Waste</td>
-                    <td>52 kg</td>
-                    <td><Badge bg="warning">Pending</Badge></td>
-                    <td>Scheduled</td>
+                    <td>2 {translate('daysAgo')}</td>
+                    <td>{translate('marketWaste')}</td>
+                    <td>52 {translate('kg')}</td>
+                    <td><Badge bg="warning">{translate('pending')}</Badge></td>
+                    <td>{translate('scheduled')}</td>
                   </tr>
                 </tbody>
               </Table>
@@ -219,7 +219,7 @@ function SupplierDashboard() {
                 style={{ borderRadius: "8px" }}
               >
                 <i className="nc-ico nc-plnet me-2"></i>
-                Log New Waste Entry
+                {translate('addNewEntry')}
               </Button>
             </Card.Body>
           </Card>
@@ -232,10 +232,10 @@ function SupplierDashboard() {
           
           <Card style={{ borderRadius: "12px", border: "1px solid #e5e7eb", marginBottom: "1rem" }}>
             <Card.Body>
-              <h6 className="mb-3">Monthly Progress</h6>
+              <h6 className="mb-3">{translate('monthlyProgress')}</h6>
               <div className="mb-3">
                 <div className="d-flex justify-content-between mb-2">
-                  <span className="text-sm">Target: 500 kg</span>
+                  <span className="text-sm">{translate('target')}: 500 {translate('kg')}</span>
                   <span className="text-sm">{((stats.monthlyWaste / 500) * 100).toFixed(0)}%</span>
                 </div>
                 <ProgressBar 
@@ -245,28 +245,28 @@ function SupplierDashboard() {
                 />
               </div>
               <small className="text-muted">
-                {(500 - stats.monthlyWaste).toFixed(0)} kg remaining to reach monthly target
+                {(500 - stats.monthlyWaste).toFixed(0)} {translate('kg')} {translate('remaining')}
               </small>
             </Card.Body>
           </Card>
 
           <Card style={{ borderRadius: "12px", border: "1px solid #e5e7eb" }}>
             <Card.Body>
-              <h6 className="mb-3">Quick Actions</h6>
+              <h6 className="mb-3">{translate('quickActions')}</h6>
               <div className="d-grid gap-2">
                 <Button 
                   variant="success"
                   onClick={() => history.push('/admin/organic-waste-logging')}
                   style={{ backgroundColor: '#25805a', border: 'none', borderRadius: '8px', fontWeight: '600' }}
                 >
-                  New Entry
+                  {translate('newEntry')}
                 </Button>
                 <Button 
                   variant="success"
                   onClick={() => history.push('/admin/messages')}
                   style={{ backgroundColor: '#25805a', border: 'none', borderRadius: '8px', fontWeight: '600' }}
                 >
-                  Messages
+                  {translate('messages')}
                 </Button>
               </div>
             </Card.Body>

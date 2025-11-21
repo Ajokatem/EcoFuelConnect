@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import axios from 'axios';
+import { useLanguage } from '../contexts/LanguageContext';
 
 const BiogasChatbot = ({ show, onHide }) => {
+  const { translate } = useLanguage();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -122,10 +124,10 @@ const BiogasChatbot = ({ show, onHide }) => {
       <Modal.Header closeButton style={{ backgroundColor: '#f8fafc', border: 'none' }}>
         <div>
           <div style={{ fontSize: '18px', fontWeight: '700', color: '#25805a', marginBottom: '4px' }}>
-             Biogas Assistant
+             {translate('chatbot')}
           </div>
           <div style={{ fontSize: '13px', color: '#666' }}>
-            Ask me anything about biogas production
+            {translate('howCanIHelp')}
           </div>
         </div>
       </Modal.Header>
@@ -216,7 +218,7 @@ const BiogasChatbot = ({ show, onHide }) => {
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <Form.Control
             type="text"
-            placeholder="Type your question here..."
+            placeholder={translate('askQuestion')}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSend()}
@@ -240,7 +242,7 @@ const BiogasChatbot = ({ show, onHide }) => {
               minWidth: '80px'
             }}
           >
-            {loading ? '...' : 'Send'}
+            {loading ? '...' : translate('send')}
           </Button>
         </div>
       </Modal.Body>
