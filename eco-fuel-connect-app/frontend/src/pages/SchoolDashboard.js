@@ -27,6 +27,7 @@ function SchoolDashboard() {
     carbonOffset: 0,
     studentsBenefited: 0,
   });
+  const [recentActivity, setRecentActivity] = useState([]);
 
   const fetchDashboardData = async () => {
     try {
@@ -47,9 +48,22 @@ function SchoolDashboard() {
     }
   };
 
+  const fetchRecentActivity = async () => {
+    try {
+      const response = await dashboardService.getRecentActivities(5);
+      setRecentActivity(response.activities || []);
+    } catch (error) {
+      console.error("Error fetching recent activity:", error);
+    }
+  };
+
   useEffect(() => {
     fetchDashboardData();
-    const intervalId = setInterval(fetchDashboardData, 30000);
+    fetchRecentActivity();
+    const intervalId = setInterval(() => {
+      fetchDashboardData();
+      fetchRecentActivity();
+    }, 30000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -177,47 +191,58 @@ function SchoolDashboard() {
           <Card style={{ borderRadius: "12px", border: "1px solid #e5e7eb" }}>
             <Card.Body>
               <h5 className="mb-4">Recent Fuel Requests</h5>
-              <Table hover responsive>
-                <thead>
-                  <tr>
-                    <th>Request ID</th>
-                    <th>Date</th>
-                    <th>Quantity</th>
-                    <th>Status</th>
-                    <th>Delivery</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>#FR-2024-001</td>
-                    <td>Today</td>
-                    <td>50 m³</td>
-                    <td><Badge bg="success">Approved</Badge></td>
-                    <td>Tomorrow</td>
-                  </tr>
-                  <tr>
-                    <td>#FR-2024-002</td>
-                    <td>Yesterday</td>
-                    <td>45 m³</td>
-                    <td><Badge bg="warning">Pending</Badge></td>
-                    <td>TBD</td>
-                  </tr>
-                  <tr>
-                    <td>#FR-2024-003</td>
-                    <td>2 days ago</td>
-                    <td>60 m³</td>
-                    <td><Badge bg="info">Delivered</Badge></td>
-                    <td>Completed</td>
-                  </tr>
-                  <tr>
-                    <td>#FR-2024-004</td>
-                    <td>3 days ago</td>
-                    <td>55 m³</td>
-                    <td><Badge bg="info">Delivered</Badge></td>
-                    <td>Completed</td>
-                  </tr>
-                </tbody>
-              </Table>
+              {recentActivity.length > 0 ? (
+                <Table hover responsive>
+                  <thead>
+                    <tr>
+                      <th>Request ID</th>
+                      <th>Date</th>
+                      <th>Quantity</th>
+                      <th>Status</th>
+                      <th>Delivery</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentActivity.map((activity) => {
+                      const activityDate = new Date(activity.date);
+                      const now = new Date();
+                      const diffMs = now - activityDate;
+                      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                      const diffDays = Math.floor(diffHours / 24);
+                      
+                      let timeAgo;
+                      if (diffHours < 1) timeAgo = 'Just now';
+                      else if (diffHours < 24) timeAgo = `${diffHours}h ago`;
+                      else if (diffDays === 1) timeAgo = 'Yesterday';
+                      else if (diffDays < 7) timeAgo = `${diffDays}d ago`;
+                      else timeAgo = activityDate.toLocaleDateString();
+
+                      return (
+                        <tr key={activity.id}>
+                          <td>{activity.requestId || `#${activity.id}`}</td>
+                          <td>{timeAgo}</td>
+                          <td>{activity.quantity} m³</td>
+                          <td>
+                            <Badge bg={
+                              activity.status === 'delivered' ? 'info' :
+                              activity.status === 'approved' ? 'success' :
+                              activity.status === 'pending' ? 'warning' : 'secondary'
+                            }>
+                              {activity.status}
+                            </Badge>
+                          </td>
+                          <td>
+                            {activity.status === 'delivered' ? 'Completed' :
+                             activity.deliveryDate ? new Date(activity.deliveryDate).toLocaleDateString() : 'TBD'}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </Table>
+              ) : (
+                <p className="text-muted text-center py-4">No recent fuel requests in the last 30 days</p>
+              )}
               <Button 
                 variant="success" 
                 className="w-100 mt-3"

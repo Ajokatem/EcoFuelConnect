@@ -291,48 +291,73 @@ async function getDashboardStats(req, res, userRole) {
 router.get('/recent-activity', auth, async (req, res) => {
   try {
     const { limit = 10 } = req.query;
-    const { Op } = require('sequelize');
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
-    // Get recent waste entries
-    const recentWaste = await WasteEntry.findAll({
-      order: [['createdAt', 'DESC']],
-      limit: Math.floor(limit / 2),
-      include: [
-        { model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName'] }
-      ],
-      attributes: ['id', 'wasteType', 'quantity', 'status', 'createdAt']
-    });
+    let activities = [];
 
-    // Get recent fuel requests
-    const recentFuel = await FuelRequest.findAll({
-      order: [['createdAt', 'DESC']],
-      limit: Math.floor(limit / 2),
-      include: [
-        { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'] }
-      ],
-      attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt']
-    });
+    if (userRole === 'school') {
+      // Schools see their fuel requests from last 30 days
+      const { Op } = require('sequelize');
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    // Combine and sort activities
-    const activities = [
-      ...recentWaste.map(entry => ({
-        id: entry.id,
-        type: 'waste_entry',
-        title: `Waste Entry: ${entry.wasteType || 'Unknown'}`,
-        description: `${entry.quantity || 0} kg logged by ${entry.supplier?.firstName || 'User'}`,
-        status: entry.status || 'pending',
-        timestamp: entry.createdAt
-      })),
-      ...recentFuel.map(request => ({
+      const recentFuel = await FuelRequest.findAll({
+        where: {
+          schoolId: userId,
+          createdAt: { [Op.gte]: thirtyDaysAgo }
+        },
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit),
+        attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'quantityDelivered', 'status', 'deliveryDate', 'createdAt']
+      });
+
+      activities = recentFuel.map(request => ({
         id: request.id,
+        requestId: request.requestId,
         type: 'fuel_request',
-        title: `Fuel Request: ${request.fuelType || 'Biogas'}`,
-        description: `${request.quantityRequested || 0} units by ${request.school?.firstName || 'School'}`,
+        fuelType: request.fuelType || 'Biogas',
+        quantity: request.quantityRequested || 0,
+        quantityDelivered: request.quantityDelivered || 0,
         status: request.status || 'pending',
-        timestamp: request.createdAt
-      }))
-    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
-     .slice(0, limit);
+        deliveryDate: request.deliveryDate,
+        date: request.createdAt
+      }));
+    } else {
+      // Other roles see combined activity
+      const recentWaste = await WasteEntry.findAll({
+        order: [['createdAt', 'DESC']],
+        limit: Math.floor(limit / 2),
+        include: [{ model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName'] }],
+        attributes: ['id', 'wasteType', 'quantity', 'status', 'createdAt']
+      });
+
+      const recentFuel = await FuelRequest.findAll({
+        order: [['createdAt', 'DESC']],
+        limit: Math.floor(limit / 2),
+        include: [{ model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'] }],
+        attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt']
+      });
+
+      activities = [
+        ...recentWaste.map(entry => ({
+          id: entry.id,
+          type: 'waste_entry',
+          title: `Waste Entry: ${entry.wasteType || 'Unknown'}`,
+          description: `${entry.quantity || 0} kg logged by ${entry.supplier?.firstName || 'User'}`,
+          status: entry.status || 'pending',
+          timestamp: entry.createdAt
+        })),
+        ...recentFuel.map(request => ({
+          id: request.id,
+          type: 'fuel_request',
+          title: `Fuel Request: ${request.fuelType || 'Biogas'}`,
+          description: `${request.quantityRequested || 0} units by ${request.school?.firstName || 'School'}`,
+          status: request.status || 'pending',
+          timestamp: request.createdAt
+        }))
+      ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, limit);
+    }
 
     res.json({
       message: 'Recent activity retrieved successfully',
@@ -342,9 +367,7 @@ router.get('/recent-activity', auth, async (req, res) => {
 
   } catch (error) {
     console.error('Recent activity error:', error);
-    res.status(500).json({
-      message: 'Error retrieving recent activity'
-    });
+    res.status(500).json({ message: 'Error retrieving recent activity' });
   }
 });
 
