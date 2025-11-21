@@ -324,7 +324,12 @@ const server = http.createServer(app);
 
 const io = require('socket.io')(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (origin.includes('localhost')) return callback(null, true);
+      if (origin.endsWith('.vercel.app')) return callback(null, true);
+      callback(null, true);
+    },
     credentials: true
   },
   maxHttpBufferSize: 1e6,
