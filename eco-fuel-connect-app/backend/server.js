@@ -109,16 +109,12 @@ connectDB()
     try {
       const { sequelize } = require('./config/database');
       
-      console.log('Running database migration...');
-      const { fixDatabaseTables } = require('./migrations/fix-database-tables');
-      await fixDatabaseTables();
-      
-      await sequelize.sync({ force: false, alter: false });
-      console.log('Database tables synced successfully');
-      
       const { defineAssociations } = require('./models/associations');
       defineAssociations();
       console.log('Model associations defined');
+      
+      await sequelize.sync({ force: false, alter: false });
+      console.log('Database tables synced successfully');
     } catch (err) {
       console.error('Database sync error:', err.message);
       console.log('App will continue but some features may not work');
