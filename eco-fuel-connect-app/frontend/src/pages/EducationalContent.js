@@ -314,14 +314,9 @@ function EducationalContent() {
                       </div>
                       <h5 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#2F4F4F", marginBottom: "8px" }}>{video.title}</h5>
                       <p style={{ fontSize: "0.9rem", color: "#666", marginBottom: "8px" }}>{video.description}</p>
-                      <div style={{ backgroundColor: "#e3f2fd", padding: "12px", borderRadius: "8px", fontSize: "0.85rem", color: "#1976d2" }}>
-                        <strong>📝 How to enable Arabic subtitles:</strong>
-                        <ol style={{ margin: "8px 0 0 0", paddingLeft: "20px" }}>
-                          <li>Click the CC (Closed Captions) button at the bottom of the video</li>
-                          <li>Click the Settings (gear) icon</li>
-                          <li>Select "Subtitles/CC" → "Auto-translate"</li>
-                          <li>Choose "Arabic" from the language list</li>
-                        </ol>
+                      <div style={{ backgroundColor: "#e3f2fd", padding: "8px 12px", borderRadius: "6px", fontSize: "0.85rem", color: "#1976d2", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span>🇦🇷</span>
+                        <span>Click CC button → Settings → Subtitles → Auto-translate → Arabic</span>
                       </div>
                     </Card.Body>
                   </Card>
