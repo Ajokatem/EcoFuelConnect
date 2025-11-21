@@ -18,6 +18,7 @@ app.set('trust proxy', 1); // Trust proxy for correct IP detection behind proxie
 // Log environment for debugging
 console.log('🔧 Environment:', process.env.NODE_ENV);
 console.log('🌐 Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:3000');
+console.log('📦 Server Version: 1.0.1 - Coin Rewards Fixed');
 
 // ----- Performance Optimizations -----
 app.use(compression()); // Enable gzip compression
