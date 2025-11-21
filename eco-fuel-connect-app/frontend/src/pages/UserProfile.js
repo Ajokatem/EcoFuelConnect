@@ -38,8 +38,10 @@ function UserProfile() {
         role: user.role || '',
         bio: user.bio || ''
       });
-      setProfilePhoto(user.profilePhoto || require("../assets/img/default-avatar.png"));
-      setCoverPhoto(user.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
+      const savedProfile = localStorage.getItem(`profilePhoto_${user.id}`);
+      const savedCover = localStorage.getItem(`coverPhoto_${user.id}`);
+      setProfilePhoto(savedProfile || user.profilePhoto || require("../assets/img/default-avatar.png"));
+      setCoverPhoto(savedCover || user.coverPhoto || require("../assets/img/aboutaspageimg.jpg"));
     }
   }, [user]);
 
@@ -50,43 +52,27 @@ function UserProfile() {
     }));
   };
 
-  const handlePhotoChange = async (event) => {
+  const handlePhotoChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         const photoData = e.target.result;
         setProfilePhoto(photoData);
-        
-        try {
-          await api.put('/users/profile', { profilePhoto: photoData });
-          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-          currentUser.profilePhoto = photoData;
-          localStorage.setItem('user', JSON.stringify(currentUser));
-        } catch (error) {
-          console.error('Failed to update profile photo:', error);
-        }
+        localStorage.setItem(`profilePhoto_${user.id}`, photoData);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCoverPhotoChange = async (event) => {
+  const handleCoverPhotoChange = (event) => {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = async (e) => {
+      reader.onload = (e) => {
         const coverData = e.target.result;
         setCoverPhoto(coverData);
-        
-        try {
-          await api.put('/users/profile', { coverPhoto: coverData });
-          const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-          currentUser.coverPhoto = coverData;
-          localStorage.setItem('user', JSON.stringify(currentUser));
-        } catch (error) {
-          console.error('Failed to update cover photo:', error);
-        }
+        localStorage.setItem(`coverPhoto_${user.id}`, coverData);
       };
       reader.readAsDataURL(file);
     }
