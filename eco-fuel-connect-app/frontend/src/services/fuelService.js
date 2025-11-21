@@ -7,12 +7,18 @@ class FuelService {
       const queryString = new URLSearchParams(params).toString();
       const url = queryString ? `/fuel-requests?${queryString}` : '/fuel-requests';
       const response = await api.get(url);
+      console.log('getFuelRequests response:', response.data);
+      
       // Handle both formats: direct array or object with requests property
       if (Array.isArray(response.data)) {
+        return { requests: response.data };
+      }
+      if (response.data.requests) {
         return response.data;
       }
-      return response.data.requests || [];
+      return { requests: [] };
     } catch (error) {
+      console.error('getFuelRequests error:', error);
       throw error.response?.data || { message: 'Failed to fetch fuel requests' };
     }
   }

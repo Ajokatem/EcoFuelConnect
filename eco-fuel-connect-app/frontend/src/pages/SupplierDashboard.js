@@ -32,19 +32,28 @@ function SupplierDashboard() {
   const fetchDashboardData = async () => {
     try {
       const response = await dashboardService.getDashboardStats();
+      console.log('Supplier dashboard response:', response);
+      
       const data = response.stats || response;
+      console.log('Supplier dashboard stats:', data);
+      
       setStats({
         totalWasteSupplied: data.totalWasteSupplied || data.userWasteContribution || 0,
         monthlyWaste: data.monthlyWaste || 0,
         weeklyWaste: data.weeklyWaste || 0,
         totalEntries: data.wasteEntriesCount || 0,
-        pendingPickups: Math.floor(Math.random() * 5),
+        pendingPickups: data.pendingPickups || 0,
         completedPickups: data.wasteEntriesCount || 0,
         earnings: data.earnings || 0,
         carbonImpact: data.carbonImpact || 0,
+        totalCoins: data.totalCoins || 0,
+        lifetimeCoins: data.lifetimeCoins || 0,
+        cashValue: data.cashValue || '0.00',
+        recentEntries: data.recentEntries || []
       });
     } catch (error) {
       console.error("Error fetching supplier dashboard data:", error);
+      console.error("Error details:", error.response?.data);
     }
   };
 
@@ -189,27 +198,27 @@ function SupplierDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>{translate('today')}</td>
-                    <td>{translate('foodWaste')}</td>
-                    <td>45 {translate('kg')}</td>
-                    <td><Badge bg="success">{translate('collected')}</Badge></td>
-                    <td>{translate('completed')}</td>
-                  </tr>
-                  <tr>
-                    <td>{translate('yesterday')}</td>
-                    <td>{translate('organicWaste')}</td>
-                    <td>38 {translate('kg')}</td>
-                    <td><Badge bg="success">{translate('collected')}</Badge></td>
-                    <td>{translate('completed')}</td>
-                  </tr>
-                  <tr>
-                    <td>2 {translate('daysAgo')}</td>
-                    <td>{translate('marketWaste')}</td>
-                    <td>52 {translate('kg')}</td>
-                    <td><Badge bg="warning">{translate('pending')}</Badge></td>
-                    <td>{translate('scheduled')}</td>
-                  </tr>
+                  {stats.recentEntries && stats.recentEntries.length > 0 ? (
+                    stats.recentEntries.map((entry, idx) => (
+                      <tr key={idx}>
+                        <td>{new Date(entry.date).toLocaleDateString()}</td>
+                        <td>{entry.wasteType}</td>
+                        <td>{entry.quantity} {translate('kg')}</td>
+                        <td>
+                          <Badge bg={entry.status === 'confirmed' ? 'success' : entry.status === 'pending' ? 'warning' : 'secondary'}>
+                            {translate(entry.status)}
+                          </Badge>
+                        </td>
+                        <td>{translate(entry.pickupStatus || 'scheduled')}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center text-muted py-4">
+                        No recent activity. Start logging waste to see your entries here.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </Table>
               <Button 

@@ -31,15 +31,53 @@ function Dashboard() {
     schoolsServed: 0,
     wasteSuppliers: 0,
     monthlyTarget: 0,
+    weeklyActivity: [],
+    schoolPerformance: [],
+    topSuppliers: []
+  });
+  const [wasteBySource, setWasteBySource] = useState({
+    markets: 60,
+    restaurants: 30,
+    households: 10
   });
 
   // Fetch dashboard analytics from backend API
   const fetchDashboardData = async () => {
     try {
-      const data = await dashboardService.getDashboardStats();
-      setStats(data);
+      const response = await dashboardService.getDashboardStats();
+      console.log('Dashboard response:', response);
+      
+      // Extract stats from response
+      const data = response.stats || response;
+      console.log('Dashboard stats:', data);
+      console.log('School Performance:', data.schoolPerformance);
+      console.log('Top Suppliers:', data.topSuppliers);
+      console.log('Weekly Activity:', data.weeklyActivity);
+      
+      setStats({
+        ...data,
+        weeklyActivity: data.weeklyActivity || [],
+        schoolPerformance: data.schoolPerformance || [],
+        topSuppliers: data.topSuppliers || []
+      });
+      
+      // Calculate waste by source from real data
+      if (data.wasteBySource) {
+        setWasteBySource(data.wasteBySource);
+      } else {
+        // Calculate from waste entries if available
+        const total = (data.marketsWaste || 0) + (data.restaurantsWaste || 0) + (data.householdsWaste || 0);
+        if (total > 0) {
+          setWasteBySource({
+            markets: Math.round((data.marketsWaste / total) * 100),
+            restaurants: Math.round((data.restaurantsWaste / total) * 100),
+            households: Math.round((data.householdsWaste / total) * 100)
+          });
+        }
+      }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+      console.error("Error details:", error.response?.data);
     }
   };
 
@@ -75,7 +113,7 @@ function Dashboard() {
                 <div>
                   <h6 className="text-white-50 mb-2">{translate("biogasProduced")}</h6>
                   <h2 className="mb-1" style={{ fontSize: "2.5rem", fontWeight: "600" }}>
-                    {stats.biogasProduced} m3
+                    {Math.round(stats.biogasProduced * 10) / 10} m³
                   </h2>
                   <div className="d-flex align-items-center">
                     <span className="text-white-50 me-2">{translate("overview")}</span>
@@ -112,22 +150,28 @@ function Dashboard() {
                 </div>
               </div>
               
-              {/* Mini Chart Simulation */}
+              {/* Weekly Trend Chart */}
               <div style={{ height: "120px", position: "relative" }}>
-                <svg width="100%" height="120" style={{ overflow: "visible" }}>
-                  <polyline
-                    points="20,80 120,70 220,75 320,50 420,45 520,60 620,40"
-                    fill="none"
-                    stroke="rgba(255,255,255,0.8)"
-                    strokeWidth="3"
-                  />
-                  {[20, 120, 220, 320, 420, 520, 620].map((x, i) => (
-                    <circle key={i} cx={x} cy={[80, 70, 75, 50, 45, 60, 40][i]} r="4" fill="white" />
-                  ))}
-                </svg>
-                <div className="d-flex justify-content-between text-white-50 text-xs mt-2">
-                  <span>{translate("mon") || "Mon"}</span><span>{translate("tue") || "Tue"}</span><span>{translate("wed") || "Wed"}</span><span>{translate("thu") || "Thu"}</span><span>{translate("fri") || "Fri"}</span><span>{translate("sat") || "Sat"}</span><span>{translate("sun") || "Sun"}</span>
-                </div>
+                {stats.weeklyActivity && stats.weeklyActivity.length > 0 ? (
+                  <>
+                    <svg width="100%" height="120" style={{ overflow: "visible" }}>
+                      <polyline
+                        points={stats.weeklyActivity.map((val, i) => `${i * 100 + 20},${120 - val}`).join(' ')}
+                        fill="none"
+                        stroke="rgba(255,255,255,0.8)"
+                        strokeWidth="3"
+                      />
+                      {stats.weeklyActivity.map((val, i) => (
+                        <circle key={i} cx={i * 100 + 20} cy={120 - val} r="4" fill="white" />
+                      ))}
+                    </svg>
+                    <div className="d-flex justify-content-between text-white-50 text-xs mt-2">
+                      <span>{translate("mon") || "Mon"}</span><span>{translate("tue") || "Tue"}</span><span>{translate("wed") || "Wed"}</span><span>{translate("thu") || "Thu"}</span><span>{translate("fri") || "Fri"}</span><span>{translate("sat") || "Sat"}</span><span>{translate("sun") || "Sun"}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-white-50 py-4">No weekly data available</div>
+                )}
               </div>
             </Card.Body>
           </Card>
@@ -139,22 +183,28 @@ function Dashboard() {
             <Card.Body>
               <h6 className="text-muted mb-3">Weekly Activity</h6>
               <div style={{ height: "180px" }}>
-                <svg width="100%" height="180">
-                  {[45, 52, 48, 61, 70, 65, 58].map((height, i) => (
-                    <rect
-                      key={i}
-                      x={i * 35 + 10}
-                      y={180 - height * 2}
-                      width="25"
-                      height={height * 2}
-                      fill={i === 4 ? "#10b981" : "#d1fae5"}
-                      rx="4"
-                    />
-                  ))}
-                </svg>
-                <div className="d-flex justify-content-between text-xs text-muted mt-2">
-                  <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
-                </div>
+                {stats.weeklyActivity && stats.weeklyActivity.length > 0 ? (
+                  <>
+                    <svg width="100%" height="180">
+                      {stats.weeklyActivity.map((height, i) => (
+                        <rect
+                          key={i}
+                          x={i * 35 + 10}
+                          y={180 - height}
+                          width="25"
+                          height={height}
+                          fill={height === Math.max(...stats.weeklyActivity) ? "#10b981" : "#d1fae5"}
+                          rx="4"
+                        />
+                      ))}
+                    </svg>
+                    <div className="d-flex justify-content-between text-xs text-muted mt-2">
+                      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-muted py-5">No activity data available</div>
+                )}
               </div>
             </Card.Body>
           </Card>
@@ -182,10 +232,14 @@ function Dashboard() {
                 <span className="text-muted">Oct 1 - Nov 1, </span>
                 <span className="text-success ms-1">Worldwide</span>
               </div>
-              <div className="d-flex align-items-center mt-2">
-                <span className="text-success me-1">↗ 18.2%</span>
-                <span className="text-muted text-sm">Since last month</span>
-              </div>
+              {stats.schoolsGrowth && (
+                <div className="d-flex align-items-center mt-2">
+                  <span className={stats.schoolsGrowth >= 0 ? "text-success me-1" : "text-danger me-1"}>
+                    {stats.schoolsGrowth >= 0 ? '↗' : '↘'} {Math.abs(stats.schoolsGrowth).toFixed(1)}%
+                  </span>
+                  <span className="text-muted text-sm">Since last month</span>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -209,10 +263,14 @@ function Dashboard() {
                 <span className="text-muted">Oct 1 - Nov 1, </span>
                 <span className="text-success ms-1">Worldwide</span>
               </div>
-              <div className="d-flex align-items-center mt-2">
-                <span className="text-success me-1">↗ 28.4%</span>
-                <span className="text-muted text-sm">Since last month</span>
-              </div>
+              {stats.revenueGrowth && (
+                <div className="d-flex align-items-center mt-2">
+                  <span className={stats.revenueGrowth >= 0 ? "text-success me-1" : "text-danger me-1"}>
+                    {stats.revenueGrowth >= 0 ? '↗' : '↘'} {Math.abs(stats.revenueGrowth).toFixed(1)}%
+                  </span>
+                  <span className="text-muted text-sm">Since last month</span>
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -224,24 +282,56 @@ function Dashboard() {
               <div className="d-flex align-items-center justify-content-center mb-3">
                 <div style={{ position: "relative", width: "120px", height: "120px" }}>
                   <svg width="120" height="120" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="50" fill="#10b981" />
-                    <circle cx="60" cy="60" r="50" fill="#3b82f6" strokeDasharray="90 283" strokeDashoffset="25" transform="rotate(-90 60 60)" />
-                    <circle cx="60" cy="60" r="50" fill="#06b6d4" strokeDasharray="32 283" strokeDashoffset="-65" transform="rotate(-90 60 60)" />
+                    {/* Markets segment */}
+                    <circle 
+                      cx="60" 
+                      cy="60" 
+                      r="50" 
+                      fill="none"
+                      stroke="#3b82f6" 
+                      strokeWidth="50"
+                      strokeDasharray={`${(wasteBySource.markets / 100) * 314} 314`}
+                      transform="rotate(-90 60 60)"
+                    />
+                    {/* Restaurants segment */}
+                    <circle 
+                      cx="60" 
+                      cy="60" 
+                      r="50" 
+                      fill="none"
+                      stroke="#06b6d4" 
+                      strokeWidth="50"
+                      strokeDasharray={`${(wasteBySource.restaurants / 100) * 314} 314`}
+                      strokeDashoffset={`-${(wasteBySource.markets / 100) * 314}`}
+                      transform="rotate(-90 60 60)"
+                    />
+                    {/* Households segment */}
+                    <circle 
+                      cx="60" 
+                      cy="60" 
+                      r="50" 
+                      fill="none"
+                      stroke="#10b981" 
+                      strokeWidth="50"
+                      strokeDasharray={`${(wasteBySource.households / 100) * 314} 314`}
+                      strokeDashoffset={`-${((wasteBySource.markets + wasteBySource.restaurants) / 100) * 314}`}
+                      transform="rotate(-90 60 60)"
+                    />
                   </svg>
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="d-flex align-items-center">
                   <span className="badge me-2" style={{ backgroundColor: "#dbeafe", color: "#3b82f6" }}>■</span>
-                  <span className="text-sm">Markets 60%</span>
+                  <span className="text-sm">Markets {wasteBySource.markets}%</span>
                 </div>
                 <div className="d-flex align-items-center">
                   <span className="badge me-2" style={{ backgroundColor: "#f0f9ff", color: "#0ea5e9" }}>■</span>
-                  <span className="text-sm">Restaurants 30%</span>
+                  <span className="text-sm">Restaurants {wasteBySource.restaurants}%</span>
                 </div>
                 <div className="d-flex align-items-center">
                   <span className="badge me-2" style={{ backgroundColor: "#dcfce7", color: "#16a34a" }}>■</span>
-                  <span className="text-sm">Households 10%</span>
+                  <span className="text-sm">Households {wasteBySource.households}%</span>
                 </div>
               </div>
             </Card.Body>
@@ -264,30 +354,26 @@ function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td>/schools/Promised-land-Secondary</td>
-                    <td>15</td>
-                    <td>SSP 2,450</td>
-                    <td><span className="text-danger">↓ 43.52%</span></td>
-                  </tr>
-                  <tr>
-                    <td>/schools/Juba-academy</td>
-                    <td>12</td>
-                    <td>SSP 1,890</td>
-                    <td><span className="text-danger">↓ 32.35%</span></td>
-                  </tr>
-                  <tr>
-                    <td>/schools/Juba-parents-Scondary</td>
-                    <td>8</td>
-                    <td>SSP 1,240</td>
-                    <td><span className="text-success">↑ 15.78%</span></td>
-                  </tr>
-                  <tr>
-                    <td>/schools/Wau-secondary</td>
-                    <td>3</td>
-                    <td>SSP 450</td>
-                    <td><span className="text-danger">↓ 75.12%</span></td>
-                  </tr>
+                  {stats.schoolPerformance && stats.schoolPerformance.length > 0 ? (
+                    stats.schoolPerformance.map((school, idx) => (
+                      <tr key={idx}>
+                        <td>{school.name}</td>
+                        <td>{school.deliveries}</td>
+                        <td>SSP {school.revenue.toLocaleString()}</td>
+                        <td>
+                          <span className={school.rate >= 0 ? "text-success" : "text-danger"}>
+                            {school.rate >= 0 ? '↑' : '↓'} {Math.abs(school.rate).toFixed(2)}%
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="text-center text-muted py-4">
+                        No school performance data available
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </Table>
             </Card.Body>
@@ -315,105 +401,47 @@ function Dashboard() {
               </div>
               
               <div className="space-y-3">
-                <div className="d-flex align-items-center">
-                  <div className="rounded-circle me-3" style={{ width: "40px", height: "40px", backgroundColor: "#10b981", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px", fontWeight: "500" }}>
-                    CW
-                  </div>
-                  <div className="flex-grow-1">
-                    <div className="fw-medium">Konyokoyo Market</div>
-                    <div className="text-success d-flex align-items-center">
-                      <span className="badge bg-success me-2" style={{ width: "8px", height: "8px", borderRadius: "50%" }}></span>
-                      Active
+                {stats.topSuppliers && stats.topSuppliers.length > 0 ? (
+                  stats.topSuppliers.map((supplier, idx) => (
+                    <div key={idx} className="d-flex align-items-center mb-3">
+                      <div className="rounded-circle me-3" style={{ 
+                        width: "40px", 
+                        height: "40px", 
+                        backgroundColor: supplier.status === 'active' ? "#10b981" : supplier.status === 'pending' ? "#f59e0b" : "#6b7280", 
+                        display: "flex", 
+                        alignItems: "center", 
+                        justifyContent: "center", 
+                        color: "white", 
+                        fontSize: "14px", 
+                        fontWeight: "500" 
+                      }}>
+                        {supplier.name.substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-grow-1">
+                        <div className="fw-medium">{supplier.name}</div>
+                        <div className={`d-flex align-items-center ${supplier.status === 'active' ? 'text-success' : supplier.status === 'pending' ? 'text-warning' : 'text-muted'}`}>
+                          <span className={`badge me-2 ${supplier.status === 'active' ? 'bg-success' : supplier.status === 'pending' ? 'bg-warning' : 'bg-secondary'}`} style={{ width: "8px", height: "8px", borderRadius: "50%" }}></span>
+                          {supplier.status.charAt(0).toUpperCase() + supplier.status.slice(1)}
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm"
+                        onClick={() => history.push('/admin/messages')}
+                        style={{
+                          backgroundColor: "#28a745",
+                          borderColor: "#28a745",
+                          color: "white",
+                          borderRadius: "20px",
+                          padding: "4px 12px"
+                        }}
+                      >
+                        Message
+                      </Button>
                     </div>
-                  </div>
-                  <Button 
-                    size="sm"
-                    style={{
-                      backgroundColor: "#28a745",
-                      borderColor: "#28a745",
-                      color: "white",
-                      borderRadius: "20px",
-                      padding: "4px 12px"
-                    }}
-                  >
-                    Invite
-                  </Button>
-                </div>
-
-                <div className="d-flex align-items-center">
-                  <div className="rounded-circle me-3" style={{ width: "40px", height: "40px", backgroundColor: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px", fontWeight: "500" }}>
-                    JR
-                  </div>
-                  <div className="flex-grow-1">
-                    <div className="fw-medium">Imperial Plaza Restaurant</div>
-                    <div className="text-warning d-flex align-items-center">
-                      <span className="badge bg-warning me-2" style={{ width: "8px", height: "8px", borderRadius: "50%" }}></span>
-                      Pending
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm"
-                    style={{
-                      backgroundColor: "#28a745",
-                      borderColor: "#28a745",
-                      color: "white",
-                      borderRadius: "20px",
-                      padding: "4px 12px"
-                    }}
-                  >
-                    Message
-                  </Button>
-                </div>
-
-                <div className="d-flex align-items-center">
-                  <div className="rounded-circle me-3" style={{ width: "40px", height: "40px", backgroundColor: "#dc2626", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px", fontWeight: "500" }}>
-                    BG
-                  </div>
-                  <div className="flex-grow-1">
-                    <div className="fw-medium">Gumbo Gardens</div>
-                    <div className="text-muted d-flex align-items-center">
-                      <span className="badge bg-secondary me-2" style={{ width: "8px", height: "8px", borderRadius: "50%" }}></span>
-                      Offline
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm"
-                    style={{
-                      backgroundColor: "#28a745",
-                      borderColor: "#28a745",
-                      color: "white",
-                      borderRadius: "20px",
-                      padding: "4px 12px"
-                    }}
-                  >
-                    Invite
-                  </Button>
-                </div>
-
-                <div className="d-flex align-items-center">
-                  <div className="rounded-circle me-3" style={{ width: "40px", height: "40px", backgroundColor: "#059669", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "14px", fontWeight: "500" }}>
-                    NS
-                  </div>
-                  <div className="flex-grow-1">
-                    <div className="fw-medium">Nimule Suppliers</div>
-                    <div className="text-success d-flex align-items-center">
-                      <span className="badge bg-success me-2" style={{ width: "8px", height: "8px", borderRadius: "50%" }}></span>
-                      Active
-                    </div>
-                  </div>
-                  <Button 
-                    size="sm"
-                    style={{
-                      backgroundColor: "#28a745",
-                      borderColor: "#28a745",
-                      color: "white",
-                      borderRadius: "20px",
-                      padding: "4px 12px"
-                    }}
-                  >
-                    Message
-                  </Button>
-                </div>
+                  ))
+                ) : (
+                  <div className="text-center text-muted py-4">No supplier data available</div>
+                )}
               </div>
             </Card.Body>
           </Card>

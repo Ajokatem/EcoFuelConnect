@@ -57,16 +57,31 @@ function Reports() {
 
   const loadReportData = async () => {
     try {
-      const wasteEntries = await wasteService.getWasteEntries();
-      const fuelRequests = await fuelService.getFuelRequests();
+      console.log('Loading report data...');
+      
+      const wasteResponse = await wasteService.getWasteEntries();
+      console.log('Waste entries response:', wasteResponse);
+      
+      const fuelResponse = await fuelService.getFuelRequests();
+      console.log('Fuel requests response:', fuelResponse);
+      
+      // Extract data from response
+      const wasteEntries = wasteResponse.wasteEntries || wasteResponse.data || wasteResponse || [];
+      const fuelRequests = fuelResponse.requests || fuelResponse.data || fuelResponse || [];
+      
+      console.log('Extracted waste entries:', wasteEntries.length);
+      console.log('Extracted fuel requests:', fuelRequests.length);
+      
       setWasteData(Array.isArray(wasteEntries) ? wasteEntries : []);
       setFuelData(Array.isArray(fuelRequests) ? fuelRequests : []);
       calculateStats(Array.isArray(wasteEntries) ? wasteEntries : [], Array.isArray(fuelRequests) ? fuelRequests : []);
     } catch (error) {
+      console.error('Error loading report data:', error);
+      console.error('Error details:', error.response?.data);
       setWasteData([]);
       setFuelData([]);
     } finally {
-      setTimeout(() => setLoading(false), 1200); // Simulate loading for 1.2s for realism
+      setLoading(false);
     }
   };
 
@@ -107,28 +122,49 @@ function Reports() {
   };
 
   const getMonthlyTrends = () => {
-    const months = [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ];
+    // Return actual monthly trends from backend data
+    if (wasteData.length === 0) return [];
+    
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
     const currentMonth = new Date().getMonth();
-
-    return months.slice(0, currentMonth + 1).map((month, index) => ({
-      month,
-      waste: Math.random() * 100 + 50, // Sample data
-      fuel: Math.random() * 60 + 30,
-      efficiency: Math.random() * 20 + 60,
-    }));
+    const monthlyData = {};
+    
+    // Group waste data by month
+    wasteData.forEach(entry => {
+      try {
+        const dateStr = entry.collectionTimestamp || entry.createdAt || entry.date;
+        if (!dateStr) return;
+        
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return; // Skip invalid dates
+        
+        const monthKey = date.getMonth();
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { waste: 0, fuel: 0, count: 0 };
+        }
+        
+        const quantity = parseFloat(entry.quantity || entry.estimatedWeight || 0);
+        monthlyData[monthKey].waste += quantity;
+        monthlyData[monthKey].fuel += quantity * 0.4; // 40% conversion rate
+        monthlyData[monthKey].count += 1;
+      } catch (e) {
+        console.error('Error processing entry:', e, entry);
+      }
+    });
+    
+    // Create array for current year up to current month
+    return months.slice(0, currentMonth + 1).map((month, index) => {
+      const data = monthlyData[index] || { waste: 0, fuel: 0, count: 0 };
+      const wasteVal = parseFloat(data.waste) || 0;
+      const fuelVal = parseFloat(data.fuel) || 0;
+      const efficiency = wasteVal > 0 ? (fuelVal / wasteVal) * 100 : 0;
+      return {
+        month,
+        waste: wasteVal.toFixed(1),
+        fuel: fuelVal.toFixed(1),
+        efficiency: efficiency.toFixed(1)
+      };
+    });
   };
 
   const getStatusColor = (status) => {
@@ -406,14 +442,14 @@ function Reports() {
                                 {getMonthlyTrends().map((data, index) => (
                                   <tr key={index}>
                                     <td>{data.month}</td>
-                                    <td>{data.waste.toFixed(1)}</td>
-                                    <td>{data.fuel.toFixed(1)}</td>
+                                    <td>{data.waste}</td>
+                                    <td>{data.fuel}</td>
                                     <td>
                                       <div className="d-flex align-items-center">
-                                        {data.efficiency.toFixed(1)}%
+                                        {data.efficiency}%
                                         <ProgressBar
                                           variant="success"
-                                          now={data.efficiency}
+                                          now={parseFloat(data.efficiency)}
                                           className="ms-2"
                                           style={{ width: "100px", height: "8px" }}
                                         />
@@ -488,12 +524,12 @@ function Reports() {
                                   <tr key={entry.id} style={{ borderBottom: "1px solid #f1f3f4" }}>
                                     <td style={{ padding: "15px 12px", verticalAlign: "middle" }}>
                                       <span className="text-muted" style={{ fontSize: "13px" }}>
-                                        {new Date(entry.date).toLocaleDateString()}
+                                        {new Date(entry.collectionTimestamp || entry.createdAt || entry.date).toLocaleDateString()}
                                       </span>
                                     </td>
                                     <td style={{ padding: "15px 12px", verticalAlign: "middle" }}>
                                       <span className="text-capitalize fw-medium" style={{ fontSize: "14px", color: "#495057" }}>
-                                        {entry.type?.replace("_", " ")}
+                                        {(entry.wasteType || entry.type || 'Unknown').replace(/_/g, " ")}
                                       </span>
                                     </td>
                                     <td style={{ padding: "15px 12px", verticalAlign: "middle" }}>
@@ -505,12 +541,12 @@ function Reports() {
                                         fontSize: "12px",
                                         fontWeight: "500"
                                       }}>
-                                        {entry.quantity} kg
+                                        {entry.quantity || entry.estimatedWeight || 0} kg
                                       </span>
                                     </td>
                                     <td style={{ padding: "15px 12px", verticalAlign: "middle" }}>
                                       <span className="text-muted" style={{ fontSize: "13px" }}>
-                                        {entry.location}
+                                        {typeof entry.sourceLocation === 'string' ? entry.sourceLocation : (entry.location || 'N/A')}
                                       </span>
                                     </td>
                                     <td style={{ padding: "15px 12px", verticalAlign: "middle" }}>
@@ -599,16 +635,16 @@ function Reports() {
                                 .map((request) => (
                                   <tr key={request.id}>
                                     <td>
-                                      <code>{request.trackingNumber}</code>
+                                      <code>{request.requestId || request.requestNumber || `REQ-${request.id}`}</code>
                                     </td>
-                                    <td>{new Date(request.dateRequested).toLocaleDateString()}</td>
-                                    <td className="text-capitalize">{request.fuelType?.replace("_", " ")}</td>
-                                    <td>{request.quantity}</td>
+                                    <td>{new Date(request.requestDate || request.createdAt || request.dateRequested).toLocaleDateString()}</td>
+                                    <td className="text-capitalize">{(request.fuelType || 'Biogas').replace(/_/g, " ")}</td>
+                                    <td>{request.quantityRequested || request.quantity || 0}</td>
                                     <td>
-                                      <Badge bg={getStatusColor(request.status)}>{request.status}</Badge>
+                                      <Badge bg={getStatusColor(request.status)}>{request.status || 'pending'}</Badge>
                                     </td>
-                                    <td>${request.estimatedCost}</td>
-                                    <td>{new Date(request.preferredDate).toLocaleDateString()}</td>
+                                    <td>${((request.quantityRequested || request.quantity || 0) * 1.5).toFixed(2)}</td>
+                                    <td>{new Date(request.preferredDeliveryDate || request.preferredDate || request.createdAt).toLocaleDateString()}</td>
                                   </tr>
                                 ))
                             )}
