@@ -108,14 +108,7 @@ function Login() {
 
       // Redirect based on role after success message
       setTimeout(() => {
-        const roleRoutes = {
-          admin: '/admin/dashboard',
-          producer: '/admin/producer-dashboard',
-          supplier: '/admin/supplier-dashboard',
-          school: '/admin/school-dashboard',
-          consumer: '/admin/dashboard'
-        };
-        history.push(roleRoutes[response.user.role] || '/admin/dashboard');
+        history.push('/admin/dashboard');
       }, 1000);
 
     } catch (error) {
@@ -133,14 +126,7 @@ function Login() {
       updateUser(response.user, response.token);
       showSuccessAlert("Google login successful! Redirecting to dashboard...");
       setTimeout(() => {
-        const roleRoutes = {
-          admin: '/admin/dashboard',
-          producer: '/admin/producer-dashboard',
-          supplier: '/admin/supplier-dashboard',
-          school: '/admin/school-dashboard',
-          consumer: '/admin/dashboard'
-        };
-        history.push(roleRoutes[response.user.role] || '/admin/dashboard');
+        history.push('/admin/dashboard');
       }, 1500);
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || "Google login failed. Please try again.";
