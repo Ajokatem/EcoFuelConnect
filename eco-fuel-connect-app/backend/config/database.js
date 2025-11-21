@@ -23,8 +23,8 @@ if (process.env.NODE_ENV === 'production') {
     },
     logging: false,
     define: {
-      freezeTableName: true,
-      underscored: false,
+      freezeTableName: false,
+      underscored: true,
       timestamps: true
     }
   });
