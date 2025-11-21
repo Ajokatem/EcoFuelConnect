@@ -11,13 +11,13 @@ router.get('/chat-users', auth, async (req, res) => {
     const { sequelize } = require('../config/database');
     
     const users = await sequelize.query(`
-      SELECT DISTINCT u.id, u.firstName, u.lastName, u.role, u.organization, u.profilePhoto, u.profileImage,
-        (SELECT COUNT(*) FROM messages WHERE senderId = u.id AND receiverId = ? AND isRead = false) as unreadCount,
-        (SELECT content FROM messages WHERE (senderId = u.id AND receiverId = ?) OR (senderId = ? AND receiverId = u.id) ORDER BY sentAt DESC LIMIT 1) as lastMessage,
-        (SELECT sentAt FROM messages WHERE (senderId = u.id AND receiverId = ?) OR (senderId = ? AND receiverId = u.id) ORDER BY sentAt DESC LIMIT 1) as lastMessageTime
+      SELECT DISTINCT u.id, u."firstName", u."lastName", u.role, u.organization, u."profilePhoto", u."profileImage",
+        (SELECT COUNT(*) FROM messages WHERE "senderId" = u.id AND "receiverId" = ? AND "isRead" = false) as unreadCount,
+        (SELECT content FROM messages WHERE ("senderId" = u.id AND "receiverId" = ?) OR ("senderId" = ? AND "receiverId" = u.id) ORDER BY "sentAt" DESC LIMIT 1) as lastMessage,
+        (SELECT "sentAt" FROM messages WHERE ("senderId" = u.id AND "receiverId" = ?) OR ("senderId" = ? AND "receiverId" = u.id) ORDER BY "sentAt" DESC LIMIT 1) as lastMessageTime
       FROM users u
-      WHERE u.isActive = true AND u.id != ? AND EXISTS (
-        SELECT 1 FROM messages WHERE (senderId = u.id AND receiverId = ?) OR (senderId = ? AND receiverId = u.id)
+      WHERE u."isActive" = true AND u.id != ? AND EXISTS (
+        SELECT 1 FROM messages WHERE ("senderId" = u.id AND "receiverId" = ?) OR ("senderId" = ? AND "receiverId" = u.id)
       )
       ORDER BY COALESCE(lastMessageTime, '1970-01-01') DESC
     `, {
