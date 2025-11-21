@@ -9,6 +9,7 @@ import {
   Button,
 } from "react-bootstrap";
 import { useLanguage } from "../contexts/LanguageContext";
+import api from "../services/api";
 
 function Contact() {
   const { translate } = useLanguage();
@@ -32,33 +33,12 @@ function Contact() {
     setLoading(true);
     setStatus(null);
     try {
-      // Use the backend API URL directly
-      const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-      const res = await fetch(`${apiUrl}/contact`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form)
-      });
-
-      if (!res.ok) {
-        // Handle non-JSON error responses
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await res.json();
-          setStatus(data.error || 'Failed to send message');
-        } else {
-          setStatus('Server error - please try again later');
-        }
-        setLoading(false);
-        return;
-      }
-
-      const data = await res.json();
-      if (data.success) {
+      const res = await api.post('/contact', form);
+      if (res.data.success) {
         setStatus('success');
         setForm({ firstName: '', lastName: '', email: '', subject: '', message: '' });
       } else {
-        setStatus(data.error || 'Failed to send message');
+        setStatus(res.data.error || 'Failed to send message');
       }
     } catch (err) {
       console.error('Contact form error:', err);
