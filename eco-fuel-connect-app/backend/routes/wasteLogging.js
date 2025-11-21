@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const WasteEntry = require('../models/WasteEntry');
-const User = require('../models/User');
+const { WasteEntry, User } = require('../models/index');
 const { auth, managerOrAdmin } = require('../middleware/auth');
 const { body, param, query, validationResult } = require('express-validator');
 const helmet = require('helmet');
