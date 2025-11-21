@@ -24,10 +24,11 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
+import { useHistory } from "react-router-dom";
 import api from '../services/api';
 
 function Notifications() {
-
+  const history = useHistory();
   const [notifications, setNotifications] = useState([]);
   const [filter, setFilter] = useState("all");
   const { user } = require("../contexts/UserContext").useUser();
@@ -243,14 +244,7 @@ function Notifications() {
                                 {notification.type === 'message' && notification.relatedId && (
                                   <div className="mt-2">
                                     <Button size="sm" variant="info" onClick={() => {
-                                      const messageMatch = notification.message.match(/^(.+?):/); 
-                                      const senderName = messageMatch ? messageMatch[1].trim() : null;
-                                      
-                                      if (senderName) {
-                                        window.location.href = `/messages?search=${encodeURIComponent(senderName)}`;
-                                      } else {
-                                        window.location.href = `/messages`;
-                                      }
+                                      history.push('/admin/messages');
                                     }}>View Message</Button>
                                   </div>
                                 )}
