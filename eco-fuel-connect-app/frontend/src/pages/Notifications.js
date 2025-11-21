@@ -24,6 +24,7 @@ import {
   Row,
   Col,
 } from "react-bootstrap";
+import api from '../services/api';
 
 function Notifications() {
 
@@ -37,22 +38,10 @@ function Notifications() {
   const fetchNotifications = async () => {
     if (!user) return;
     setLoading(true);
-    let url = "/api/notifications";
-    // If not running with proxy, fallback to absolute backend URL
-    if (window.location.port === "3000") {
-      url = "http://localhost:5000/api/notifications";
-    }
     try {
-      const res = await fetch(url, {
-        credentials: "include",
-      });
-      if (res.ok) {
-        const data = await res.json();
-        console.log("Fetched notifications from API:", data);
-        setNotifications(data);
-      } else {
-        console.log("API response not ok", res.status);
-      }
+      const { data } = await api.get('/notifications');
+      console.log("Fetched notifications from API:", data);
+      setNotifications(data);
     } catch (err) {
       console.error("Error fetching notifications:", err);
     }
@@ -68,11 +57,7 @@ function Notifications() {
   // Mark notification as read (backend + local state)
   const markAsRead = async (id) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
+      await api.post(`/notifications/${id}/read`);
       fetchNotifications();
     } catch (err) {}
   };
@@ -80,10 +65,7 @@ function Notifications() {
   // Delete notification (backend + local state)
   const deleteNotification = async (id) => {
     try {
-      await fetch(`/api/notifications/${id}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
+      await api.delete(`/notifications/${id}`);
       fetchNotifications();
     } catch (err) {}
   };
@@ -204,19 +186,11 @@ function Notifications() {
                                 {user?.role === 'producer' && notification.type === 'waste_entry' && notification.wasteEntryId && notification.message.includes('received') && (
                                   <div className="mt-2" style={{ display: 'flex', gap: '8px' }}>
                                     <Button size="sm" variant="success" onClick={async () => {
-                                      await fetch(`/api/waste-logging/${notification.wasteEntryId}/verify`, {
-                                        method: 'POST', credentials: 'include',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ verified: true })
-                                      });
+                                      await api.post(`/waste-logging/${notification.wasteEntryId}/verify`, { verified: true });
                                       fetchNotifications();
                                     }}>Confirm</Button>
                                     <Button size="sm" variant="danger" onClick={async () => {
-                                      await fetch(`/api/waste-logging/${notification.wasteEntryId}/verify`, {
-                                        method: 'POST', credentials: 'include',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ verified: false, rejectionReason: 'Declined by producer' })
-                                      });
+                                      await api.post(`/waste-logging/${notification.wasteEntryId}/verify`, { verified: false, rejectionReason: 'Declined by producer' });
                                       fetchNotifications();
                                     }}>Reject</Button>
                                   </div>
@@ -225,19 +199,11 @@ function Notifications() {
                                 {user?.role === 'producer' && notification.type === 'fuel_request' && notification.relatedId && notification.message.includes('received') && (
                                   <div className="mt-2" style={{ display: 'flex', gap: '8px' }}>
                                     <Button size="sm" variant="success" onClick={async () => {
-                                      await fetch(`/api/fuel-requests/${notification.relatedId}/approve`, {
-                                        method: 'POST', credentials: 'include',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ approved: true })
-                                      });
+                                      await api.post(`/fuel-requests/${notification.relatedId}/approve`, { approved: true });
                                       fetchNotifications();
                                     }}>Approve</Button>
                                     <Button size="sm" variant="danger" onClick={async () => {
-                                      await fetch(`/api/fuel-requests/${notification.relatedId}/approve`, {
-                                        method: 'POST', credentials: 'include',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ approved: false, rejectionReason: 'Declined by producer' })
-                                      });
+                                      await api.post(`/fuel-requests/${notification.relatedId}/approve`, { approved: false, rejectionReason: 'Declined by producer' });
                                       fetchNotifications();
                                     }}>Reject</Button>
                                   </div>

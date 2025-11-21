@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Modal, Form, Alert, Badge, ListGroup } from 'react-bootstrap';
 import { useUser } from '../contexts/UserContext';
+import api from '../services/api';
 
 function CoinRewards() {
   const { user } = useUser();
@@ -17,9 +18,7 @@ function CoinRewards() {
 
   const fetchCoins = async () => {
     try {
-      const baseURL = window.location.port === '3000' ? 'http://localhost:5000' : '';
-      const res = await fetch(`${baseURL}/api/rewards/coins`, { credentials: 'include' });
-      const data = await res.json();
+      const { data } = await api.get('/rewards/coins');
       if (data.success) {
         setCoins(data.coins);
         setTransactions(data.transactions);
@@ -36,14 +35,10 @@ function CoinRewards() {
     }
 
     try {
-      const baseURL = window.location.port === '3000' ? 'http://localhost:5000' : '';
-      const res = await fetch(`${baseURL}/api/rewards/coins/convert`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ amount: parseInt(convertAmount), paymentMethod })
+      const { data } = await api.post('/rewards/coins/convert', {
+        amount: parseInt(convertAmount),
+        paymentMethod
       });
-      const data = await res.json();
       
       if (data.success) {
         setMessage(`✅ Successfully converted ${convertAmount} coins to $${data.conversion.cash}!`);
