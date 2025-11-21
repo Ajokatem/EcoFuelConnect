@@ -128,7 +128,8 @@ const Transaction = sequelize.define('Transaction', {
     allowNull: true
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  tableName: 'transactions'
 });
 
 // Define associations

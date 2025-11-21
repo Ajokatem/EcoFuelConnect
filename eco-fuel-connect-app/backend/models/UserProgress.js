@@ -41,6 +41,7 @@ UserProgress.init({
 }, {
   sequelize,
   modelName: 'UserProgress',
+  tableName: 'user_progress',
   timestamps: true
 });
 

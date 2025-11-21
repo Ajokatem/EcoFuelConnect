@@ -76,7 +76,8 @@ const Course = sequelize.define('Course', {
     defaultValue: false
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  tableName: 'courses'
 });
 
 module.exports = Course;

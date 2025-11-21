@@ -23,8 +23,6 @@ if (process.env.NODE_ENV === 'production') {
     },
     logging: false,
     define: {
-      freezeTableName: false,
-      underscored: true,
       timestamps: true
     }
   });
@@ -39,8 +37,6 @@ if (process.env.NODE_ENV === 'production') {
       dialect: 'mysql',
       logging: false,
       define: {
-        freezeTableName: true,
-        underscored: false,
         timestamps: true
       }
     }
