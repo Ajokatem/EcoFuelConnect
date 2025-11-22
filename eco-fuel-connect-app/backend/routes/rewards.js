@@ -18,7 +18,7 @@ router.get('/my-rewards', auth, async (req, res) => {
     res.json({
       success: true,
       coins: { total: totalCoins, lifetime: lifetimeCoins, cashValue: (totalCoins * coinValue).toFixed(2) },
-      earnings: { totalEarnings: (lifetimeCoins * coinValue).toFixed(2), paidAmount: paidAmount.toFixed(2), pendingAmount: pendingAmount.toFixed(2) },
+      earnings: { totalEarnings: lifetimeCoins * coinValue, paidAmount: paidAmount, pendingAmount: pendingAmount },
       transactions: transactions.map(t => ({ 
         id: t.id, 
         date: t.createdAt, 
@@ -107,7 +107,7 @@ router.get('/supplier/:supplierId', auth, async (req, res) => {
     res.json({
       success: true,
       earnings: { totalEarnings: (coins[0]?.lifetimeCoins || 0) * coinValue, paidAmount: 0, pendingAmount: 0 },
-      payments: transactions.map(t => ({ id: t.id, wasteDate: t.wasteDate, wasteType: t.wasteType, quantitySupplied: t.quantity, paymentRate: coinValue, totalAmount: Math.abs(t.amount) * coinValue, paymentStatus: 'completed' }))
+      payments: transactions.map(t => ({ id: t.id, wasteDate: t.wasteDate, wasteType: t.wasteType, quantitySupplied: t.quantity, paymentRate: coinValue, totalAmount: Math.abs(t.amount) * coinValue, paymentStatus: 'completed', coinsEarned: Math.abs(t.amount) }))
     });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
