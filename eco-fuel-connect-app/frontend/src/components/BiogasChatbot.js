@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
-import axios from 'axios';
+import chatbotService from '../services/chatbotService';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const BiogasChatbot = ({ show, onHide }) => {
@@ -15,24 +15,11 @@ const BiogasChatbot = ({ show, onHide }) => {
 
   useEffect(() => {
     if (show && messages.length === 0) {
-      // Fetch suggestions first
-      axios.get('/api/chatbot/suggestions')
-        .then(res => {
-          setSuggestions(res.data.suggestions || []);
-          setMessages([{
-            type: 'bot',
-            text: 'Hi! 👋 I\'m your Biogas Assistant. Choose a question below or type your own:',
-            timestamp: new Date()
-          }]);
-        })
-        .catch(() => {
-          setSuggestions([]);
-          setMessages([{
-            type: 'bot',
-            text: 'Hi! 👋 I\'m your Biogas Assistant. Ask me anything about biogas production!',
-            timestamp: new Date()
-          }]);
-        });
+      setMessages([{
+        type: 'bot',
+        text: 'Hi! 👋 I\'m your Biogas Assistant. Ask me anything about biogas production!',
+        timestamp: new Date()
+      }]);
     }
   }, [show, messages.length]);
 
@@ -51,18 +38,11 @@ const BiogasChatbot = ({ show, onHide }) => {
     setLoading(true);
 
     try {
-      // Try API call first
-      const response = await axios.post('/api/chatbot/query', {
-        message: messageText,
-        sessionId,
-        userId: localStorage.getItem('userId')
-      });
-
+      const response = await chatbotService.query(messageText, sessionId, localStorage.getItem('userId'));
       const botMessage = {
         type: 'bot',
-        text: response.data.response || 'I received your question but couldn\'t find a specific answer. Please try rephrasing or ask about biogas production, maintenance, or safety.',
-        timestamp: new Date(),
-        articleId: response.data.relatedArticleId
+        text: response.response || 'I received your question but couldn\'t find a specific answer. Please try rephrasing or ask about biogas production, maintenance, or safety.',
+        timestamp: new Date()
       };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
