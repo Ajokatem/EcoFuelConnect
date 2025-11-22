@@ -2,7 +2,7 @@ const { sequelize } = require('../config/database');
 
 async function awardRetroactiveCoins() {
   try {
-    console.log('🪙 Starting retroactive coin awards...');
+    console.log('Starting retroactive coin awards...');
     
     // Get all waste entries that don't have coin transactions
     const wasteEntries = await sequelize.query(`
@@ -15,10 +15,10 @@ async function awardRetroactiveCoins() {
       ORDER BY we."createdAt" ASC
     `, { type: sequelize.QueryTypes.SELECT });
     
-    console.log(`🪙 Found ${wasteEntries.length} waste entries without coin rewards`);
+    console.log(`Found ${wasteEntries.length} waste entries without coin rewards`);
     
     if (wasteEntries.length === 0) {
-      console.log('✅ No retroactive coins needed');
+      console.log('No retroactive coins needed');
       return;
     }
     
@@ -75,12 +75,12 @@ async function awardRetroactiveCoins() {
         }
       );
       
-      console.log(`✅ Awarded ${coinsEarned} coins to user ${entry.supplierId} for waste entry ${entry.id}`);
+      console.log(`Awarded ${coinsEarned} coins to user ${entry.supplierId} for waste entry ${entry.id}`);
     }
     
-    console.log('✅ Retroactive coin awards completed');
+    console.log('Retroactive coin awards completed');
   } catch (error) {
-    console.error('❌ Retroactive coin award error:', error.message);
+    console.error('Retroactive coin award error:', error.message);
     throw error;
   }
 }

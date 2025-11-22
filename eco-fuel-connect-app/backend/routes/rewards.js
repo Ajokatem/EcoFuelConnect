@@ -4,73 +4,77 @@ const { auth } = require('../middleware/auth');
 const db = require('../config/database').sequelize;
 
 router.get('/my-rewards', auth, async (req, res) => {
-  console.log('🪙 /my-rewards called for user:', req.user.id);
   try {
-    let coins = [], transactions = [], payouts = [];
-    
-    try {
-      coins = await db.query(`SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-      console.log('🪙 Coins query result:', coins);
-    } catch (e) {
-      console.error('🪙 Coins query error:', e.message);
-    }
-    
-    try {
-      transactions = await db.query(`SELECT ct.*, we."wasteType", we.quantity, we.unit, we."createdAt" as wastedate FROM coin_transactions ct LEFT JOIN waste_entries we ON ct."wasteEntryId" = we.id WHERE ct."userId" = ? AND ct.type = 'earned' ORDER BY ct."createdAt" DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-      console.log('🪙 Transactions count:', transactions.length);
-    } catch (e) {
-      console.error('🪙 Transactions query error:', e.message);
-    }
-    
-    try {
-      payouts = await db.query(`SELECT * FROM coin_payouts WHERE "userId" = ? ORDER BY "createdAt" DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-    } catch (e) {}
+    const coins = await db.query(`SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    const transactions = await db.query(`SELECT ct.id, ct.amount, ct.type, ct.description, ct."createdAt", we."wasteType", we.quantity, we.unit FROM coin_transactions ct LEFT JOIN waste_entries we ON ct."wasteEntryId" = we.id WHERE ct."userId" = ? ORDER BY ct."createdAt" DESC LIMIT 50`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    const payouts = await db.query(`SELECT id, coins, "cashAmount", "paymentMethod", status, "processedAt", "createdAt" FROM coin_payouts WHERE "userId" = ? ORDER BY "createdAt" DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
     
     const coinValue = 0.01;
     const totalCoins = coins[0]?.totalCoins || 0;
     const lifetimeCoins = coins[0]?.lifetimeCoins || 0;
-    
-    console.log('🪙 Sending response - Total:', totalCoins, 'Lifetime:', lifetimeCoins);
+    const paidAmount = payouts.filter(p => p.status === 'completed').reduce((sum, p) => sum + parseFloat(p.cashAmount || 0), 0);
+    const pendingAmount = payouts.filter(p => p.status === 'pending').reduce((sum, p) => sum + parseFloat(p.cashAmount || 0), 0);
     
     res.json({
       success: true,
       coins: { total: totalCoins, lifetime: lifetimeCoins, cashValue: (totalCoins * coinValue).toFixed(2) },
-      earnings: { totalEarnings: lifetimeCoins * coinValue, paidAmount: 0, pendingAmount: 0 },
-      payments: transactions.map(t => ({ id: t.id, wasteDate: t.wasteDate, wasteType: t.wasteType, quantitySupplied: t.quantity, paymentRate: coinValue, totalAmount: Math.abs(t.amount) * coinValue, paymentStatus: 'completed', coinsEarned: Math.abs(t.amount) }))
+      earnings: { totalEarnings: (lifetimeCoins * coinValue).toFixed(2), paidAmount: paidAmount.toFixed(2), pendingAmount: pendingAmount.toFixed(2) },
+      transactions: transactions.map(t => ({ 
+        id: t.id, 
+        date: t.createdAt, 
+        wasteType: t.wasteType, 
+        quantity: t.quantity, 
+        unit: t.unit,
+        coinsEarned: Math.abs(t.amount), 
+        cashValue: (Math.abs(t.amount) * coinValue).toFixed(2),
+        type: t.type,
+        description: t.description
+      })),
+      payouts: payouts.map(p => ({
+        id: p.id,
+        coins: p.coins,
+        amount: parseFloat(p.cashAmount).toFixed(2),
+        method: p.paymentMethod,
+        status: p.status,
+        requestedAt: p.createdAt,
+        processedAt: p.processedAt
+      }))
     });
   } catch (error) {
-    console.error('🪙 /my-rewards error:', error.message);
-    res.json({ success: true, coins: { total: 0, lifetime: 0, cashValue: '0.00' }, earnings: { totalEarnings: 0, paidAmount: 0, pendingAmount: 0 }, payments: [] });
+    console.error('Rewards error:', error.message);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
 router.get('/coins', auth, async (req, res) => {
   try {
-    let coins = [], transactions = [];
-    
-    try {
-      coins = await db.query(`SELECT "totalCoins", "lifetimeCoins", "lastEarned" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-    } catch (e) {
-      console.error('Coins query error:', e.message);
-    }
-    
-    try {
-      transactions = await db.query(`SELECT * FROM coin_transactions WHERE "userId" = ? ORDER BY "createdAt" DESC LIMIT 20`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-    } catch (e) {
-      console.error('Transactions query error:', e.message);
-    }
+    const coins = await db.query(`SELECT "totalCoins", "lifetimeCoins", "lastEarned" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    const transactions = await db.query(`SELECT id, amount, type, description, "createdAt" FROM coin_transactions WHERE "userId" = ? ORDER BY "createdAt" DESC LIMIT 20`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
     
     const coinValue = 0.01;
     const totalCoins = coins[0]?.totalCoins || 0;
     
     res.json({
       success: true,
-      coins: { total: totalCoins, lifetime: coins[0]?.lifetimeCoins || 0, cashValue: (totalCoins * coinValue).toFixed(2), coinValue, lastEarned: coins[0]?.lastEarned },
-      transactions: transactions || []
+      coins: { 
+        total: totalCoins, 
+        lifetime: coins[0]?.lifetimeCoins || 0, 
+        cashValue: (totalCoins * coinValue).toFixed(2), 
+        coinValue, 
+        lastEarned: coins[0]?.lastEarned 
+      },
+      transactions: transactions.map(t => ({
+        id: t.id,
+        amount: t.amount,
+        type: t.type,
+        description: t.description,
+        date: t.createdAt,
+        cashValue: (Math.abs(t.amount) * coinValue).toFixed(2)
+      }))
     });
   } catch (error) {
-    console.error('GET /coins error:', error.message);
-    res.json({ success: true, coins: { total: 0, lifetime: 0, cashValue: '0.00' }, transactions: [] });
+    console.error('Coins error:', error.message);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
@@ -112,18 +116,40 @@ router.get('/supplier/:supplierId', auth, async (req, res) => {
 
 router.post('/request-payment', auth, async (req, res) => {
   try {
-    const { paymentMethod, amount } = req.body;
-    const [coins] = await db.query(`SELECT "totalCoins" FROM user_coins WHERE "userId" = ?`, [req.user.id]);
+    const { paymentMethod, paymentDetails, amount } = req.body;
+    
+    if (!paymentMethod) return res.status(400).json({ success: false, message: 'Payment method required' });
+    if (!paymentDetails) return res.status(400).json({ success: false, message: 'Payment details required' });
+    
+    const coins = await db.query(`SELECT "totalCoins" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
     const totalCoins = coins[0]?.totalCoins || 0;
     const requestAmount = amount || totalCoins;
+    const cashAmount = requestAmount * 0.01;
     
-    if (requestAmount < 100) return res.status(400).json({ success: false, message: 'Minimum 100 coins required' });
+    if (cashAmount < 50) return res.status(400).json({ success: false, message: 'Minimum $50 required for payout' });
     if (totalCoins < requestAmount) return res.status(400).json({ success: false, message: 'Insufficient coins' });
     
-    const cashAmount = (requestAmount * 0.01).toFixed(2);
-    await db.query(`INSERT INTO coin_payouts ("userId", coins, "cashAmount", "paymentMethod", status, "createdAt") VALUES (?, ?, ?, ?, 'pending', NOW())`, [req.user.id, requestAmount, cashAmount, paymentMethod || 'mobile_money']);
-    res.json({ success: true, message: 'Payment request submitted', cashAmount });
+    await db.query(`UPDATE user_coins SET "totalCoins" = "totalCoins" - ?, "updatedAt" = NOW() WHERE "userId" = ?`, { replacements: [requestAmount, req.user.id], type: db.QueryTypes.UPDATE });
+    await db.query(`INSERT INTO coin_transactions ("userId", amount, type, description, "createdAt") VALUES (?, ?, 'withdrawal', ?, NOW())`, { replacements: [req.user.id, -requestAmount, `Payment request: $${cashAmount.toFixed(2)}`], type: db.QueryTypes.INSERT });
+    
+    const result = await db.query(`INSERT INTO coin_payouts ("userId", coins, "cashAmount", "paymentMethod", "paymentDetails", status, "createdAt", "updatedAt") VALUES (?, ?, ?, ?, ?, 'pending', NOW(), NOW()) RETURNING id`, { replacements: [req.user.id, requestAmount, cashAmount.toFixed(2), paymentMethod, JSON.stringify(paymentDetails)], type: db.QueryTypes.INSERT });
+    
+    const Notification = require('../models/Notification');
+    const User = require('../models/User');
+    const producers = await User.findAll({ where: { role: 'producer', isActive: true } });
+    for (const producer of producers) {
+      await Notification.create({
+        userId: producer.id,
+        type: 'payment_request',
+        title: 'New Payment Request',
+        message: `Supplier ${req.user.firstName} ${req.user.lastName} requested payout of $${cashAmount.toFixed(2)}`,
+        isRead: false
+      });
+    }
+    
+    res.json({ success: true, message: 'Payment request submitted successfully', payoutId: result[0]?.id, amount: cashAmount.toFixed(2) });
   } catch (error) {
+    console.error('Payment request error:', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -152,8 +178,57 @@ router.get('/debug', auth, async (req, res) => {
   }
 });
 
-router.post('/process-payment', auth, async (req, res) => {
-  res.json({ success: true, message: 'Payment processed' });
+router.get('/pending-payouts', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'producer' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+    
+    const payouts = await db.query(`
+      SELECT cp.id, cp.coins, cp."cashAmount", cp."paymentMethod", cp."paymentDetails", cp.status, cp."createdAt",
+             u.id as "userId", u."firstName", u."lastName", u.email, u.phone, u.organization
+      FROM coin_payouts cp
+      JOIN users u ON cp."userId" = u.id
+      WHERE cp.status = 'pending'
+      ORDER BY cp."createdAt" DESC
+    `, { type: db.QueryTypes.SELECT });
+    
+    res.json({ success: true, payouts });
+  } catch (error) {
+    console.error('Pending payouts error:', error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+router.post('/process-payment/:payoutId', auth, async (req, res) => {
+  try {
+    if (req.user.role !== 'producer' && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Only producers can process payments' });
+    }
+    
+    const { payoutId } = req.params;
+    const { transactionReference, notes } = req.body;
+    
+    const payout = await db.query(`SELECT * FROM coin_payouts WHERE id = ?`, { replacements: [payoutId], type: db.QueryTypes.SELECT });
+    if (!payout[0]) return res.status(404).json({ success: false, message: 'Payout not found' });
+    if (payout[0].status !== 'pending') return res.status(400).json({ success: false, message: 'Payout already processed' });
+    
+    await db.query(`UPDATE coin_payouts SET status = 'completed', "processedAt" = NOW(), "processedBy" = ?, "transactionReference" = ?, notes = ?, "updatedAt" = NOW() WHERE id = ?`, { replacements: [req.user.id, transactionReference, notes, payoutId], type: db.QueryTypes.UPDATE });
+    
+    const Notification = require('../models/Notification');
+    await Notification.create({
+      userId: payout[0].userId,
+      type: 'payment_completed',
+      title: 'Payment Processed',
+      message: `Your payment of $${payout[0].cashAmount} has been processed successfully`,
+      isRead: false
+    });
+    
+    res.json({ success: true, message: 'Payment processed successfully' });
+  } catch (error) {
+    console.error('Process payment error:', error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 module.exports = router;

@@ -1,0 +1,11 @@
+{
+  "name": "ecofuelconnect-performance-test",
+  "version": "1.0.0",
+  "scripts": {
+    "load-test": "node tests/performance/loadTest.js",
+    "performance-check": "npm run load-test"
+  },
+  "devDependencies": {
+    "compression": "^1.7.4"
+  }
+}

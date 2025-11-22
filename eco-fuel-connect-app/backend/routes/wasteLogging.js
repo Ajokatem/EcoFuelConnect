@@ -485,15 +485,14 @@ router.post('/', [
         }
         
         // Notify user about coins earned
-        console.log('Creating coin reward notification for user:', req.user.id);
-        await Notification.create({
+          await Notification.create({
           userId: req.user.id,
           type: 'reward',
           title: 'Coins Earned',
           message: `You earned ${coinsEarned} coins for logging waste! Total balance: ${coinBalance.totalCoins} coins`,
           read: false,
           isRead: false
-        }).then(() => console.log('Coin notification created')).catch(err => console.error('Coin notification error:', err.message));
+        }).catch(err => console.error('Coin notification error:', err.message));
       }
     } catch (coinError) {
       console.log('Coin reward error (tables may not exist):', coinError.message);

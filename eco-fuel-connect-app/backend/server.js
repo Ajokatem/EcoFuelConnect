@@ -16,9 +16,9 @@ const app = express();
 app.set('trust proxy', 1); // Trust proxy for correct IP detection behind proxies/load balancers
 
 // Log environment for debugging
-console.log('🔧 Environment:', process.env.NODE_ENV);
-console.log('🌐 Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:3000');
-console.log('📦 Server Version: 1.0.1 - Coin Rewards Fixed');
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Frontend URL:', process.env.FRONTEND_URL || 'http://localhost:3000');
+console.log('Server Version: 1.0.2 - Payment System & Data Loading Fixed');
 
 // ----- Performance Optimizations -----
 app.use(compression()); // Enable gzip compression
@@ -122,32 +122,42 @@ connectDB()
       
       // Fix coin tables schema first
       try {
-        console.log('\n🔧 Running coin tables schema fix...');
+        console.log('\nRunning coin tables schema fix...');
         const { fixCoinTablesSchema } = require('./migrations/fix-coin-tables-schema');
         await fixCoinTablesSchema();
-        console.log('✅ Coin tables schema fix completed\n');
+        console.log('Coin tables schema fix completed\n');
       } catch (migErr) {
-        console.error('❌ Coin tables schema fix failed:', migErr.message);
+        console.error('Coin tables schema fix failed:', migErr.message);
+      }
+      
+      // Update coin payouts schema
+      try {
+        console.log('\nUpdating coin payouts schema...');
+        const { updateCoinPayoutsSchema } = require('./migrations/update-coin-payouts-schema');
+        await updateCoinPayoutsSchema();
+        console.log('Coin payouts schema updated\n');
+      } catch (migErr) {
+        console.error('Coin payouts schema update failed:', migErr.message);
       }
       
       // Add fuel request fields
       try {
-        console.log('\n🔧 Running fuel request fields migration...');
+        console.log('\nRunning fuel request fields migration...');
         const { addFuelRequestFields } = require('./migrations/add-fuel-request-fields');
         await addFuelRequestFields();
-        console.log('✅ Fuel request fields migration completed\n');
+        console.log('Fuel request fields migration completed\n');
       } catch (migErr) {
-        console.error('❌ Fuel request fields migration failed:', migErr.message);
+        console.error('Fuel request fields migration failed:', migErr.message);
       }
       
       // Award retroactive coins
       try {
-        console.log('\n🪙 Running retroactive coin awards...');
+        console.log('\nRunning retroactive coin awards...');
         const { awardRetroactiveCoins } = require('./migrations/award-retroactive-coins');
         await awardRetroactiveCoins();
-        console.log('✅ Retroactive coin awards completed\n');
+        console.log('Retroactive coin awards completed\n');
       } catch (migErr) {
-        console.error('❌ Retroactive coin awards failed:', migErr.message);
+        console.error('Retroactive coin awards failed:', migErr.message);
       }
 
     } catch (err) {
