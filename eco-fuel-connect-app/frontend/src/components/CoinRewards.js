@@ -19,11 +19,9 @@ function CoinRewards() {
   const fetchCoins = async () => {
     try {
       const { data } = await api.get('/rewards/coins');
-      console.log('Coins data:', data);
       if (data.success) {
         setCoins(data.coins);
-        setTransactions(data.transactions || []);
-        console.log('Transactions:', data.transactions);
+        setTransactions(data.transactions);
       }
     } catch (error) {
       console.error('Error fetching coins:', error);
@@ -43,27 +41,27 @@ function CoinRewards() {
       });
       
       if (data.success) {
-        setMessage(`Successfully converted ${convertAmount} coins to $${data.conversion.cash}!`);
+        setMessage(`✅ Successfully converted ${convertAmount} coins to $${data.conversion.cash}!`);
         setShowConvert(false);
         setConvertAmount('');
         fetchCoins();
       } else {
-        setMessage(data.message);
+        setMessage(`❌ ${data.message}`);
       }
     } catch (error) {
-      setMessage('Error converting coins');
+      setMessage('❌ Error converting coins');
     }
   };
 
   return (
     <div>
-      {message && <Alert variant={message.includes('Successfully') ? 'success' : 'danger'} onClose={() => setMessage('')} dismissible>{message}</Alert>}
+      {message && <Alert variant={message.includes('✅') ? 'success' : 'danger'} onClose={() => setMessage('')} dismissible>{message}</Alert>}
       
       <Card style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', marginBottom: 20 }}>
         <Card.Body>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2 style={{ fontSize: 48, fontWeight: 700, margin: 0 }}>{coins.total}</h2>
+              <h2 style={{ fontSize: 48, fontWeight: 700, margin: 0 }}>🪙 {coins.total}</h2>
               <p style={{ margin: 0, opacity: 0.9 }}>Total Coins</p>
             </div>
             <div style={{ textAlign: 'right' }}>
@@ -79,10 +77,10 @@ function CoinRewards() {
 
       <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
         <Button variant="success" onClick={() => setShowConvert(true)} disabled={coins.total < 100} style={{ flex: 1 }}>
-          Convert to Cash
+          💰 Convert to Cash
         </Button>
         <Button variant="outline-primary" onClick={fetchCoins} style={{ flex: 1 }}>
-          Refresh
+          🔄 Refresh
         </Button>
       </div>
 
@@ -96,24 +94,12 @@ function CoinRewards() {
               <ListGroup.Item key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 600 }}>
+                    {tx.type === 'earned' && '🎉'} 
+                    {tx.type === 'converted' && '💸'} 
+                    {tx.type === 'bonus' && '🎁'} 
                     {tx.description}
                   </div>
-                  <small style={{ color: '#888' }}>
-                    {tx.date ? (() => {
-                      try {
-                        const date = new Date(tx.date);
-                        return isNaN(date.getTime()) ? 'N/A' : date.toLocaleString('en-US', { 
-                          year: 'numeric', 
-                          month: 'short', 
-                          day: 'numeric', 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        });
-                      } catch (e) {
-                        return 'N/A';
-                      }
-                    })() : 'N/A'}
-                  </small>
+                  <small style={{ color: '#888' }}>{new Date(tx.createdAt).toLocaleString()}</small>
                 </div>
                 <Badge bg={tx.amount > 0 ? 'success' : 'danger'} style={{ fontSize: 16 }}>
                   {tx.amount > 0 ? '+' : ''}{tx.amount}
@@ -126,7 +112,7 @@ function CoinRewards() {
 
       <Modal show={showConvert} onHide={() => setShowConvert(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Convert Coins to Cash</Modal.Title>
+          <Modal.Title>💰 Convert Coins to Cash</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Alert variant="info">
