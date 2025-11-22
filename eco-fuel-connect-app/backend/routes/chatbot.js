@@ -14,14 +14,14 @@ const getAIResponse = async (message) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a biogas production expert assistant. Provide helpful, accurate, and concise answers about biogas production, waste management, maintenance, troubleshooting, and safety. Keep responses under 150 words.'
+            content: 'You are an expert biogas production consultant with 20+ years of experience. Answer ALL questions about biogas production, anaerobic digestion, waste management, maintenance, troubleshooting, safety, equipment, costs, benefits, and related topics. Provide detailed, accurate, practical answers. If asked about biogas, always give a complete helpful response. Keep answers under 200 words but be thorough.'
           },
           {
             role: 'user',
             content: message
           }
         ],
-        max_tokens: 200,
+        max_tokens: 300,
         temperature: 0.7
       },
       {
@@ -34,7 +34,7 @@ const getAIResponse = async (message) => {
     return response.data.choices[0].message.content;
   } catch (error) {
     console.error('OpenAI API error:', error.response?.data || error.message);
-    return 'I can help with biogas questions! Ask about: what is biogas, how to start, temperature, pH levels, feeding, gas leaks, maintenance, safety, or troubleshooting.';
+    throw new Error('Unable to connect to AI service. Please check your API key configuration.');
   }
 };
 
@@ -57,38 +57,9 @@ router.get('/suggestions', (req, res) => {
 router.post('/query', async (req, res) => {
   try {
     const { message, sessionId, userId } = req.body;
-    const searchTerm = `%${message.toLowerCase()}%`;
     
-    let response;
-    let source = 'database';
+    const response = await getAIResponse(message);
 
-    try {
-      // Try database first
-      const [matches] = await db.query(
-        `SELECT * FROM chatbot_knowledge 
-         WHERE LOWER(keyword) LIKE :search OR LOWER(question) LIKE :search OR LOWER(answer) LIKE :search
-         ORDER BY usageCount DESC LIMIT 1`,
-        { replacements: { search: searchTerm } }
-      );
-
-      if (matches.length > 0) {
-        response = matches[0].answer;
-        await db.query(
-          'UPDATE chatbot_knowledge SET usageCount = usageCount + 1 WHERE id = :id',
-          { replacements: { id: matches[0].id } }
-        );
-      } else {
-        // Use AI if no database match
-        response = await getAIResponse(message);
-        source = 'ai';
-      }
-    } catch (dbError) {
-      // If database fails, use AI
-      response = await getAIResponse(message);
-      source = 'ai';
-    }
-
-    // Save conversation if database available
     try {
       await db.query(
         `INSERT INTO chatbot_conversations (userId, sessionId, userMessage, botResponse)
@@ -99,7 +70,7 @@ router.post('/query', async (req, res) => {
       console.log('Could not save conversation:', saveError.message);
     }
 
-    res.json({ success: true, response, source });
+    res.json({ success: true, response, source: 'ai' });
   } catch (error) {
     console.error('Chatbot error:', error);
     res.status(500).json({ success: false, message: error.message });
