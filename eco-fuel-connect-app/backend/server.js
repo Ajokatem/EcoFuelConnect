@@ -120,15 +120,14 @@ connectDB()
       await sequelize.sync({ force: false, alter: false });
       console.log('Database tables synced successfully');
       
-      // Auto-create coin reward tables if they don't exist
+      // Fix coin tables schema first
       try {
-        console.log('\n🔧 Running coin tables migration...');
-        const { addCoinTables } = require('./migrations/add-coin-tables');
-        await addCoinTables();
-        console.log('✅ Coin tables migration completed\n');
+        console.log('\n🔧 Running coin tables schema fix...');
+        const { fixCoinTablesSchema } = require('./migrations/fix-coin-tables-schema');
+        await fixCoinTablesSchema();
+        console.log('✅ Coin tables schema fix completed\n');
       } catch (migErr) {
-        console.error('❌ Coin tables migration failed:', migErr.message);
-        console.error('Stack:', migErr.stack);
+        console.error('❌ Coin tables schema fix failed:', migErr.message);
       }
       
       // Add fuel request fields

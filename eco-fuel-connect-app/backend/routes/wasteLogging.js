@@ -449,20 +449,20 @@ router.post('/', [
       if (coinsEarned > 0) {
         // Check if user_coins record exists
         const existingCoins = await db.query(
-          'SELECT totalcoins, lifetimecoins FROM user_coins WHERE userid = ?',
+          'SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?',
           { replacements: [req.user.id], type: QueryTypes.SELECT }
         );
         
         if (existingCoins.length > 0) {
           // Update existing record
           await db.query(
-            'UPDATE user_coins SET totalcoins = totalcoins + ?, lifetimecoins = lifetimecoins + ?, lastearned = NOW(), updatedat = NOW() WHERE userid = ?',
+            'UPDATE user_coins SET "totalCoins" = "totalCoins" + ?, "lifetimeCoins" = "lifetimeCoins" + ?, "lastEarned" = NOW(), "updatedAt" = NOW() WHERE "userId" = ?',
             { replacements: [coinsEarned, coinsEarned, req.user.id], type: QueryTypes.UPDATE }
           );
         } else {
           // Create new record
           await db.query(
-            'INSERT INTO user_coins (userid, totalcoins, lifetimecoins, lastearned, createdat, updatedat) VALUES (?, ?, ?, NOW(), NOW(), NOW())',
+            'INSERT INTO user_coins ("userId", "totalCoins", "lifetimeCoins", "lastEarned", "createdAt", "updatedAt") VALUES (?, ?, ?, NOW(), NOW(), NOW())',
             { replacements: [req.user.id, coinsEarned, coinsEarned], type: QueryTypes.INSERT }
           );
         }
@@ -470,18 +470,18 @@ router.post('/', [
         // Log coin transaction
         const description = `Earned ${coinsEarned} coins for logging ${Math.round(estimatedWeight)}kg of ${wasteType}`;
         await db.query(
-          'INSERT INTO coin_transactions (userid, amount, type, description, wasteentryid, createdat) VALUES (?, ?, ?, ?, ?, NOW())',
+          'INSERT INTO coin_transactions ("userId", amount, type, description, "wasteEntryId", "createdAt") VALUES (?, ?, ?, ?, ?, NOW())',
           { replacements: [req.user.id, coinsEarned, 'earned', description, createdEntry.id], type: QueryTypes.INSERT }
         );
         
         // Get updated coin balance
         const updatedBalance = await db.query(
-          'SELECT totalcoins, lifetimecoins FROM user_coins WHERE userid = ?',
+          'SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?',
           { replacements: [req.user.id], type: QueryTypes.SELECT }
         );
         
         if (updatedBalance.length > 0) {
-          coinBalance = { totalCoins: updatedBalance[0].totalcoins, lifetimeCoins: updatedBalance[0].lifetimecoins };
+          coinBalance = { totalCoins: updatedBalance[0].totalCoins, lifetimeCoins: updatedBalance[0].lifetimeCoins };
         }
         
         // Notify user about coins earned

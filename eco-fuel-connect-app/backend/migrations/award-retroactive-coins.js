@@ -10,7 +10,7 @@ async function awardRetroactiveCoins() {
       FROM waste_entries we
       WHERE NOT EXISTS (
         SELECT 1 FROM coin_transactions ct 
-        WHERE ct.wasteentryid = we.id
+        WHERE ct."wasteEntryId" = we.id
       )
       ORDER BY we."createdAt" ASC
     `, { type: sequelize.QueryTypes.SELECT });
@@ -42,27 +42,27 @@ async function awardRetroactiveCoins() {
       
       // Check if user_coins record exists
       const existingCoins = await sequelize.query(
-        'SELECT totalcoins FROM user_coins WHERE userid = ?',
+        'SELECT "totalCoins" FROM user_coins WHERE "userId" = ?',
         { replacements: [entry.supplierId], type: sequelize.QueryTypes.SELECT }
       );
       
       if (existingCoins.length > 0) {
         // Update existing
         await sequelize.query(
-          'UPDATE user_coins SET totalcoins = totalcoins + ?, lifetimecoins = lifetimecoins + ?, updatedat = NOW() WHERE userid = ?',
+          'UPDATE user_coins SET "totalCoins" = "totalCoins" + ?, "lifetimeCoins" = "lifetimeCoins" + ?, "updatedAt" = NOW() WHERE "userId" = ?',
           { replacements: [coinsEarned, coinsEarned, entry.supplierId], type: sequelize.QueryTypes.UPDATE }
         );
       } else {
         // Create new
         await sequelize.query(
-          'INSERT INTO user_coins (userid, totalcoins, lifetimecoins, createdat, updatedat) VALUES (?, ?, ?, NOW(), NOW())',
+          'INSERT INTO user_coins ("userId", "totalCoins", "lifetimeCoins", "createdAt", "updatedAt") VALUES (?, ?, ?, NOW(), NOW())',
           { replacements: [entry.supplierId, coinsEarned, coinsEarned], type: sequelize.QueryTypes.INSERT }
         );
       }
       
       // Log transaction
       await sequelize.query(
-        'INSERT INTO coin_transactions (userid, amount, type, description, wasteentryid, createdat) VALUES (?, ?, ?, ?, ?, NOW())',
+        'INSERT INTO coin_transactions ("userId", amount, type, description, "wasteEntryId", "createdAt") VALUES (?, ?, ?, ?, ?, NOW())',
         { 
           replacements: [
             entry.supplierId, 
