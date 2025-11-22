@@ -118,24 +118,20 @@ async function getDashboardStats(req, res, userRole) {
     const userWasteEntriesCount = await WasteEntry.count({ where: { supplierId: userId } });
 
     // Get user's fuel requests (for schools)
-    const userFuelResult = await FuelRequest.findAll({
+    const userFuelCount = await FuelRequest.count({ where: { schoolId: userId } });
+    const userFuelSum = await FuelRequest.findAll({
       where: { schoolId: userId },
-      attributes: [
-        [fn('COUNT', '*'), 'total'],
-        [fn('SUM', col('quantityRequested')), 'totalQuantity']
-      ]
+      attributes: [[fn('SUM', col('quantityRequested')), 'totalQuantity']]
     });
-    const fuelStats = userFuelResult[0] || {};
+    const fuelStats = { total: userFuelCount, totalQuantity: userFuelSum[0]?.getDataValue('totalQuantity') || 0 };
 
     // Get producer's fuel requests
-    const producerFuelResult = await FuelRequest.findAll({
+    const producerFuelCount = await FuelRequest.count({ where: { producerId: userId } });
+    const producerFuelSum = await FuelRequest.findAll({
       where: { producerId: userId },
-      attributes: [
-        [fn('COUNT', '*'), 'total'],
-        [fn('SUM', col('quantityRequested')), 'totalQuantity']
-      ]
+      attributes: [[fn('SUM', col('quantityRequested')), 'totalQuantity']]
     });
-    const producerFuelStats = producerFuelResult[0] || {};
+    const producerFuelStats = { total: producerFuelCount, totalQuantity: producerFuelSum[0]?.getDataValue('totalQuantity') || 0 };
 
     // Get all fuel requests for system stats
     const allFuelResult = await FuelRequest.findAll({
@@ -248,10 +244,10 @@ async function getDashboardStats(req, res, userRole) {
       };
     } else if (userRole === 'school') {
       // School gets fuel request stats
-      const totalQuantity = fuelStats.getDataValue ? fuelStats.getDataValue('totalQuantity') || 0 : 0;
+      const totalQuantity = fuelStats.totalQuantity || 0;
       stats = {
-        totalFuelRequests: fuelStats.getDataValue ? fuelStats.getDataValue('total') || 0 : 0,
-        fuelRequests: fuelStats.getDataValue ? fuelStats.getDataValue('total') || 0 : 0,
+        totalFuelRequests: fuelStats.total || 0,
+        fuelRequests: fuelStats.total || 0,
         fuelDelivered: Math.round(totalQuantity * 10) / 10,
         deliveredFuel: Math.round(totalQuantity * 10) / 10,
         monthlyConsumption: Math.round(totalQuantity * 0.3 * 10) / 10,
@@ -279,8 +275,8 @@ async function getDashboardStats(req, res, userRole) {
         dailyWaste: Math.round(totalWaste / 30 * 10) / 10,
         biogasProduced: Math.round(totalWaste * 0.3 * 10) / 10,
         biogasEfficiency: 75,
-        fuelRequests: producerFuelStats.getDataValue ? producerFuelStats.getDataValue('total') || 0 : 0,
-        fuelDelivered: producerFuelStats.getDataValue ? producerFuelStats.getDataValue('totalQuantity') || 0 : 0,
+        fuelRequests: producerFuelStats.total || 0,
+        fuelDelivered: producerFuelStats.totalQuantity || 0,
         carbonReduction: Math.round(totalWaste * 2.3 * 10) / 10,
         energyGenerated: Math.round(totalWaste * 1.5 * 10) / 10,
         forestSaved: Math.round((totalWaste * 2.3 / 1000) * 100) / 100,
@@ -339,16 +335,9 @@ router.get('/recent-activity', auth, async (req, res) => {
     let activities = [];
 
     if (userRole === 'school') {
-      // Schools see their fuel requests from last 30 days
-      const { Op } = require('sequelize');
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+      // Schools see ALL their fuel requests
       const recentFuel = await FuelRequest.findAll({
-        where: {
-          schoolId: userId,
-          createdAt: { [Op.gte]: thirtyDaysAgo }
-        },
+        where: { schoolId: userId },
         order: [['createdAt', 'DESC']],
         limit: parseInt(limit),
         attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'quantityDelivered', 'status', 'deliveryDate', 'createdAt']
@@ -366,19 +355,12 @@ router.get('/recent-activity', auth, async (req, res) => {
         date: request.createdAt
       }));
     } else if (userRole === 'producer') {
-      // Producers see fuel requests assigned to them
-      const { Op } = require('sequelize');
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+      // Producers see ALL fuel requests assigned to them
       const recentFuel = await FuelRequest.findAll({
-        where: {
-          producerId: userId,
-          createdAt: { [Op.gte]: thirtyDaysAgo }
-        },
+        where: { producerId: userId },
         order: [['createdAt', 'DESC']],
         limit: parseInt(limit),
-        include: [{ model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'], required: false }],
+        include: [{ model: User, as: 'school', attributes: ['id', 'firstName', 'lastName', 'organization'], required: false }],
         attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt']
       });
 
@@ -387,7 +369,7 @@ router.get('/recent-activity', auth, async (req, res) => {
         requestId: request.requestId,
         type: 'fuel_request',
         title: `Fuel Request: ${request.fuelType || 'Biogas'}`,
-        description: `${request.quantityRequested || 0} units by ${request.school?.firstName || 'School'}`,
+        description: `${request.quantityRequested || 0} units by ${request.school?.organization || request.school?.firstName || 'School'}`,
         status: request.status || 'pending',
         timestamp: request.createdAt
       }));
