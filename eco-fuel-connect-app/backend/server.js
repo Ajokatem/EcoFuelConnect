@@ -140,6 +140,16 @@ connectDB()
       } catch (migErr) {
         console.error('❌ Fuel request fields migration failed:', migErr.message);
       }
+      
+      // Award retroactive coins
+      try {
+        console.log('\n🪙 Running retroactive coin awards...');
+        const { awardRetroactiveCoins } = require('./migrations/award-retroactive-coins');
+        await awardRetroactiveCoins();
+        console.log('✅ Retroactive coin awards completed\n');
+      } catch (migErr) {
+        console.error('❌ Retroactive coin awards failed:', migErr.message);
+      }
 
     } catch (err) {
       console.error('Database sync error:', err.message);
