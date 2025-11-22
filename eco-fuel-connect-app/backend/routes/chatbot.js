@@ -2,51 +2,40 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/database').sequelize;
 const axios = require('axios');
-const { HfInference } = require('@huggingface/inference');
 
-// Smart AI responses
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'sk-proj-your-key-here';
+
 const getAIResponse = async (message) => {
-  const lowerMsg = message.toLowerCase();
-  
-  // Comprehensive biogas knowledge base
-  const responses = {
-    'hi': 'Hello!  I\'m your Biogas Assistant. I can help you with biogas production, maintenance, troubleshooting, and safety. What would you like to know?',
-    'hello': 'Hi there!  I\'m here to help with all your biogas questions. Ask me anything!',
-    'hey': 'Hey!  Ready to help with biogas production. What\'s your question?',
-    'what is biogas': 'Biogas is a renewable energy produced when bacteria break down organic waste in an oxygen-free environment. It contains 50-75% methane (CH4) and can be used for cooking, heating, and electricity generation.',
-    'how to start': 'To start biogas production: 1) Build/buy a digester, 2) Fill with water (50%), 3) Add starter (cow dung), 4) Feed daily with organic waste, 5) Maintain 20-35°C, 6) Wait 15-30 days for gas production.',
-    'temperature': 'Optimal temperature: 30-35°C. Minimum: 20°C. Tips: Insulate digester, use black paint for heat absorption, consider underground installation, add hot water if needed.',
-    'ph level': 'Ideal pH: 6.5-7.5. Too acidic? Add lime/wood ash. Too alkaline? Add organic acids. Test weekly with pH strips.',
-    'feeding': 'Feed daily! Good: kitchen scraps, animal manure, crop residues. Avoid: plastics, metals, chemicals. Ratio: 1 part waste to 1 part water.',
-    'gas leak': 'Detection: Mix soap with water, apply to joints/pipes, look for bubbles. Fix: Tighten connections, replace damaged parts. NEVER use flame to check!',
-    'maintenance': 'Daily: Feed, check temperature. Weekly: Test pH, check leaks. Monthly: Remove sludge, clean filters. Yearly: Deep clean, replace parts.',
-    'safety': 'Biogas is flammable! Ensure ventilation, no smoking near digester, install pressure valve, keep fire extinguisher, regular leak checks.',
-    'not working': 'Common issues: 1) Low temperature (<20°C), 2) Wrong pH (not 6.5-7.5), 3) Insufficient feeding, 4) Gas leaks, 5) Water imbalance, 6) Toxic materials.',
-    'waste types': 'Best: Cow/pig manure, kitchen waste, crop residues, grass. Good: Food scraps, vegetable waste. Avoid: Meat, bones, oils, chemicals, plastics.',
-  };
-  
-  // Match question to response
-  for (const [key, value] of Object.entries(responses)) {
-    if (lowerMsg.includes(key)) return value;
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a biogas production expert assistant. Provide helpful, accurate, and concise answers about biogas production, waste management, maintenance, troubleshooting, and safety. Keep responses under 150 words.'
+          },
+          {
+            role: 'user',
+            content: message
+          }
+        ],
+        max_tokens: 200,
+        temperature: 0.7
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('OpenAI API error:', error.response?.data || error.message);
+    return 'I can help with biogas questions! Ask about: what is biogas, how to start, temperature, pH levels, feeding, gas leaks, maintenance, safety, or troubleshooting.';
   }
-  
-  // Greetings
-  if (lowerMsg === 'hi' || lowerMsg === 'hello' || lowerMsg === 'hey') {
-    return responses[lowerMsg] || responses['hi'];
-  }
-  
-  // Partial matches
-  if (lowerMsg.includes('biogas')) return responses['what is biogas'];
-  if (lowerMsg.includes('start') || lowerMsg.includes('begin')) return responses['how to start'];
-  if (lowerMsg.includes('temp')) return responses['temperature'];
-  if (lowerMsg.includes('ph') || lowerMsg.includes('acid')) return responses['ph level'];
-  if (lowerMsg.includes('feed') || lowerMsg.includes('waste')) return responses['feeding'];
-  if (lowerMsg.includes('leak')) return responses['gas leak'];
-  if (lowerMsg.includes('maintain') || lowerMsg.includes('clean')) return responses['maintenance'];
-  if (lowerMsg.includes('safe')) return responses['safety'];
-  if (lowerMsg.includes('not') || lowerMsg.includes('problem') || lowerMsg.includes('issue')) return responses['not working'];
-  
-  return "I can help with biogas questions! Ask about: what is biogas, how to start, temperature, pH levels, feeding, gas leaks, maintenance, safety, or troubleshooting.";
 };
 
 // Chatbot query
