@@ -231,7 +231,12 @@ const BiogasChatbot = ({ show, onHide }) => {
             }}
           />
           <Button
-            onClick={handleSend}
+            type="button"
+            onClick={() => handleSend()}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleSend();
+            }}
             disabled={loading || !input.trim()}
             style={{
               backgroundColor: '#25805a',
@@ -239,7 +244,8 @@ const BiogasChatbot = ({ show, onHide }) => {
               borderRadius: '24px',
               padding: '10px 24px',
               fontWeight: '600',
-              minWidth: '80px'
+              minWidth: '80px',
+              touchAction: 'manipulation'
             }}
           >
             {loading ? '...' : translate('send')}
