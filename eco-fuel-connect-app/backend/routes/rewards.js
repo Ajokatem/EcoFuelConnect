@@ -9,26 +9,26 @@ router.get('/my-rewards', auth, async (req, res) => {
     let coins = [], transactions = [], payouts = [];
     
     try {
-      coins = await db.query(`SELECT "totalCoins", "lifetimeCoins" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      coins = await db.query(`SELECT totalcoins, lifetimecoins FROM user_coins WHERE userid = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
       console.log('🪙 Coins query result:', coins);
     } catch (e) {
       console.error('🪙 Coins query error:', e.message);
     }
     
     try {
-      transactions = await db.query(`SELECT ct.*, we."wasteType", we.quantity, we.unit, we."createdAt" as "wasteDate" FROM coin_transactions ct LEFT JOIN waste_entries we ON ct."wasteEntryId" = we.id WHERE ct."userId" = ? AND ct.type = 'earned' ORDER BY ct."createdAt" DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      transactions = await db.query(`SELECT ct.*, we."wasteType", we.quantity, we.unit, we."createdAt" as wastedate FROM coin_transactions ct LEFT JOIN waste_entries we ON ct.wasteentryid = we.id WHERE ct.userid = ? AND ct.type = 'earned' ORDER BY ct.createdat DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
       console.log('🪙 Transactions count:', transactions.length);
     } catch (e) {
       console.error('🪙 Transactions query error:', e.message);
     }
     
     try {
-      payouts = await db.query(`SELECT * FROM coin_payouts WHERE "userId" = ? ORDER BY "createdAt" DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+      payouts = await db.query(`SELECT * FROM coin_payouts WHERE userid = ? ORDER BY createdat DESC`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
     } catch (e) {}
     
     const coinValue = 0.01;
-    const totalCoins = coins[0]?.totalCoins || 0;
-    const lifetimeCoins = coins[0]?.lifetimeCoins || 0;
+    const totalCoins = coins[0]?.totalcoins || 0;
+    const lifetimeCoins = coins[0]?.lifetimecoins || 0;
     
     console.log('🪙 Sending response - Total:', totalCoins, 'Lifetime:', lifetimeCoins);
     
@@ -49,22 +49,27 @@ router.get('/coins', auth, async (req, res) => {
     let coins = [], transactions = [];
     
     try {
-      coins = await db.query(`SELECT "totalCoins", "lifetimeCoins", "lastEarned" FROM user_coins WHERE "userId" = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-    } catch (e) {}
+      coins = await db.query(`SELECT totalcoins, lifetimecoins, lastearned FROM user_coins WHERE userid = ?`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    } catch (e) {
+      console.error('Coins query error:', e.message);
+    }
     
     try {
-      transactions = await db.query(`SELECT * FROM coin_transactions WHERE "userId" = ? ORDER BY "createdAt" DESC LIMIT 20`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
-    } catch (e) {}
+      transactions = await db.query(`SELECT * FROM coin_transactions WHERE userid = ? ORDER BY createdat DESC LIMIT 20`, { replacements: [req.user.id], type: db.QueryTypes.SELECT });
+    } catch (e) {
+      console.error('Transactions query error:', e.message);
+    }
     
     const coinValue = 0.01;
-    const totalCoins = coins[0]?.totalCoins || 0;
+    const totalCoins = coins[0]?.totalcoins || 0;
     
     res.json({
       success: true,
-      coins: { total: totalCoins, lifetime: coins[0]?.lifetimeCoins || 0, cashValue: (totalCoins * coinValue).toFixed(2), coinValue, lastEarned: coins[0]?.lastEarned },
+      coins: { total: totalCoins, lifetime: coins[0]?.lifetimecoins || 0, cashValue: (totalCoins * coinValue).toFixed(2), coinValue, lastEarned: coins[0]?.lastearned },
       transactions: transactions || []
     });
   } catch (error) {
+    console.error('GET /coins error:', error.message);
     res.json({ success: true, coins: { total: 0, lifetime: 0, cashValue: '0.00' }, transactions: [] });
   }
 });
