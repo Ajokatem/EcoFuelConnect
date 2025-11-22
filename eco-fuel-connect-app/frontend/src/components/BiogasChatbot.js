@@ -17,7 +17,7 @@ const BiogasChatbot = ({ show, onHide }) => {
     if (show && messages.length === 0) {
       setMessages([{
         type: 'bot',
-        text: 'Hi! 👋 I\'m your Biogas Assistant. Ask me anything about biogas production!',
+        text: 'Hi! 👋 I\'m your Biogas Expert. Ask me about biogas production, maintenance, troubleshooting, safety, or any related topic!',
         timestamp: new Date()
       }]);
     }
@@ -49,23 +49,33 @@ const BiogasChatbot = ({ show, onHide }) => {
       console.error('Chatbot error:', error);
       console.error('Error details:', error.response?.data || error.message);
       
-      // Fallback responses if API fails
-      const fallbackResponses = {
-        'start': 'To start biogas production: 1) Set up your digester 2) Mix organic waste with water (1:1 ratio) 3) Add starter culture 4) Maintain temperature 30-40°C 5) Wait 15-30 days for first gas.',
-        'maintenance': 'Daily maintenance: Check temperature, stir mixture, add feedstock. Weekly: Check pH levels, inspect for leaks. Monthly: Clean inlet/outlet, check gas pressure.',
-        'help': 'I can help you with: biogas production, maintenance, troubleshooting, waste types, safety, and temperature control. What would you like to know?',
-        'safety': 'Biogas safety tips: 1) Ensure good ventilation 2) Check for leaks regularly 3) No open flames near digester 4) Use proper equipment 5) Train all users.',
-        'temperature': 'Optimal temperature: 30-40°C (86-104°F). Below 20°C: production slows. Above 45°C: bacteria die. Use insulation in cold weather.'
+      const lowerInput = messageText.toLowerCase();
+      const knowledge = {
+        'biogas': 'Biogas is renewable energy from organic waste breakdown in oxygen-free conditions. Contains 50-75% methane (CH4). Used for cooking, heating, electricity. Reduces emissions and manages waste sustainably.',
+        'start': 'To start: 1) Get/build digester 2) Fill 50% with water 3) Add cow dung starter 4) Feed daily (waste:water 1:1) 5) Keep 30-35°C 6) Wait 15-30 days for gas.',
+        'temperature': 'Optimal: 30-35°C. Minimum: 20°C. Maximum: 40°C (bacteria die above 45°C). Tips: Insulate, paint black, install underground, add hot water in cold weather.',
+        'ph': 'Ideal pH: 6.5-7.5. Too acidic? Add lime/wood ash. Too alkaline? Add organic acids. Test weekly. Maintain stable pH for bacteria.',
+        'feed': 'Feed daily. Good: kitchen scraps, manure, crop waste, grass. Avoid: meat, bones, oils, plastics, chemicals. Ratio: 1:1 waste to water. Chop small.',
+        'leak': 'Detect leaks: Mix soap+water, apply to joints/pipes, look for bubbles. NEVER use flame! Fix: Tighten connections, replace seals. Check regularly.',
+        'maintenance': 'Daily: Feed, check temp. Weekly: Test pH, check leaks. Monthly: Remove sludge, clean pipes. Yearly: Deep clean, replace parts.',
+        'safety': 'Safety: 1) Good ventilation 2) No smoking near digester 3) Install pressure valve 4) Check leaks regularly 5) Use proper appliances 6) Keep fire extinguisher 7) Train users.',
+        'problem': 'Common issues: Low temp (<20°C), wrong pH, overfeeding, gas leaks, toxic materials, insufficient bacteria, water imbalance. Check each.',
+        'waste': 'Best: Cow dung, pig manure, kitchen waste, vegetable scraps, crop residues, grass. Avoid: Meat, bones, oils, plastics, metals, chemicals.',
+        'production': 'Yield: Cow dung 0.3-0.4 m³/kg, Pig manure 0.5-0.6 m³/kg, Kitchen waste 0.4-0.5 m³/kg. Factors: temp, pH, retention time (20-30 days).',
+        'cost': 'Small (2-4 m³): $300-800. Medium (6-10 m³): $1,500-3,000. Large (20+ m³): $5,000+. Payback: 2-4 years.',
+        'benefit': 'Benefits: Free energy, reduces costs, organic fertilizer, cuts emissions, improves sanitation, creates jobs, energy independence.'
       };
       
-      const lowerInput = messageText.toLowerCase();
-      let response = 'I\'m currently having trouble connecting to my knowledge base. However, I can still help! Try asking about: starting biogas production, maintenance, safety, or temperature control.';
-      
-      for (const [key, value] of Object.entries(fallbackResponses)) {
+      let response = null;
+      for (const [key, value] of Object.entries(knowledge)) {
         if (lowerInput.includes(key)) {
           response = value;
           break;
         }
+      }
+      
+      if (!response) {
+        response = 'Ask me about: biogas basics, how to start, temperature control, pH levels, feeding, gas leaks, maintenance, safety, troubleshooting, waste types, production rates, costs, or benefits.';
       }
       
       setMessages(prev => [...prev, {
