@@ -105,8 +105,8 @@ function Reports() {
     const typeMap = {};
     const arr = Array.isArray(wasteData) ? wasteData : [];
     arr.forEach((entry) => {
-      const type = entry.type || "unknown";
-      typeMap[type] = (typeMap[type] || 0) + parseFloat(entry.quantity || 0);
+      const type = entry.wasteType || entry.type || "unknown";
+      typeMap[type] = (typeMap[type] || 0) + parseFloat(entry.quantity || entry.estimatedWeight || 0);
     });
     return Object.entries(typeMap).map(([type, quantity]) => ({ type, quantity: quantity.toFixed(1) }));
   };
