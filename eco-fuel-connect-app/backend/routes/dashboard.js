@@ -37,9 +37,7 @@ router.get('/charts/iot-trends', auth, async (req, res) => {
 
 
 const Analytics = require('../models/Analytics');
-const WasteEntry = require('../models/WasteEntry');
-const FuelRequest = require('../models/FuelRequest');
-const User = require('../models/User');
+const { User, WasteEntry, FuelRequest } = require('../models/index');
 
 // @route   GET /api/dashboard/producer/stats
 // @desc    Get producer dashboard statistics
@@ -119,7 +117,7 @@ async function getDashboardStats(req, res, userRole) {
     const wasteEntriesCount = await WasteEntry.count();
     const userWasteEntriesCount = await WasteEntry.count({ where: { supplierId: userId } });
 
-    // Get user's fuel requests
+    // Get user's fuel requests (for schools)
     const userFuelResult = await FuelRequest.findAll({
       where: { schoolId: userId },
       attributes: [
@@ -128,6 +126,16 @@ async function getDashboardStats(req, res, userRole) {
       ]
     });
     const fuelStats = userFuelResult[0] || {};
+
+    // Get producer's fuel requests
+    const producerFuelResult = await FuelRequest.findAll({
+      where: { producerId: userId },
+      attributes: [
+        [fn('COUNT', '*'), 'total'],
+        [fn('SUM', col('quantityRequested')), 'totalQuantity']
+      ]
+    });
+    const producerFuelStats = producerFuelResult[0] || {};
 
     // Get all fuel requests for system stats
     const allFuelResult = await FuelRequest.findAll({
@@ -271,8 +279,8 @@ async function getDashboardStats(req, res, userRole) {
         dailyWaste: Math.round(totalWaste / 30 * 10) / 10,
         biogasProduced: Math.round(totalWaste * 0.3 * 10) / 10,
         biogasEfficiency: 75,
-        fuelRequests: allFuelStats.getDataValue ? allFuelStats.getDataValue('total') || 0 : 0,
-        fuelDelivered: allFuelStats.getDataValue ? allFuelStats.getDataValue('totalDelivered') || 0 : 0,
+        fuelRequests: producerFuelStats.getDataValue ? producerFuelStats.getDataValue('total') || 0 : 0,
+        fuelDelivered: producerFuelStats.getDataValue ? producerFuelStats.getDataValue('totalQuantity') || 0 : 0,
         carbonReduction: Math.round(totalWaste * 2.3 * 10) / 10,
         energyGenerated: Math.round(totalWaste * 1.5 * 10) / 10,
         forestSaved: Math.round((totalWaste * 2.3 / 1000) * 100) / 100,
@@ -357,6 +365,32 @@ router.get('/recent-activity', auth, async (req, res) => {
         deliveryDate: request.deliveryDate,
         date: request.createdAt
       }));
+    } else if (userRole === 'producer') {
+      // Producers see fuel requests assigned to them
+      const { Op } = require('sequelize');
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const recentFuel = await FuelRequest.findAll({
+        where: {
+          producerId: userId,
+          createdAt: { [Op.gte]: thirtyDaysAgo }
+        },
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit),
+        include: [{ model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'], required: false }],
+        attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt']
+      });
+
+      activities = recentFuel.map(request => ({
+        id: request.id,
+        requestId: request.requestId,
+        type: 'fuel_request',
+        title: `Fuel Request: ${request.fuelType || 'Biogas'}`,
+        description: `${request.quantityRequested || 0} units by ${request.school?.firstName || 'School'}`,
+        status: request.status || 'pending',
+        timestamp: request.createdAt
+      }));
     } else {
       // Other roles see combined activity
       const recentWaste = await WasteEntry.findAll({
@@ -364,14 +398,14 @@ router.get('/recent-activity', auth, async (req, res) => {
         limit: Math.floor(limit / 2),
         include: [{ model: User, as: 'supplier', attributes: ['id', 'firstName', 'lastName'], required: false }],
         attributes: ['id', 'wasteType', 'quantity', 'status', 'createdAt']
-      }).catch(() => []);
+      });
 
       const recentFuel = await FuelRequest.findAll({
         order: [['createdAt', 'DESC']],
         limit: Math.floor(limit / 2),
         include: [{ model: User, as: 'school', attributes: ['id', 'firstName', 'lastName'], required: false }],
         attributes: ['id', 'requestId', 'fuelType', 'quantityRequested', 'status', 'createdAt']
-      }).catch(() => []);
+      });
 
       activities = [
         ...recentWaste.map(entry => ({

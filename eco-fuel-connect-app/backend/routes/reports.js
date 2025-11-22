@@ -1,10 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
-const WasteEntry = require('../models/WasteEntry');
-const FuelRequest = require('../models/FuelRequest');
+const { User, WasteEntry, FuelRequest } = require('../models/index');
 const BiogasProduction = require('../models/BiogasProduction');
-const User = require('../models/User');
 
 // Conversion factor for CO2 reduction (example: 1kg biogas = 2.75kg CO2 saved)
 const CO2_FACTOR = 2.75;

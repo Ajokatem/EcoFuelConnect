@@ -86,6 +86,9 @@ app.use(cookieParser());
 const { i18n } = require('./middleware/i18n');
 app.use(i18n);
 
+// ----- Initialize Models and Associations -----
+require('./models/index'); // Load models with associations
+
 // ----- Import Routes -----
 const authRoutes = require('./routes/auth');
 const dashboardRoutes = require('./routes/dashboard');
@@ -128,6 +131,15 @@ connectDB()
         console.error('Stack:', migErr.stack);
       }
       
+      // Add fuel request fields
+      try {
+        console.log('\n🔧 Running fuel request fields migration...');
+        const { addFuelRequestFields } = require('./migrations/add-fuel-request-fields');
+        await addFuelRequestFields();
+        console.log('✅ Fuel request fields migration completed\n');
+      } catch (migErr) {
+        console.error('❌ Fuel request fields migration failed:', migErr.message);
+      }
 
     } catch (err) {
       console.error('Database sync error:', err.message);

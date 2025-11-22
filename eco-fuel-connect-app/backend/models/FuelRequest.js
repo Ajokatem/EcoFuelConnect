@@ -75,6 +75,35 @@ const FuelRequest = sequelize.define('FuelRequest', {
     defaultValue: 'any_time'
   },
   
+  // Request dates
+  requestDate: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  
+  // Contact information
+  contactPerson: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  contactPhone: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  
+  // Priority
+  priority: {
+    type: DataTypes.ENUM('low', 'normal', 'medium', 'high'),
+    defaultValue: 'normal'
+  },
+  
+  // Notes
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  
   // Request status and tracking
   status: {
     type: DataTypes.ENUM(
@@ -336,35 +365,6 @@ FuelRequest.getDeliveryMetrics = async function(producerId, startDate, endDate) 
   }
   
   return null;
-};
-
-// Define associations (will be set up in a separate associations file)
-FuelRequest.associate = function(models) {
-  // Many-to-one with User (school)
-  FuelRequest.belongsTo(models.User, {
-    foreignKey: 'schoolId',
-    as: 'school'
-  });
-  
-  // Many-to-one with User (producer)
-  FuelRequest.belongsTo(models.User, {
-    foreignKey: 'producerId',
-    as: 'producer'
-  });
-  
-  // Many-to-one with BiogasProduction
-  FuelRequest.belongsTo(models.BiogasProduction, {
-    foreignKey: 'biogasProductionId',
-    as: 'biogasProduction'
-  });
-  
-  // Many-to-many with Transaction through junction table
-  FuelRequest.belongsToMany(models.Transaction, {
-    through: 'FuelRequestTransactions',
-    foreignKey: 'fuelRequestId',
-    otherKey: 'transactionId',
-    as: 'transactions'
-  });
 };
 
 module.exports = FuelRequest;

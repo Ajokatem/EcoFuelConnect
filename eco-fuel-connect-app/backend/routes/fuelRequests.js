@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const FuelRequest = require('../models/FuelRequest');
+const { User, FuelRequest } = require('../models/index');
 const { auth, adminOnly, schoolOnly } = require('../middleware/auth');
 const { body, validationResult } = require('express-validator');
 const helmet = require('helmet');
@@ -86,7 +86,6 @@ router.post('/', [
       });
       // Notify producer
       if (producerId) {
-        const User = require('../models/User');
         const school = await User.findByPk(schoolId);
         const schoolName = school ? `${school.firstName} ${school.lastName} (${school.organization || 'School'})` : `School ID ${schoolId}`;
         
@@ -150,26 +149,28 @@ router.get('/', auth, async (req, res) => {
     let where = {};
     if (req.user.role === 'school') {
       where.schoolId = req.user.id;
+    } else if (req.user.role === 'producer') {
+      where.producerId = req.user.id;
     } else if (req.user.role === 'supplier') {
       where.assignedSupplierId = req.user.id;
     }
+    // Admin sees all requests (no where filter)
     
     if (status && typeof status === 'string') {
       where.status = status.trim();
     }
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
-      const User = require('../models/User');
-      const requests = await FuelRequest.findAll({
-        where,
-        order: [['requestDate', 'DESC']],
-        limit: parseInt(limit),
-        offset,
-        include: [
-          { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'], required: false },
-          { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'], required: false }
-        ]
-      }).catch(() => []);
+    const requests = await FuelRequest.findAll({
+      where,
+      order: [['requestDate', 'DESC']],
+      limit: parseInt(limit),
+      offset,
+      include: [
+        { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'], required: false },
+        { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'email'], required: false }
+      ]
+    });
 
     const total = await FuelRequest.count({ where });
     // Add 'dateRequested' field for frontend compatibility
@@ -178,6 +179,9 @@ router.get('/', auth, async (req, res) => {
       obj.dateRequested = obj.createdAt;
       return obj;
     });
+    
+    console.log(`✅ Fetched ${requestsWithDate.length} fuel requests for ${req.user.role}`);
+    
     res.json({ 
       success: true,
       requests: requestsWithDate,
@@ -186,7 +190,7 @@ router.get('/', auth, async (req, res) => {
       currentPage: parseInt(page)
     });
   } catch (error) {
-    console.error('Error fetching fuel requests:', error.message);
+    console.error('❌ Error fetching fuel requests:', error.message);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -196,8 +200,8 @@ router.get('/:id', auth, async (req, res) => {
   try {
     const request = await FuelRequest.findByPk(req.params.id, {
       include: [
-        { model: require('../models/User'), as: 'school', attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone'] },
-        { model: require('../models/User'), as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone'] }
+        { model: User, as: 'school', attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone'] },
+        { model: User, as: 'producer', attributes: ['id', 'firstName', 'lastName', 'organization', 'email', 'phone'] }
       ]
     });
 
