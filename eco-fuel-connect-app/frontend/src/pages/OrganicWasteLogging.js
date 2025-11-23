@@ -514,45 +514,48 @@ function OrganicWasteLogging() {
         </Row>
 
         {/* AI Verification Modal */}
-        <Modal show={showVerificationModal} onHide={() => setShowVerificationModal(false)} centered>
+        <Modal show={showVerificationModal} onHide={() => setShowVerificationModal(false)} centered size="sm">
           <Modal.Header closeButton>
-            <Modal.Title>🤖 AI Weight Verification</Modal.Title>
+            <Modal.Title style={{ fontSize: '1.1rem' }}>AI Weight Verification</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            <Alert variant="info">
-              <strong>AI Estimated Weight:</strong> {aiEstimatedWeight} kg
-            </Alert>
-            <p>Do you agree with this AI estimation?</p>
+            <div className="text-center mb-3">
+              <h5 className="mb-1">{aiEstimatedWeight} kg</h5>
+              <small className="text-muted">AI Estimated Weight</small>
+            </div>
             <Button 
               variant="success" 
-              className="w-100 mb-3" 
+              size="sm"
+              className="w-100 mb-2" 
               onClick={() => handleConfirmAI(aiEstimatedWeight)}
             >
-              ✓ Confirm AI Estimate ({aiEstimatedWeight} kg)
+              Confirm
             </Button>
-            <hr />
-            <p className="text-muted small">Or override with manual measurement:</p>
+            <div className="text-center my-2">
+              <small className="text-muted">or</small>
+            </div>
             <Form.Group className="mb-2">
-              <Form.Label>Manual Weight (kg)</Form.Label>
               <Form.Control
                 type="number"
                 step="0.1"
                 min="0.1"
+                size="sm"
                 id="manualWeightInput"
-                placeholder="Enter actual weight"
+                placeholder="Enter manual weight (kg)"
               />
             </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Reason for Override (Optional)</Form.Label>
+            <Form.Group className="mb-2">
               <Form.Control
                 as="textarea"
-                rows={2}
+                rows={1}
+                size="sm"
                 id="overrideReasonInput"
-                placeholder="E.g., Weighed on scale, visual inspection..."
+                placeholder="Reason (optional)"
               />
             </Form.Group>
             <Button 
-              variant="warning" 
+              variant="outline-secondary" 
+              size="sm"
               className="w-100" 
               onClick={() => {
                 const manualWeight = document.getElementById('manualWeightInput').value;
@@ -564,7 +567,7 @@ function OrganicWasteLogging() {
                 }
               }}
             >
-              Override with Manual Weight
+              Override
             </Button>
           </Modal.Body>
         </Modal>
