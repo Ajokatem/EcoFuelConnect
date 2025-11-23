@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect } from "react";
 import { useLanguage } from "../contexts/LanguageContext";
-import { Card, Container, Row, Col, Form, Button, Alert, Table, Badge, Tabs, Tab } from "react-bootstrap";
+import { Card, Container, Row, Col, Form, Button, Alert, Table, Badge, Tabs, Tab, Modal } from "react-bootstrap";
 import wasteService from "../services/wasteService";
 import api from "../services/api";
 
@@ -17,6 +17,8 @@ function OrganicWasteLogging() {
   const [gpsLocation, setGpsLocation] = useState(null);
   const [loadingLocation, setLoadingLocation] = useState(false);
   const [analyzingImage, setAnalyzingImage] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
+  const [aiEstimatedWeight, setAiEstimatedWeight] = useState(null);
   
   const wasteTypes = [
     { value: "food_scraps", label: "Food Scraps", fuelRatio: 0.5 },
@@ -153,9 +155,10 @@ function OrganicWasteLogging() {
         console.log('AI Response:', response.data);
         
         if (response.data.success && response.data.estimatedWeight > 0) {
-          setFormData(prev => ({ ...prev, quantity: response.data.estimatedWeight.toString() }));
-          setAlertMessage(`✓ AI estimated weight: ${response.data.estimatedWeight} kg`);
-          setAlertType('success');
+          setAiEstimatedWeight(response.data.estimatedWeight);
+          setShowVerificationModal(true);
+          setAlertMessage(`✓ AI estimated weight: ${response.data.estimatedWeight} kg - Please verify`);
+          setAlertType('info');
         } else {
           setAlertMessage('Could not estimate weight. Please enter manually.');
           setAlertType('info');
@@ -174,6 +177,24 @@ function OrganicWasteLogging() {
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleConfirmAI = (weight) => {
+    setFormData(prev => ({ ...prev, quantity: weight.toString() }));
+    setShowVerificationModal(false);
+    setAlertMessage(`✓ AI weight confirmed: ${weight} kg`);
+    setAlertType('success');
+    setShowAlert(true);
+    setTimeout(() => setShowAlert(false), 3000);
+  };
+
+  const handleOverrideAI = (manualWeight, reason) => {
+    setFormData(prev => ({ ...prev, quantity: manualWeight.toString(), description: prev.description + (reason ? `\n[Override reason: ${reason}]` : '') }));
+    setShowVerificationModal(false);
+    setAlertMessage(`✓ Manual weight entered: ${manualWeight} kg`);
+    setAlertType('warning');
+    setShowAlert(true);
+    setTimeout(() => setShowAlert(false), 3000);
   };
 
   const handleSubmit = async (e) => {
@@ -491,6 +512,62 @@ function OrganicWasteLogging() {
             </Card>
           </Col>
         </Row>
+
+        {/* AI Verification Modal */}
+        <Modal show={showVerificationModal} onHide={() => setShowVerificationModal(false)} centered>
+          <Modal.Header closeButton>
+            <Modal.Title>🤖 AI Weight Verification</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Alert variant="info">
+              <strong>AI Estimated Weight:</strong> {aiEstimatedWeight} kg
+            </Alert>
+            <p>Do you agree with this AI estimation?</p>
+            <Button 
+              variant="success" 
+              className="w-100 mb-3" 
+              onClick={() => handleConfirmAI(aiEstimatedWeight)}
+            >
+              ✓ Confirm AI Estimate ({aiEstimatedWeight} kg)
+            </Button>
+            <hr />
+            <p className="text-muted small">Or override with manual measurement:</p>
+            <Form.Group className="mb-2">
+              <Form.Label>Manual Weight (kg)</Form.Label>
+              <Form.Control
+                type="number"
+                step="0.1"
+                min="0.1"
+                id="manualWeightInput"
+                placeholder="Enter actual weight"
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Reason for Override (Optional)</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                id="overrideReasonInput"
+                placeholder="E.g., Weighed on scale, visual inspection..."
+              />
+            </Form.Group>
+            <Button 
+              variant="warning" 
+              className="w-100" 
+              onClick={() => {
+                const manualWeight = document.getElementById('manualWeightInput').value;
+                const reason = document.getElementById('overrideReasonInput').value;
+                if (manualWeight && parseFloat(manualWeight) > 0) {
+                  handleOverrideAI(parseFloat(manualWeight), reason);
+                } else {
+                  alert('Please enter a valid weight');
+                }
+              }}
+            >
+              Override with Manual Weight
+            </Button>
+          </Modal.Body>
+        </Modal>
       </Container>
     </div>
   );
